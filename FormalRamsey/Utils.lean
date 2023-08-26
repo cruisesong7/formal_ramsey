@@ -32,32 +32,28 @@ lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : �
   exact Finset.mem_singleton_self b
   lift b to t using bobv
   rw [bins]
-  admit 
-  sorry
-  -- use (λ x : ↥{a} ↦ b)
-  -- apply And.intro
-  -- intros a₁ a₂ fa₁a₂
-  -- apply Subtype.ext
-  -- have a₁prop := a₁.prop
-  -- have a₂prop := a₂.prop
-  -- simp at a₁prop a₂prop
-  -- simp [a₁prop, a₂prop]
-  -- intros b'
-  -- use a
-  -- simp
-  -- simp
-  -- apply Subtype.ext
-  -- have b'prop := b'.prop
-  -- simp [← bins] at b'prop
-  -- simp [b'prop]
-  -- rcases fbij with ⟨f, fbij⟩
-  -- have bint : b ∈ t := by rw [← bins] <;> simp
-  -- have fhelper : ∀ x, ↑(f x) ∈ t
-  -- intros
-  -- simp [← bins]
-  -- use (λ x ↦ match Finset.decidable_mem ↑x s with
-  -- | is_true p => ⟨f ⟨↑x, p⟩, fhelper ⟨↑x, p⟩⟩
-  -- | is_false _ => ⟨b, bint⟩)
+  use (λ x : {y // y ∈ insert a ∅} ↦ b)
+  apply And.intro
+  intros a₁ a₂ fa₁a₂
+  apply Subtype.ext
+  have a₁prop := a₁.prop
+  have a₂prop := a₂.prop
+  simp at a₁prop a₂prop
+  simp [a₁prop, a₂prop]
+  intros b'
+  use ⟨a, Finset.mem_insert_self a ∅⟩
+  have b'prop := b'.prop
+  simp [← bins] at b'prop
+  apply Subtype.ext
+  simp [b'prop]
+  have bint : b ∈ t := by rw [← bins] <;> simp
+  rcases fbij with ⟨f, fbij⟩
+  have fhelper : ∀ x, ↑(f x) ∈ t
+  intros
+  simp [← bins]
+  use (λ x ↦ match Finset.decidableMem ↑x s with
+  | isTrue p => ⟨f ⟨↑x, p⟩, fhelper ⟨↑x, p⟩⟩
+  | isFalse _ => ⟨b, bint⟩)
   -- split
   -- intros _ _ fa₁a₂
   -- simp at fa₁a₂
