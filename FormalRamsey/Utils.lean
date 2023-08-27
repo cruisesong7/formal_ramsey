@@ -57,31 +57,25 @@ lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : �
   apply And.intro
   intros a₁ a₂ fa₁a₂
   simp at fa₁a₂
-  cases (Finset.decidableMem ↑a₁ s) with
-  | isFalse a₁notins => 
-    cases (Finset.decidableMem ↑a₂ s) with 
-    | isFalse a₂notins =>  
-      have a₁a := a₁.prop
-      have a₂a := a₂.prop
-      simp [a₁notins, a₂notins] at a₁a a₂a
-      apply Subtype.ext
-      simp [a₁a, a₂a]
-    | isTrue a₂ins => 
-    --NOTE: avoid split and simp_all
-      split at fa₁a₂<;> simp_all ; split at fa₁a₂ <;> simp_all
-  | isTrue a₁ins => cases (Finset.decidableMem ↑a₂ s) with 
-    | isFalse a₂notins => 
-      split at fa₁a₂<;> simp_all ; split at fa₁a₂ <;> simp_all
-      next a₁ins _ a₂notins =>
-        have fa₁prop := (f ⟨↑a₁, a₁ins⟩).prop
-        rw [fa₁a₂] at fa₁prop
-        contradiction
-    | isTrue a₂ins =>
-      split at fa₁a₂<;> simp_all ; split at fa₁a₂ <;> simp_all
-      have japf := fbij.left (Subtype.ext fa₁a₂)
-      simp at japf
-      apply Subtype.ext
-      assumption
+  split at fa₁a₂ <;> split at fa₁a₂ <;> simp at fa₁a₂
+  next a₁ins _ _ a₂ins _ =>
+    have a₁eqa₂ := fbij.left (Subtype.ext fa₁a₂)
+    simp at a₁eqa₂
+    exact Subtype.ext a₁eqa₂
+  next a₁ins _ _ a₂notins _ =>
+    have fa₁prop := (f ⟨↑a₁, a₁ins⟩).prop
+    rw [fa₁a₂] at fa₁prop
+    contradiction
+  next a₁notins _ _ a₂ins _ =>
+    have bint' := (f { val := ↑a₂, property := a₂ins }).prop
+    rw [← fa₁a₂] at bint'
+    contradiction
+  next a₁notins _ _ a₂notins _ =>
+    have a₁a := a₁.prop
+    have a₂a := a₂.prop
+    simp [a₁notins, a₂notins] at a₁a a₂a
+    apply Subtype.ext
+    simp [a₁a, a₂a]
   
   intros b'
   have b'prop := b'.prop
