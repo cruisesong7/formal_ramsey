@@ -54,43 +54,53 @@ lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : �
   use (λ x ↦ match Finset.decidableMem ↑x s with
   | isTrue p => ⟨f ⟨↑x, p⟩, fhelper ⟨↑x, p⟩⟩
   | isFalse _ => ⟨b, bint⟩)
-  -- split
-  -- intros _ _ fa₁a₂
-  -- simp at fa₁a₂
-  -- rcases (Finset.decidable_mem ↑a₁ s) with  ⟨a₁notins, a₁ins⟩ <;> rcases (Finset.decidable_mem ↑a₂ s) with ⟨a₂notins, a₂ins⟩ <;> simp at fa₁a₂
-  -- have a₁a := a₁.prop
-  -- have a₂a := a₂.prop
-  -- simp [a₁notins, a₂notins] at a₁a a₂a
-  -- apply Subtype.ext
-  -- simp [a₁a, a₂a]
-  -- have fa₂prop := (f ⟨↑a₂, a₂ins⟩).prop
-  -- rw [← fa₁a₂] at fa₂prop
-  -- contradiction
-  -- have fa₁prop := (f ⟨↑a₁, a₁ins⟩).prop
-  -- rw [fa₁a₂] at fa₁prop
-  -- contradiction
-  -- have japf := fbij.left (Subtype.ext fa₁a₂)
-  -- simp at japf
-  -- apply Subtype.ext
-  -- assumption
-  -- intros b'
-  -- have b'prop := b'.prop
-  -- simp [← bins] at b'prop
-  -- cases b'prop
-  -- use a
-  -- simp
-  -- simp
-  -- cases ains : (Finset.decidable_mem a s)
-  -- simp [← b'prop]
-  -- contradiction
-  -- have boysc := fbij.right ⟨↑b', b'prop⟩
-  -- rcases boysc with ⟨a', fa'⟩
-  -- use a'
-  -- simp
-  -- simp
-  -- cases (Finset.decidable_mem ↑a' s)
-  -- cases h a'.prop
-  -- simp [fa']
+  apply And.intro
+  intros a₁ a₂ fa₁a₂
+  simp at fa₁a₂
+  cases (Finset.decidableMem ↑a₁ s) with
+  | isFalse a₁notins => 
+    cases (Finset.decidableMem ↑a₂ s) with 
+    | isFalse a₂notins =>  
+      have a₁a := a₁.prop
+      have a₂a := a₂.prop
+      simp [a₁notins, a₂notins] at a₁a a₂a
+      apply Subtype.ext
+      simp [a₁a, a₂a]
+    | isTrue a₂ins => 
+    --NOTE: avoid split and simp_all
+      split at fa₁a₂<;> simp_all ; split at fa₁a₂ <;> simp_all
+  | isTrue a₁ins => cases (Finset.decidableMem ↑a₂ s) with 
+    | isFalse a₂notins => 
+      split at fa₁a₂<;> simp_all ; split at fa₁a₂ <;> simp_all
+      next a₁ins _ a₂notins =>
+        have fa₁prop := (f ⟨↑a₁, a₁ins⟩).prop
+        rw [fa₁a₂] at fa₁prop
+        contradiction
+    | isTrue a₂ins =>
+      split at fa₁a₂<;> simp_all ; split at fa₁a₂ <;> simp_all
+      have japf := fbij.left (Subtype.ext fa₁a₂)
+      simp at japf
+      apply Subtype.ext
+      assumption
+  
+  intros b'
+  have b'prop := b'.prop
+  simp [← bins] at b'prop
+  rcases b'prop with b'prop|b'prop
+  use ⟨a, Finset.mem_insert_self a s⟩
+  simp
+  rcases ains : (Finset.decidableMem a s) with h|h
+  simp [← b'prop]
+  contradiction
+  have boysc := fbij.right ⟨↑b', b'prop⟩
+  rcases boysc with ⟨a', fa'⟩
+  have a'ins : ↑a' ∈ insert a s
+  simp
+  use ⟨a',a'ins⟩ 
+  rcases (Finset.decidableMem ↑a' s) with h|h
+  cases h a'.prop
+  simp_all
+  split <;> simp_all;simp_all
 
 lemma floormagic : ∀ (n m : ℕ) (q : ℚ), q < 1 → ↑n ≤ ⌊(↑m + q)⌋  → n ≤ m := by
   intros n m q smallqat nlemfloor
