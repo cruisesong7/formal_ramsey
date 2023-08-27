@@ -215,10 +215,8 @@ lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 
   apply And.intro
   intros x _ aeqx
   have swap : (snd, fst) = Prod.swap (fst, snd) := by simp
-  simp [SimpleGraph.Dart.ext_iff x]
-  rw [swap,← SimpleGraph.dart_edge_eq_mk'_iff]
-  simp [aeqx,symm] at aprop
-  symm at aprop
+  simp [SimpleGraph.Dart.ext_iff]
+  rw [swap, ← SimpleGraph.dart_edge_eq_mk'_iff]
   simp [aeqx, SimpleGraph.Dart.edge,aprop]
 
   simp_all
