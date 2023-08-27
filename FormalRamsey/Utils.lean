@@ -208,7 +208,7 @@ lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 
   apply And.intro
   by_contra h
   simp[Prod.ext_iff] at h
-  rcases h with ⟨h_left, h_right⟩ 
+  rcases h with ⟨h_left, _⟩ 
   simp[← aprop,h_left] at ains_left
   
   simp[Finset.Subset.antisymm_iff, Finset.subset_iff]
