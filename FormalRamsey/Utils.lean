@@ -3,10 +3,6 @@ import Mathlib.Combinatorics.DoubleCounting
 import Mathlib.Data.Rat.Floor 
 import Mathlib.Algebra.Parity
 
-import Init.Tactics
-import Mathlib.Tactic
-import Mathlib.Mathport.Syntax
-
 lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : ∀ {s : Finset α} {t : Finset β}, s.card = t.card → ((s = ∅ ∧ t = ∅) ∨ ∃ f : ↥s → ↥t, Function.Bijective f) := by
   
   intro s
