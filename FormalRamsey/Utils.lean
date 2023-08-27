@@ -32,9 +32,9 @@ lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : �
   exact Finset.mem_singleton_self b
   lift b to t using bobv
   rw [bins]
-  use (λ x : {y // y ∈ insert a ∅} ↦ b)
+  use (λ _ : {y // y ∈ insert a ∅} ↦ b)
   apply And.intro
-  intros a₁ a₂ fa₁a₂
+  intros a₁ a₂ _
   apply Subtype.ext
   have a₁prop := a₁.prop
   have a₂prop := a₂.prop
@@ -46,7 +46,7 @@ lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : �
   simp [← bins] at b'prop
   apply Subtype.ext
   simp [b'prop]
-  have bint : b ∈ t := by rw [← bins] <;> simp
+  have bint : b ∈ t := by rw [← bins] ; simp
   rcases fbij with ⟨f, fbij⟩
   have fhelper : ∀ x, ↑(f x) ∈ t
   intros
@@ -97,7 +97,7 @@ lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : �
   have a'ins : ↑a' ∈ insert a s
   simp
   use ⟨a',a'ins⟩ 
-  rcases (Finset.decidableMem ↑a' s) with h|h
+  rcases (Finset.decidableMem ↑a' s) with h|_
   cases h a'.prop
   simp_all
   split <;> simp_all;simp_all
@@ -221,28 +221,7 @@ lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 
   simp[Finset.Subset.antisymm_iff, Finset.subset_iff]
   apply And.intro
   intros x _ aeqx
-  sorry
-  -- have h : (x.toProd.1, x.toProd.2) = ⟦(x.toProd.1, x.toProd.2)⟧.out
-  -- ∨ (x.toProd.2, x.toProd.1) = ⟦(x.toProd.1, x.toProd.2)⟧.out := by
-  --   simp [Quotient.mk_eq_iff_out, Quotient.mk_out (x.toProd.1, x.toProd.2)]
-  
-
-  -- simp at h
-  -- cases h 
-  -- --|refl =>
-  --   left
-  --   apply SimpleGraph.Dart.ext
-  --   simp[aeqx]
-  --   have temp: x.toProd = (x.toProd.1, x.toProd.2) := by simp
-  --   rw[temp]
-  --   exact cases_eq
-  -- right
-  -- apply SimpleGraph.Dart.ext
-  -- simp[aeqx]
-  -- have temp: x.toProd = (x.toProd.2, x.toProd.1).swap := by simp[prod.swap_prod_mk],
-  -- rw[temp,prod.swap_inj],
-  -- rw[← temp],
-  -- simp[cases_eq],
+  simp [SimpleGraph.Dart.ext_iff x, SimpleGraph.Dart.ext_iff x,← SimpleGraph.dart_edge_eq_mk'_iff, aeqx, SimpleGraph.Dart.edge]
 
   exact ains_right
 
