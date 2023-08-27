@@ -187,44 +187,45 @@ lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 
   let t := Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart) ↦ f ⟦x.toProd⟧ = c) Finset.univ
   have hm : ∀ (a : Sym2 (Fin (M' + N').succ)), a ∈ s → (Finset.bipartiteAbove r t a).card = 2
   intros a ains
+  rcases (Quotient.exists_rep a) with ⟨a',aprop⟩ 
+  cases' a' with fst snd 
   simp [SimpleGraph.mem_edgeSet, ← SimpleGraph.completeGraph_eq_top,completeGraph] at ains --NOTE: can be replace by simp_all
   simp [Finset.bipartiteAbove,Finset.card_eq_two]
   rcases ains with ⟨ains_left, ains_right⟩ 
 
-  have aOutAdj : (⊤ : SimpleGraph (Fin (M' + N').succ)).Adj (Quot.out a).1 (Quot.out a).2 := by
-    --NOTE : try avoid the temp
-    have temp : a = ⟦(a.out.1, a.out.2)⟧ := by simp
-    rw [temp] at ains_left
-    exact ains_left 
-  use SimpleGraph.Dart.mk a.out aOutAdj
+  have aOutAdj : (⊤ : SimpleGraph (Fin (M' + N').succ)).Adj fst snd := by
+    simp [← aprop] at ains_left
+    simp [ains_left] 
+  use SimpleGraph.Dart.mk (fst,snd) aOutAdj
   
-  have aOutSwapAdj : (⊤ : SimpleGraph (Fin (M' + N').succ)).Adj (Quot.out a).swap.1 (Quot.out a).swap.2 := by 
-    --NOTE : try avoid the temp
-    have temp : a = ⟦(a.out.2, a.out.1)⟧ := by 
-      rw[ Sym2.eq_swap] 
-      simp
-    rw [temp] at ains_left
-    exact ains_left
-
-  use SimpleGraph.Dart.mk a.out.swap aOutSwapAdj
+  have aOutSwapAdj : (⊤ : SimpleGraph (Fin (M' + N').succ)).Adj snd fst := by 
+    simp[aOutAdj]
+    simp [Sym2.eq_swap, ←aprop] at ains_left
+    intro ; simp_all
+  use SimpleGraph.Dart.mk (snd,fst) aOutSwapAdj
   simp
 
   apply And.intro
   by_contra h
   simp[Prod.ext_iff] at h
   rcases h with ⟨h_left, h_right⟩ 
-  --NOTE : try avoid the temp
-  have temp : a = ⟦(a.out.1, a.out.2)⟧ := by simp
-  rw [temp] at ains_left
-  simp[h_left] at ains_left
-
+  simp[← aprop,h_left] at ains_left
+  
   simp[Finset.Subset.antisymm_iff, Finset.subset_iff]
   apply And.intro
   intros x _ aeqx
-  simp [SimpleGraph.Dart.ext_iff x, SimpleGraph.Dart.ext_iff x,← SimpleGraph.dart_edge_eq_mk'_iff, aeqx, SimpleGraph.Dart.edge]
+  have swap : (snd, fst) = Prod.swap (fst, snd) := by simp
+  simp [SimpleGraph.Dart.ext_iff x]
+  rw [swap,← SimpleGraph.dart_edge_eq_mk'_iff]
+  simp [aeqx,symm] at aprop
+  symm at aprop
+  simp [aeqx, SimpleGraph.Dart.edge,aprop]
 
-  exact ains_right
-
+  simp_all
+  have aeqswap : a = Quotient.mk (Sym2.Rel.setoid (Fin (Nat.succ (M' + N')))) (snd, fst) := by simp[← aprop]
+  simp[aeqswap]
+  simp[← aeqswap, ains_right] 
+  
   have hn : ∀ (b : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart), b ∈ t → (Finset.bipartiteBelow r s b).card = 1
   intros b bint
   simp [Finset.bipartiteBelow, Finset.card_eq_one]
