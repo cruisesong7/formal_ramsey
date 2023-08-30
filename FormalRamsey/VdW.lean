@@ -778,12 +778,12 @@ theorem vdWByList (N : ℕ) (k : ℕ) (r : ℕ) : vdWProp N.succ k r ↔ ∀ (f 
 
 open Lean Lean.Meta Lean.Parser.Tactic Lean.Parser.Term Lean.Elab.Tactic Lean.Elab.Term
 
-private def explodeAss (g : MVarId) (h : Name) : TacticM (List MVarId) :=
+private partial def explodeAss (g : MVarId) (h : Name) : TacticM (List MVarId) :=
 g.withContext do {
   let some hDecl := (← getLCtx).findFromUserName? h | throwError ("No declaration " ++ h);
   let lType ← instantiateMVars hDecl.type;
-  let .app (.app (.const `Or _) P) Q := lType | do {
-    let ctx ← Simp.Context.mkDefault;
+  let .app (.app (.const `Or _) _) _ := lType | do {
+    -- let ctx ← Simp.Context.mkDefault;
     let newG ← g.rename hDecl.fvarId `ass;
     return [newG]
     -- TODO Simplify here
