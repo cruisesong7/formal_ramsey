@@ -109,16 +109,9 @@ withMainContext do {
   return (info.fst, subsetEqExpr)
 }
 
-private partial def parseLBound (e : Expr) : TacticM (Option (Expr × Expr × Expr × List Level)) :=
-match e.getAppFn with
-  | .const `LT.lt _ => (match e.getAppArgs with
-    | #[_, _, b, s] =>  (match s.getAppFn with
-      | .const `Finset.card u => (match s.getAppArgs with
-        | #[t, s'] => return some (b, t, s', u)
-        | _ => do return none)
-      | _ => do return none)
-    | _  => do return none)
-  | _ => return none
+private partial def parseLBound : Expr → TacticM (Option (Expr × Expr × Expr × List Level))
+| .app (.app (.app (.app (.const `LT.lt _) _) _) b) (.app (.app (.const `Finset.card u) t) s) => return some (b, t, s, u)
+| _ => return none
 
 -- Invariant: every level returns a list of pairs where each pair is:
 -- fst: the name of a member obtained in a recursive call
@@ -186,17 +179,10 @@ private def doPick : List Name → Name → TacticM (List (Name × Expr))
       }
     }
 
--- TODO Define this one in terms of parseLBound
 private partial def isLBound (s : Expr) : (l : LocalDecl) → TacticM (Option (Name × Expr))
-  | .cdecl _ _ name e _ _ => (match e.getAppFn with
-    | .const `LT.lt _ => (match e.getAppArgs with
-      | #[_, _, b, s'] =>  (match s'.getAppFn with
-        | .const `Finset.card _ => (match s'.getAppArgs with
-          | #[_, s''] => do if (← isDefEq s'' s) then return (some (name, e)) else return none
-          | _ => do return none)
-        | _ => do return none)
-      | _  => do return none)
-    | _ => return none)
+  | .cdecl _ _ name e _ _ => do
+                          let some (_, _, s', _) ← parseLBound e | return none;
+                          if (← isDefEq s' s) then return (some (name, e)) else return none
   | .ldecl .. => return none
 
 def pickFn (is :  List Name) (s : TSyntax `term) : TacticM Unit :=
@@ -213,7 +199,7 @@ withMainContext do
         | some n => if n.succ < is.length then throwError "Picking too many elements!" else
                   do
                     match (← inferType sexp) with
-                      | .app (.const `Finset _) α => do
+                      | .app (.const `Finset _) _ => do
                                                      let insList ← doPick is sBoundName;
                                                      insList.forA (wrapup sexp);
                       | _ => throwError ("Could not find the element type of " ++ s)))
