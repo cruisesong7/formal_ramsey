@@ -570,31 +570,39 @@ lemma isArithProgIffGet {N : ℕ} {t : List (Fin N.succ)} {h h' d : Fin N.succ} 
 
 instance existsIsArithProgDec {N : ℕ} : ∀ (l : List (Fin N.succ)), Decidable (∃ d : (Fin N.succ), isArithProg l d) := by
   intros l
-  rcases l with _ | ⟨h, t⟩
-  apply isTrue
-  simp [isArithProg]
-  rcases t with _ | ⟨h', t⟩
-  apply isTrue
-  simp [isArithProg]
-  rcases (Fin.decLt h h') with hGth' | hLth'
-  apply isFalse
-  intro absurd
-  rcases absurd with ⟨d, apProp⟩
-  simp [isArithProg] at apProp
-  cases hGth' apProp.left.left
-  rcases (@List.decidableChain' (Fin N.succ) (λ m n => m < n ∧ m + (h' - h) = n) _ (h' :: t)) with rest | rest
-  apply isFalse
-  intro absurd
-  rcases absurd with ⟨d, apProp⟩
-  simp [isArithProg] at apProp
-  rcases apProp with ⟨headChain, restChain⟩
-  rcases headChain with ⟨_, ddiff⟩
-  simp [← ddiff] at rest restChain
-  contradiction
-  apply isTrue
-  use h' - h
-  simp [isArithProg]
-  tauto
+  cases l with
+  | nil =>
+    apply isTrue
+    simp [isArithProg]
+  | cons h t =>
+    cases t with
+    | nil =>
+      apply isTrue
+      simp [isArithProg]
+    | cons h' t =>
+      cases (Fin.decLt h h') with
+      | isFalse hGth' =>
+        apply isFalse
+        intro absurd
+        rcases absurd with ⟨d, apProp⟩
+        simp [isArithProg] at apProp
+        cases hGth' apProp.left.left
+      | isTrue hLth' =>
+        cases (@List.decidableChain' (Fin N.succ) (λ m n => m < n ∧ m + (h' - h) = n) _ (h' :: t)) with
+        | isFalse rest =>
+          apply isFalse
+          intro absurd
+          rcases absurd with ⟨d, apProp⟩
+          simp [isArithProg] at apProp
+          rcases apProp with ⟨headChain, restChain⟩
+          rcases headChain with ⟨_, ddiff⟩
+          simp [← ddiff] at rest restChain
+          contradiction
+        | isTrue rest =>
+          apply isTrue
+          use h' - h
+          simp [isArithProg]
+          tauto
 
 -- #eval let allVars := List.filter (fun l' => decide (∃ d, isArithProg l' d)) (List.sublistsLen 3 (List.finRange (Nat.succ 8))); "p cnf " ++ (reprStr (List.finRange (Nat.succ 8)).length) ++ " " ++ (reprStr (2 * allVars.length)) ++ " " ++ " 0 ".intercalate (List.map (fun c => " ".intercalate (c.map (λ l => reprStr (l.val + 1)))) allVars) ++ " 0 " ++ " 0 ".intercalate (List.map (fun c => " ".intercalate (c.map (λ l => reprStr (Int.negSucc l.val)))) allVars) ++ " 0"
 
