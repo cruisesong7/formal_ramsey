@@ -610,34 +610,6 @@ lrat_proof vdW9
   "p cnf 9 32 7 8 9 0 6 7 8 0 5 7 9 0 5 6 7 0 4 6 8 0 4 5 6 0 3 6 9 0 3 5 7 0 3 4 5 0 2 5 8 0 2 4 6 0 2 3 4 0 1 5 9 0 1 4 7 0 1 3 5 0 1 2 3 0 -7 -8 -9 0 -6 -7 -8 0 -5 -7 -9 0 -5 -6 -7 0 -4 -6 -8 0 -4 -5 -6 0 -3 -6 -9 0 -3 -5 -7 0 -3 -4 -5 0 -2 -5 -8 0 -2 -4 -6 0 -2 -3 -4 0 -1 -5 -9 0 -1 -4 -7 0 -1 -3 -5 0 -1 -2 -3 0"
   "33 -6 -8 -9 0 17 21 23 9 14 29 0 34 -8 -9 0 17 33 4 29 26 14 16 25 0 34 d 17 0 35 -8 -9 0 34 0 35 d 33 0 36 7 -9 0 35 2 23 8 22 29 14 0 37 -6 -9 0 36 19 35 10 23 27 9 0 38 -9 0 35 36 19 10 37 6 30 28 15 0 39 5 6 0 38 3 13 6 30 0 40 -5 -3 0 24 31 25 14 0 40 d 24 0 41 6 0 38 7 39 40 0 42 -5 0 41 38 20 22 40 1 12 26 0 43 7 0 42 38 3 0 44 1 0 42 38 13 0 45 -8 0 43 41 18 0 46 -4 0 44 43 30 0 47 2 0 45 42 10 0 48 3 0 46 42 9 0 49 0 47 48 44 32 0"
 
--- TODO Move these general properties up to around vdWMonotone
-
-lemma vdWAntitone : ∀ {N k r : ℕ}, vdWProp N k r → ∀ {k' : ℕ}, k' ≤ k → vdWProp N k' r := by
-  unfold vdWProp
-  intros N k r vdW k' k'leqk f
-  rcases vdW f with ⟨s, c, ⟨sdiff, sprop⟩⟩
-  use { start := s.start, diff := s.diff }, c
-  simp [sdiff, Membership.mem] at sprop ⊢
-  intro a
-  exact sprop (Fin.castLE k'leqk a)
-
-lemma vdWGE : ∀ {N k r : ℕ}, vdWProp N k r → k ≤ N := by
-  unfold vdWProp
-  intros N k h vdW
-  cases k with
-  | zero => simp
-  | succ k' =>
-    rcases (vdW (λ _ ↦ 0)) with ⟨s, ⟨c, ⟨sDiff, sProp⟩⟩⟩
-    have lastIneq := (let e := (Nat.iterate (λ j : ℕ ↦ j + s.diff) (Fin.last k').val s.start); sProp e ⟨Fin.last k', refl e⟩).left
-    simp at lastIneq
-    have k'ltN : k' < N := by
-      calc
-        k' = k' * 1 := (Nat.mul_one k').symm
-        _ ≤ k' * s.diff := Nat.mul_le_mul Nat.le.refl sDiff.lt
-        _ ≤ s.start + k' * s.diff := Nat.le_add_left (k' * s.diff) s.start
-        _ < N := lastIneq
-    exact k'ltN
-
 -- set_option tactic.simp.trace true
 
 theorem vdWByList (N : ℕ) (k : ℕ) (r : ℕ) : vdWProp N.succ k r ↔ ∀ (f : Fin N.succ → Fin r.succ), ∃ (c : Fin r.succ) (l : List (Fin N.succ)) (_ : l ∈ List.sublistsLen k (List.finRange N.succ)) (_ : ∃ (d : Fin N.succ), isArithProg l d), ∀ n, n ∈ l → f n = c := by
@@ -676,34 +648,28 @@ theorem vdWByList (N : ℕ) (k : ℕ) (r : ℕ) : vdWProp N.succ k r ↔ ∀ (f 
     simp
   have lArithP : ∃ (d : Fin N.succ), isArithProg l d := by
     use s.diff
-    unfold isArithProg
     induction k with
-    | zero => simp
+    | zero => simp [isArithProg]
     | succ k' ih =>
       cases k' with
-      | zero => simp
+      | zero => simp [isArithProg]
       | succ k'' =>
-        simp [-add_right_iterate, sdiff]
+        simp [isArithProgIffGet]
+        have sdiffN : s.diff < N.succ := by
+          calc
+            s.diff ≤ s.start + s.diff := Nat.le_add_left s.diff s.start
+            _ < N.succ := (sprop (s.start + s.diff) ⟨1, refl (s.start + s.diff)⟩).left
         apply And.intro
-        · simp [Fin.add_def]
-          have l1prop := (l.get ⟨1, by simp⟩).prop
-          simp at l1prop
-          exact l1prop
-        · have s'prop := ih (vdWAntitone vdW (le_of_lt Nat.le.refl)) { start := s.start + s.diff, diff := s.diff } sdiff
-          simp [-add_right_iterate] at s'prop
-          apply s'prop
-          · apply List.Sublist.trans (l₂ := l)
-            · simp [-add_right_iterate]
-            · simp at lsublk
-              simp [lsublk]
-            · intro e ein
-              simp [Membership.mem] at ein
-              rcases ein with ⟨i, iprop⟩
-              apply sprop
-              · simp [iprop, Membership.mem]
-                use i.succ.castLE Nat.le.refl
-                simp
-                rw [Nat.add_assoc s.start, Nat.add_comm s.diff (↑i * s.diff), ← Nat.succ_mul]
+        · rw [Fin.lt_def, Fin.val_cast_of_lt sdiffN]
+          simp [sdiff.lt]
+        · apply Fin.cases
+          · simp
+          · rw [← Nat.mod_eq_iff_lt] at sdiffN
+            apply Fin.cases
+            · simp [sdiffN]
+            · intro i
+              simp [sdiffN]
+            · simp
   use c, l, lsublk, lArithP
   intros n nInl
   simp [List.mem_ofFn] at nInl
