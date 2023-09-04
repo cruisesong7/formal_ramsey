@@ -145,6 +145,16 @@ lemma notc : ∀ {c x y : Fin 2}, x ≠ c → y ≠ c → x = y := by
   simp
   contradiction
 
+lemma not0_eq1: ∀ {x: Fin 2}, x ≠ 0 ↔ x = 1 := by
+  intro 
+  apply Iff.intro 
+  intro xneq0
+  have _1_neq0 : (1 : Fin 2) ≠ 0 := by simp
+  apply notc xneq0 _1_neq0
+  intro
+  simp_all
+  done
+
 lemma missing_pigeonhole {α β : Type} [DecidableEq α] [LinearOrderedSemiring β] : ∀ {s : Finset α}, Finset.Nonempty s → ∀ {f g : α → β}, s.sum f ≤ s.sum g → ∃ a : α, a ∈ s ∧ f a ≤ g a := by
   
   intros s sne f g fgsum
@@ -177,8 +187,7 @@ lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 
   let t := Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart) ↦ f ⟦x.toProd⟧ = c) Finset.univ
   have hm : ∀ (a : Sym2 (Fin (M' + N').succ)), a ∈ s → (Finset.bipartiteAbove r t a).card = 2
   intros a ains
-  rcases (Quotient.exists_rep a) with ⟨a',aprop⟩ 
-  cases' a' with fst snd 
+  rcases (Quotient.exists_rep a) with ⟨⟨fst,snd⟩, aprop⟩ 
   simp [SimpleGraph.mem_edgeSet, ← SimpleGraph.completeGraph_eq_top,completeGraph] at ains --NOTE: can be replace by simp_all
   simp [Finset.bipartiteAbove,Finset.card_eq_two]
   rcases ains with ⟨ains_left, ains_right⟩ 
