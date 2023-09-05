@@ -342,7 +342,7 @@ lemma monochromaticVicinity_Ramsey {N c : ℕ} : ∀ (v : Fin N) (f : Sym2 (Fin 
   simp at a₁a₂eq
   exact a₁a₂eq
   let ftransemb : Function.Embedding (Fin (monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card) (Fin N) := ⟨λ x ↦ ↑(ftrans ⟨x, Finset.mem_univ x⟩), ftransembinj⟩
-  rcases vicinityProp (λ e ↦ f ⟦(ftrans ⟨e.out.1, _⟩, ftrans ⟨e.out.2, _⟩)⟧) with ⟨S, ⟨i', Sclique⟩⟩ 
+  rcases vicinityProp (λ e ↦ f (e.map ((λ x ↦ ↑(ftrans ⟨x, Finset.mem_univ x⟩)):(Fin (monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card → Fin N)))) with ⟨S, ⟨i', Sclique⟩⟩
   rcases (instDecidableEqFin c i' i) with h|h
 
   right
@@ -350,76 +350,49 @@ lemma monochromaticVicinity_Ramsey {N c : ℕ} : ∀ (v : Fin N) (f : Sym2 (Fin 
   simp [h]
   use S.map ftransemb
   constructor
-  simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor]
-  intros a ainS b binS ftransneq
-  have ftransaprop := (ftrans ⟨a, Finset.mem_univ a⟩).prop
-  simp at ftransaprop
-  --NOTE: simplified to true
-  simp [ftransneq]
-  simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at Sclique
-  rcases (instDecidableEqFin _ a b) with aneqb|aeqb  
-  have abedge := Sclique.clique ainS binS aneqb
-  simp at abedge
-  --simp [← Quotient.mk''_eq_mk] at abedge
-  --have temp : (Quotient.out (Quotient.mk'' (a, b))) = (Quotient.out' (Quotient.mk'' (a, b))) := by tauto
-  --simp [temp] at abedge
-  --let ab: Sym2 (Fin (Finset.card (monochromaticVicinity ⊤ v f i))) := ⟦(a,b)⟧
-  --rcases (Quotient.exists_rep ab) with ⟨⟨x,y⟩,abProp⟩  
-  --simp_all
-  --rcases abProp with refl | swap
-  --simp[← refl] at abedge ⊢  
-  --simp[Quotient.mk_out] at abedge
-  admit;
-
-  rw [← @ Subtype.mk_eq_mk (Fin (monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card) (λ x ↦ x ∈ Finset.univ) a (Finset.mem_univ a) b (Finset.mem_univ b)] at aeqb
-  have ftranseq := congr_arg ftrans aeqb
-  rw [Subtype.ext_iff] at ftranseq
-  cases ftransneq ftranseq
-  simp
-  rw [Sclique.card_eq] <;> simp
+  · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor]
+    intros a ainS b binS ftransneq
+    simp [ftransneq]
+    simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at Sclique
+    rcases (instDecidableEqFin _ a b) with aneqb | aeqb
+    have abedge := Sclique.clique ainS binS aneqb
+    simp at abedge
+    exact abedge.right
+    simp [aeqb] at ftransneq
+  · simp
+    exact Sclique.card_eq
 
   left
   use (insert v (S.map ftransemb))
   constructor
   simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor]
   apply And.intro
-  intros a ainS ftransa
-  have ftransaprop := (ftrans ⟨a, Finset.mem_univ a⟩).prop
-  simp [monochromaticVicinity] at ftransaprop
-  exact ftransaprop
-  intros a ainS
-  have ftransaprop := (ftrans ⟨a, Finset.mem_univ a⟩).prop
-  simp [monochromaticVicinity] at ftransaprop
-  apply And.intro
-  rw [Sym2.eq_swap]
-  intros ftransa
-  simp [ftransa, ftransaprop.right]
-  intros b binS ftransneq
-  simp [ftransneq]
-  simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at Sclique
-  rcases (instDecidableEqFin _ a b) with aneqb|aeqb
-  have abedge := Sclique.clique ainS binS aneqb
-  simp at abedge
-  admit
-  -- cases' quotient.mk_out (a, b)
-  -- rw [← cases_eq] at abedge
-  -- simp [h] at abedge
-  -- exact abedge.right
-  -- rw [← cases_eq] at abedge
-  -- simp [h] at abedge
--- rw [Sym2.eq_swap],
--- exact abedge.right,
-  rw [← @Subtype.mk_eq_mk (Fin (monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card) (λ x ↦ x ∈ Finset.univ) a (Finset.mem_univ a) b (Finset.mem_univ b)] at aeqb
-  have ftranseq := congr_arg ftrans aeqb
-  rw [Subtype.ext_iff] at ftranseq
-  cases ftransneq ftranseq
-  have vnotinSmap : v ∉ (S.map ftransemb) := by
-    simp_all
-    intros a aprop ftransa
-    have ftransat := (ftrans ⟨a, Finset.mem_univ a⟩).prop
-    simp [ftransa, monochromaticVicinity] at ftransat
-  rw [Finset.card_insert_of_not_mem vnotinSmap] 
-  simp [Sclique.card_eq, h]
+  · intros a _ _
+    have ftransaprop := (ftrans ⟨a, Finset.mem_univ a⟩).prop
+    simp [monochromaticVicinity] at ftransaprop
+    exact ftransaprop
+  · intros a ainS
+    have ftransaprop := (ftrans ⟨a, Finset.mem_univ a⟩).prop
+    simp [monochromaticVicinity] at ftransaprop
+    apply And.intro
+    · rw [Sym2.eq_swap]
+      intros ftransa
+      simp [ftransa, ftransaprop.right]
+    · intros b binS ftransneq
+      simp [ftransneq]
+      simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at Sclique
+      rcases (instDecidableEqFin _ a b) with aneqb | aeqb
+      have abedge := Sclique.clique ainS binS aneqb
+      simp at abedge
+      simp [← h, abedge.right]
+      simp [aeqb] at ftransneq
+  · have vnotinSmap : v ∉ (S.map ftransemb) := by
+      simp_all
+      intros a _ ftransa
+      have ftransat := (ftrans ⟨a, Finset.mem_univ a⟩).prop
+      simp [ftransa, monochromaticVicinity] at ftransat
+    rw [Finset.card_insert_of_not_mem vnotinSmap]
+    simp [Sclique.card_eq, h]
   done
 
 theorem Ramsey₂PropIneq : ∀ M N s t : ℕ, Ramsey₂Prop M s.succ t.succ.succ → Ramsey₂Prop N s.succ.succ t.succ → Ramsey₂Prop (M + N) s.succ.succ t.succ.succ := by
