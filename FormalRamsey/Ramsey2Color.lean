@@ -255,10 +255,8 @@ theorem Ramsey₂2 : ∀ k : ℕ, Ramsey₂ 2 k.succ = k.succ := by
   use fst,snd
   simp
   intro h
-  simp[h] at wprop
-  --NOTE: simp cant catch contradiction
-  have temp : Sym2.IsDiag (Sym2.diag snd) := by simp
-  cases wprop.left temp
+  rw [← Sym2.mk''_isDiag_iff] at h
+  cases wprop.left h
   
   unfold Ramsey₂Prop
   unfold RamseyProp
