@@ -1,15 +1,12 @@
 import Mathlib.Combinatorics.Pigeonhole
 import Mathlib.Combinatorics.SimpleGraph.Clique
--- import data.Fin.vec_notation
 import Mathlib.Data.Vector3
 import Mathlib.Data.Rat.NNRat
 
 import Lean.Parser.Tactic
---import Init.Tactics
 import Mathlib.Tactic
 import FormalRamsey.PickTactic
 import FormalRamsey.Utils
---import Lean.Meta.Tactic.Cleanup
 
 def graphAtColor {N k : ℕ} (G : SimpleGraph (Fin N)) (ϕ : Sym2 (Fin N) → Fin k)
  (i : Fin k): SimpleGraph (Fin N) := {
