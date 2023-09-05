@@ -398,7 +398,6 @@ theorem Ramsey₂PropIneq : ∀ M N s t : ℕ, Ramsey₂Prop M s.succ t.succ.suc
   exact MNpos
 
   intro f
-  rcases (Nat.exists_eq_succ_of_ne_zero (Ne.symm (ne_of_lt MNpos.lt))) with ⟨MN, MNprop⟩
   haveI : NeZero (M + N) := by
     constructor
     intro h
@@ -408,12 +407,11 @@ theorem Ramsey₂PropIneq : ∀ M N s t : ℕ, Ramsey₂Prop M s.succ t.succ.suc
   have hgsum : Finset.univ.sum h = Finset.univ.sum g
   simp [Finset.univ_fin2]
   have lhs :  ↑M - mkRat 1 2 + (↑N - mkRat 1 2) = ↑M + ↑N - 1 := by
-    abel
+    abel_nf
     cancel_denoms
     simp [add_comm]
 
   simp [lhs]
-  rcases (Nat.exists_eq_succ_of_ne_zero (ne_of_gt MNpos.lt)) with ⟨O, Oprop⟩
   have filterdisj : Disjoint (monochromaticVicinity (⊤:SimpleGraph (Fin (M + N))) 0 f 0) (monochromaticVicinity (⊤:SimpleGraph (Fin (M + N))) 0 f 1)
   rw [Finset.disjoint_iff_ne]
   intros _ ainS _ binT
@@ -421,17 +419,9 @@ theorem Ramsey₂PropIneq : ∀ M N s t : ℕ, Ramsey₂Prop M s.succ t.succ.suc
   intro aeqb
   rw [aeqb] at ainS
   cases Eq.trans (Eq.symm binT.right) ainS.right
-  --NOTE ugly
-  rw [← Rat.mkRat_self (monochromaticVicinity ⊤ 0 f 0).card, ← Rat.mkRat_self (monochromaticVicinity ⊤ 0 f 1).card]
-  rw [Rat.mkRat_add_mkRat]
-  rw[Rat.coe_nat_num , Rat.coe_nat_den]
-  rw[Rat.coe_nat_num , Rat.coe_nat_den]
-  have numSimp1 : (↑(Finset.card (monochromaticVicinity ⊤ 0 f 0)) : ℤ )* ↑(1:ℕ) = ↑(Finset.card (monochromaticVicinity ⊤ 0 f 0)) := by
-    simp[Int.mul_one]
-  have numSimp2 : (↑(Finset.card (monochromaticVicinity ⊤ 0 f 1)) : ℤ )* ↑(1:ℕ) = ↑(Finset.card (monochromaticVicinity ⊤ 0 f 1)) := by
-    simp[Int.mul_one]
-  rw [numSimp1, numSimp2,Int.ofNat_add_out]
-  simp at filterdisj
+  -- NOTE One should be able to get away with a few rewrites and then letting simp deal with the rest,
+  --       but that approach causes whnf time out in my computer.
+  rw [Rat.add_def' ↑(Finset.card (monochromaticVicinity ⊤ 0 f 0)) ↑(Finset.card (monochromaticVicinity ⊤ 0 f 1)), Rat.coe_nat_den (Finset.card (monochromaticVicinity ⊤ 0 f 0)), Rat.coe_nat_num (Finset.card (monochromaticVicinity ⊤ 0 f 0)), Rat.coe_nat_den (Finset.card (monochromaticVicinity ⊤ 0 f 1)), Rat.coe_nat_num (Finset.card (monochromaticVicinity ⊤ 0 f 1)), Int.ofNat_one, ← Distrib.right_distrib, Int.mul_one, ← Int.ofNat_add]
   have seteq : (monochromaticVicinity ⊤ 0 f 0) ∪ (monochromaticVicinity ⊤ 0 f 1) = ((⊤:SimpleGraph (Fin (M + N))).neighborFinset 0)
   apply subset_antisymm <;> unfold HasSubset.Subset
   intros _ ainset
@@ -443,34 +433,21 @@ theorem Ramsey₂PropIneq : ∀ M N s t : ℕ, Ramsey₂Prop M s.succ t.succ.suc
   by_contra h
   simp[not_or] at h
   simp[monochromaticVicinity, ainset, not0_eq1] at h
-
+  
   rw [← Finset.card_union_eq filterdisj, seteq, SimpleGraph.neighborFinset_eq_filter]
   simp [← SimpleGraph.completeGraph_eq_top, completeGraph, Finset.filter_ne]
-
-  rw[Rat.mkRat_one]
-  have MNle1 : 1 ≤ M + N := by linarith only [MNpos]
-  rw [Int.coe_nat_sub MNle1]
+  rw [Int.ofNat_sub MNpos.lt]
+  -- NOTE Again, these lines should all be part of a single simp call but we get whnf timeout
+  rw [Rat.add_def', Rat.coe_nat_num M, Rat.coe_nat_den M, Rat.coe_nat_num N, Rat.coe_nat_den N, Int.ofNat_one, ← Distrib.right_distrib, Int.mul_one, ← Int.ofNat_add, Nat.mul_one]
+  rw [Rat.sub_def', Rat.one_den, Rat.one_num, Int.ofNat_one, Int.mul_one, Int.one_mul, Nat.mul_one, mkRat_one_num, mkRat_one_den, Int.ofNat_one]
   
-  rw[← Int.ofNat_add_out]
-  rw[← Rat.cast_coe_nat M]  
-  rw[← Rat.cast_coe_nat N] 
-  admit; admit
-  -- rw [← Rat.mkRat_self M , ← Rat.mkRat_self N, ← Rat.divInt_one_one]
-  -- simp [Rat.add_def', Rat.sub_def']
-  -- simp [Rat.mkRat_eq_iff]
-  -- rw [← Int.coe_nat_add M N, ← Rat.mk_one_one, Rat.sub_def (ne_of_gt Int.zero_lt_one) (ne_of_gt Int.zero_lt_one)]
-
-  simp[Oprop]
-  have halflt1 :mkRat 1 2 < 1 := by simp
   have mp := missing_pigeonhole (Exists.intro (0 : Fin 2) (Finset.mem_univ (0 : Fin 2))) (le_of_eq hgsum)
   rcases mp with ⟨a, ainuniv, gha⟩
-  fin_cases a<;> simp_all[-halflt1]
+  fin_cases a <;> simp at gha
+  
+  rw [← Int.cast_ofNat, ← Rat.le_floor] at gha
 
-  have MtoZ : (↑M:ℚ) = (↑M:ℤ) := by simp
-  rw [MtoZ] at gha
-  rw [← Rat.le_floor] at gha
-
-  have MleqNeighbor0 := floormagic M (monochromaticVicinity (⊤:SimpleGraph (Fin (M + N))) 0 f 0).card (mkRat 1 2) halflt1 gha
+  have MleqNeighbor0 := floormagic M (monochromaticVicinity (⊤:SimpleGraph (Fin (M + N))) 0 f 0).card (mkRat 1 2) (by simp) gha
   have cliquecases := monochromaticVicinity_Ramsey 0 f 0 ⟨[s.succ, t.succ.succ], by simp⟩ (RamseyMonotone RamseyM MleqNeighbor0)
   rcases cliquecases with ⟨S, Sclique⟩ |cliquecases
   use S, 0
@@ -481,10 +458,8 @@ theorem Ramsey₂PropIneq : ∀ M N s t : ℕ, Ramsey₂Prop M s.succ t.succ.suc
   simp [ieq1] at Sclique
   exact Sclique
 
-  have NtoZ : (↑N:ℚ) = (↑N:ℤ) := by simp
-  rw [NtoZ] at gha
-  rw [← Rat.le_floor] at gha
-  have NleqNeighbor1 := floormagic N (monochromaticVicinity (⊤:SimpleGraph (Fin (M + N))) 0 f 1).card (mkRat 1 2) halflt1 gha
+  rw [← Int.cast_ofNat, ← Rat.le_floor] at gha
+  have NleqNeighbor1 := floormagic N (monochromaticVicinity (⊤:SimpleGraph (Fin (M + N))) 0 f 1).card (mkRat 1 2) (by simp) gha
   have cliquecases := monochromaticVicinity_Ramsey 0 f 1 ⟨[s.succ.succ, t.succ], by simp⟩ (RamseyMonotone RamseyN NleqNeighbor1)
   rcases cliquecases with ⟨T, Tclique⟩ |cliquecases
   use T, 1

@@ -247,3 +247,7 @@ lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 
   intros
   fin_cases x; simp
  -/
+
+lemma mkRat_one_den : ∀ (n : ℤ), (mkRat n 1).den = 1 := by intros; simp [mkRat, Rat.normalize]
+
+lemma mkRat_one_num : ∀ (n : ℤ), (mkRat n 1).num = n := by intros; simp [mkRat, Rat.normalize]
