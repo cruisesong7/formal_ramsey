@@ -97,7 +97,7 @@ theorem Ramsey₂PropSymm : ∀ N s t, Ramsey₂Prop N s t ↔ Ramsey₂Prop N t
   done
 
 
-theorem friendshipUpperound : Ramsey₂Prop 6 3 3 := by
+theorem friendshipUpperbound : Ramsey₂Prop 6 3 3 := by
   unfold Ramsey₂Prop RamseyProp
   apply And.intro
   simp
