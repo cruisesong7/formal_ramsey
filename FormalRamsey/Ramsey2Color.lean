@@ -719,7 +719,20 @@ theorem friendship_upper_bound_alt : Ramsey₂ 3 3 ≤ 6 := by
   exact R33
   done
 
-theorem friendship : Ramsey₂ 3 3 = 6 := sorry
+theorem Ramsey₂ByList : ∀ N s t, Ramsey₂Prop N s t ↔ (∀ (f : Sym2 (Fin N) → Fin 2), (∃ (l : List (Fin N)), l ∈ (List.finRange N).sublistsLen s ∧ (List.Pairwise (λ u v ↦ f ⟦(u, v)⟧ = 0) l)) ∨ (∃ (l : List (Fin N)), l ∈ (List.finRange N).sublistsLen t ∧ (List.Pairwise (λ u v ↦ f ⟦(u, v)⟧ = 1) l))) := sorry 
+
+theorem friendship : Ramsey₂ 3 3 = 6 := by
+  unfold Ramsey₂
+  rw [Nat.sInf_upward_closed_eq_succ_iff]
+  · simp
+    apply And.intro
+    · exact friendshipUpperbound
+    · rw [Ramsey₂ByList, not_forall]
+      use (λ (e : Sym2 (Fin 5)) ↦ if e ∈ ({⟦(0, 1)⟧, ⟦(1, 2)⟧, ⟦(2, 3)⟧, ⟦(3, 4)⟧, ⟦(4, 0)⟧}:Finset (Sym2 (Fin 5))) then 0 else 1)
+      simp
+  · simp [Ramsey₂Prop]
+    intros M N MleN Ramsey₂M
+    exact RamseyMonotone Ramsey₂M MleN
 
 theorem Ramsey₂_binomial_coefficient_ineq : ∀ s t : ℕ, Ramsey₂ s.succ t.succ 
 ≤ Nat.choose (s.succ + t.succ - 2) (s.succ - 1) := by
