@@ -802,7 +802,7 @@ theorem vdW3 : vdW 3 2 = 9 := by
     simp at isAP
     rcases isAP with ⟨d, isAP⟩
     exact h c l d isAP subl length3
-  have myReplace : List.filter (fun l' => decide (∃ d, isArithProg l' d)) (List.sublistsLen 3 (List.finRange (Nat.succ 8))) = [[6, 7, 8], [5, 6, 7], [4, 6, 8], [4, 5, 6], [3, 5, 7], [3, 4, 5], [2, 5, 8], [2, 4, 6], [2, 3, 4], [1, 4, 7], [1, 3, 5], [1, 2, 3], [0, 4, 8], [0, 3, 6], [0, 2, 4], [0, 1, 2]] := by native_decide
+  have myReplace : (List.sublistsLen 3 (List.finRange (Nat.succ 8))).filter (λ l' => ∃ d, isArithProg l' d) = [[6, 7, 8], [5, 6, 7], [4, 6, 8], [4, 5, 6], [3, 5, 7], [3, 4, 5], [2, 5, 8], [2, 4, 6], [2, 3, 4], [1, 4, 7], [1, 3, 5], [1, 2, 3], [0, 4, 8], [0, 3, 6], [0, 2, 4], [0, 1, 2]] := by native_decide
   rw [myReplace] at h'
   have miniNotC : ∀ (x : Fin 2), ¬(x = 1) ↔ (x = 0) := by
     intro x
@@ -823,7 +823,7 @@ theorem vdW3 : vdW 3 2 = 9 := by
     exact lsubl
     simp
     exact ⟨d, isAP⟩
-  have myReplace : ((List.finRange (Nat.succ 7)).sublistsLen 3).filter (λ l' => (∃ (d : Fin (Nat.succ 7)), isArithProg l' d)) = [[(5:Fin (Nat.succ 7)), 6, 7], [4, 5, 6], [3, 5, 7], [3, 4, 5], [2, 4, 6], [2, 3, 4], [1, 4, 7], [1, 3, 5], [1, 2, 3], [0, 3, 6], [0, 2, 4], [0, 1, 2]] := by native_decide
+  have myReplace : ((List.finRange (Nat.succ 7)).sublistsLen 3).filter (λ l' => ∃ d, isArithProg l' d) = [[(5:Fin (Nat.succ 7)), 6, 7], [4, 5, 6], [3, 5, 7], [3, 4, 5], [2, 4, 6], [2, 3, 4], [1, 4, 7], [1, 3, 5], [1, 2, 3], [0, 3, 6], [0, 2, 4], [0, 1, 2]] := by native_decide
   rw [myReplace] at lFiltered
   fin_cases c <;> fin_cases lFiltered <;> simp
 >>>>>>> bd01e6e (Completed a Proof of vdW 2 3 = 9)
