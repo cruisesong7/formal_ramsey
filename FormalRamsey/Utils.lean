@@ -3,6 +3,114 @@ import Mathlib.Combinatorics.DoubleCounting
 import Mathlib.Data.Rat.Floor 
 import Mathlib.Algebra.Parity
 
+namespace Finset
+
+def sortedList {α : Type} [LinearOrder α] (s : Finset α) : List α :=
+match s.decidableNonempty with
+| isTrue p =>
+  let m := s.min' p;
+  have := Finset.card_erase_lt_of_mem (Finset.min'_mem s p);
+  m :: (sortedList (s.erase m))
+| isFalse _ => []
+termination_by _ => s.card
+
+-- TODO Maybe add a [simp] lemma that sortedList ∅ = [] because any
+-- simp unfolding sortedList reaches maximum recursion depth.
+
+lemma sortedList_mem_iff {α : Type} [LinearOrder α] : ∀ (s : Finset α) (a : α), a ∈ s ↔ a ∈ s.sortedList := by
+  intros s
+  induction s using Finset.induction_on_min with
+  | h0 =>
+    unfold sortedList
+    split
+    next p _ => simp at p
+    next => simp
+  | step a t aMin ih =>
+    simp
+    intro b
+    unfold sortedList
+    split
+    next nonemp _ =>
+      simp
+      have minIns : min' (insert a t) nonemp = a := by
+        cases t using Finset.induction with
+        | empty => simp
+        | @insert c t _ ih =>
+          rw [Finset.min'_insert a (insert c t) (Finset.insert_nonempty c t)]
+          apply min_eq_right
+          apply le_of_lt
+          apply aMin
+          apply Finset.min'_mem
+      have aNotInt : a ∉ t := by
+        cases Finset.decidableMem a t
+        next aNotInt => exact aNotInt
+        next aInt =>
+          have absurd := aMin a aInt
+          simp at absurd
+      apply Iff.intro
+      · intro bVal
+        rw [minIns]
+        cases bVal
+        next bEqa => left; exact bEqa
+        next bInt =>
+          simp
+          rw [Finset.erase_eq_of_not_mem aNotInt]
+          right
+          rw [← ih b]
+          exact bInt
+      · intro bVal
+        cases bVal
+        next bMin =>
+          have bMem := Finset.min'_mem (insert a t) nonemp
+          simp [← bMin] at bMem
+          exact bMem
+        next bRest =>
+          rw [minIns] at bRest
+          simp at bRest
+          rw [Finset.erase_eq_of_not_mem aNotInt] at bRest
+          right
+          rw [ih b]
+          exact bRest
+    next absurd _ => simp at absurd
+        
+lemma sortedList_is_sorted {α : Type} [LinearOrder α] : ∀ (s : Finset α), List.Chain' LT.lt s.sortedList := by
+  intros s
+  induction s using Finset.induction_on_min with
+  | h0 =>
+    unfold sortedList
+    split
+    next p _ => simp at p
+    next => simp
+  | step a t aMin ih =>
+    simp
+    unfold sortedList
+    split
+    next nonemp _ =>
+      have minIns : min' (insert a t) nonemp = a := by
+        cases t using Finset.induction with
+        | empty => simp
+        | @insert c t _ ih =>
+          rw [Finset.min'_insert a (insert c t) (Finset.insert_nonempty c t)]
+          apply min_eq_right
+          apply le_of_lt
+          apply aMin
+          apply Finset.min'_mem
+      have aNotInt : a ∉ t := by
+        cases Finset.decidableMem a t
+        next aNotInt => exact aNotInt
+        next aInt =>
+          have absurd := aMin a aInt
+          simp at absurd
+      simp [minIns, Finset.erase_eq_of_not_mem aNotInt]
+      apply @List.Chain'.cons' α LT.lt a (sortedList t) ih
+      intro b bHead
+      have bInt := List.mem_of_mem_head? bHead
+      rw [← sortedList_mem_iff] at bInt
+      exact aMin b bInt
+    next absurd _ => simp at absurd
+
+end Finset
+
 lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : ∀ {s : Finset α} {t : Finset β}, s.card = t.card → ((s = ∅ ∧ t = ∅) ∨ ∃ f : ↥s → ↥t, Function.Bijective f) := by
   
   intro s
