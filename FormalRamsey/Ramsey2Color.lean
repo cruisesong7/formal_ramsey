@@ -719,7 +719,7 @@ theorem friendship_upper_bound_alt : Ramsey₂ 3 3 ≤ 6 := by
   exact R33
   done
   
-theorem Ramsey₂ByList : ∀ N s t, Ramsey₂Prop N s t ↔ (∀ (f : Sym2 (Fin N) → Fin 2), (∃ (l : List (Fin N)), l ∈ (List.finRange N).sublistsLen s ∧ (List.Pairwise (λ u v ↦ f ⟦(u, v)⟧ = 0) l)) ∨ (∃ (l : List (Fin N)), l ∈ (List.finRange N).sublistsLen t ∧ (List.Pairwise (λ u v ↦ f ⟦(u, v)⟧ = 1) l))) := by  
+theorem Ramsey₂ByList : ∀ (N s t : ℕ), Ramsey₂Prop N s.succ t.succ ↔ (∀ (f : Sym2 (Fin N) → Fin 2), (∃ (l : List (Fin N)), l ∈ (List.finRange N).sublistsLen s.succ ∧ (List.Pairwise (λ u v ↦ f ⟦(u, v)⟧ = 0) l)) ∨ (∃ (l : List (Fin N)), l ∈ (List.finRange N).sublistsLen t.succ ∧ (List.Pairwise (λ u v ↦ f ⟦(u, v)⟧ = 1) l))) := by  
   intros N s t
   unfold Ramsey₂Prop RamseyProp 
   apply Iff.intro
@@ -727,112 +727,69 @@ theorem Ramsey₂ByList : ∀ N s t, Ramsey₂Prop N s t ↔ (∀ (f : Sym2 (Fin
     rcases h with ⟨NPos, h⟩
     simp [SimpleGraph.isNClique_iff,SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at h
     rcases h f with ⟨S, i,SProp⟩ 
-    fin_cases i
-    · simp [Vector.head] at SProp
-      left
-      use S.sortedList
+    let Slist := Finset.sort instLEFin.le S
+    have hs: Symmetric fun u v => f (Quotient.mk (Sym2.Rel.setoid (Fin N)) (u, v)) = i := by
+      unfold Symmetric
+      simp[Sym2.eq_swap]
+    fin_cases i; simp [Vector.head] at SProp hs; left; rotate_left 1; simp [Vector.get, List.nthLe] at SProp hs; right; rotate_left 1
+    all_goals {   
+      use Slist
       apply And.intro
-      simp only [List.mem_sublistsLen, List.sublist_iff_exists_fin_orderEmbedding_get_eq, ← S.sortedList_length, SProp.right, and_true]
-      let f' : Fin ((S.sortedList).length) → Fin (N) := λ (i: Fin ((S.sortedList).length))↦ ((S.sortedList).get i)
-      let idxMap : Fin (S.sortedList.length) → Fin (List.finRange N).length := (λ idx ↦
-        let mappedIdx := f' idx; 
+      simp only [List.mem_sublistsLen, List.sublist_iff_exists_fin_orderEmbedding_get_eq, Finset.length_sort instLEFin.le, SProp.right, and_true]
+      let f' : Fin Slist.length → Fin N := λ (i: Fin Slist.length) ↦ Slist.get i
+      let idxMap : Fin Slist.length → Fin (List.finRange N).length := (λ idx ↦
+        let mappedIdx := f' idx;
         Fin.cast (List.length_finRange N).symm mappedIdx)
       have idxMapInj : Function.Injective idxMap := by
         unfold Function.Injective
         intros a₁ a₂
         intro h
-        simp[Fin.cast] at h
-        sorry
-      have idxOrdered : ∀ {a₁ a₂ : Fin (Finset.sortedList S).length}, idxMap a₁ ≤ idxMap a₂ ↔ a₁ ≤ a₂ := by
+        simp [Fin.cast, ← Fin.ext_iff, List.Nodup.get_inj_iff (Finset.sort_nodup instLEFin.le S)] at h
+        exact h
+      have idxOrdered : ∀ {a₁ a₂ : Fin Slist.length}, idxMap a₁ ≤ idxMap a₂ ↔ a₁ ≤ a₂ := by
         intros a₁ a₂
         simp[Fin.cast]
         apply Iff.intro
         · intro valCond
-          sorry
+          cases a₁.decLe a₂ with
+          | isTrue p => exact p
+          | isFalse p =>
+            simp at p
+            have a₂lea₁ := List.Sorted.rel_get_of_lt (Finset.sort_sorted instLEFin.le S) p
+            have a₂eqa₁ := le_antisymm valCond a₂lea₁
+            rw [List.Nodup.get_inj_iff (Finset.sort_nodup instLEFin.le S)] at a₂eqa₁
+            simp [a₂eqa₁] at p
         · intro idCond
-          sorry  
+          exact List.Sorted.rel_get_of_le (Finset.sort_sorted instLEFin.le S) idCond 
       use { toFun := idxMap, inj' := idxMapInj, map_rel_iff' := idxOrdered }
       simp[Fin.cast]
       simp_all
-      have hn: S.sortedList.Nodup := by 
-        rw [S.sortedList.nodup_iff_injective_get]
-        sorry
-      have hs: Symmetric fun u v => f (Quotient.mk (Sym2.Rel.setoid (Fin N)) (u, v)) = 0 := by
-        unfold Symmetric
-        simp[Sym2.eq_swap]
-      simp [← List.pairwise_iff_coe_toFinset_pairwise hn hs, ← S.sortedList_mem_iff, Set.Pairwise]
+      simp [← List.pairwise_iff_coe_toFinset_pairwise (Finset.sort_nodup instLEFin.le S) hs, Set.Pairwise]
       exact SProp.left
-    · simp [Vector.get, List.nthLe] at SProp
-      right
-      use S.sortedList
-      apply And.intro
-      simp only [List.mem_sublistsLen, List.sublist_iff_exists_fin_orderEmbedding_get_eq, ← S.sortedList_length, SProp.right, and_true]
-      let f' : Fin ((S.sortedList).length) → Fin (N) := λ (i: Fin ((S.sortedList).length))↦ ((S.sortedList).get i)
-      let idxMap : Fin (S.sortedList.length) → Fin (List.finRange N).length := (λ idx ↦
-        let mappedIdx := f' idx; 
-        Fin.cast (List.length_finRange N).symm mappedIdx)
-      have idxMapInj : Function.Injective idxMap := by
-        unfold Function.Injective
-        intros a₁ a₂
-        intro h
-        simp[Fin.cast] at h
-        sorry
-      have idxOrdered : ∀ {a₁ a₂ : Fin (Finset.sortedList S).length}, idxMap a₁ ≤ idxMap a₂ ↔ a₁ ≤ a₂ := by
-        intros a₁ a₂
-        simp[Fin.cast]
-        apply Iff.intro
-        · intro valCond
-          sorry
-        · intro idCond
-          sorry  
-      use { toFun := idxMap, inj' := idxMapInj, map_rel_iff' := idxOrdered }
-      simp [Fin.cast]
-      simp_all
-      have hn: S.sortedList.Nodup := by 
-        rw [S.sortedList.nodup_iff_injective_get]
-        sorry
-      have hs: Symmetric fun u v => f (Quotient.mk (Sym2.Rel.setoid (Fin N)) (u, v)) = 1 := by
-        unfold Symmetric
-        simp[Sym2.eq_swap]
-      simp [← List.pairwise_iff_coe_toFinset_pairwise hn hs, ← S.sortedList_mem_iff, Set.Pairwise]
-      exact SProp.left
-  · intros h
+    }
+  · intro RamseyProp
     apply And.intro
-    · sorry
-    · intros f
-      rcases h f with ⟨l, ⟨lInS, lProp⟩ ⟩  | ⟨l, ⟨lInT, lProp⟩ ⟩ 
-      · use l.toFinset, 0
-        simp [SimpleGraph.isNClique_iff,SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor, Vector.head]
-        have hn: l.Nodup := by
-          sorry
-        have hs: Symmetric fun u v => f (Quotient.mk (Sym2.Rel.setoid (Fin N)) (u, v)) = 0 := by
-          unfold Symmetric
-          simp[Sym2.eq_swap]
-        simp [← List.pairwise_iff_coe_toFinset_pairwise hn hs, Set.Pairwise] at lProp
-        simp at lInS
-        simp [List.toFinset_card_of_nodup hn, lInS.right]
-        intros
-        simp_all
-      · use l.toFinset, 1
-        simp [SimpleGraph.isNClique_iff,SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor, Vector.get, List.nthLe]
-        have helper := List.nodup_finRange N
-        have hn : l.Nodup := by
-          simp[List.nodup_iff_nthLe_inj]
-          intros i j h₁ h₂ eq
-          simp[List.nthLe, List.get] at eq
-          sorry
-        simp only [hn] at lInT
-        have hs: Symmetric fun u v => f (Quotient.mk (Sym2.Rel.setoid (Fin N)) (u, v)) = 1 := by
-          unfold Symmetric
-          simp[Sym2.eq_swap]
-        simp [← List.pairwise_iff_coe_toFinset_pairwise hn hs, Set.Pairwise] at lProp
-        simp at lInT 
-        simp [List.toFinset_card_of_nodup hn, lInT.right]
-        intros
-        simp_all
-  done
+    · cases (RamseyProp (λ _ ↦ 0)) with
+      | inl lProp =>
+        rcases lProp with ⟨l, lLen, _⟩
+        simp at lLen
+        rcases (List.exists_of_length_succ l lLen.right) with ⟨x, _⟩
+        exact Fin.pos x
+      | inr lProp => admit
+        -- same thing
+    · intro f
+      cases (RamseyProp f) with
+      | inl lProp =>
+        rcases lProp with ⟨l, lSubl, lPairwise⟩
+        use l.toFinset, 0
+        constructor
+        · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor]
+          simp at lSubl
+          have lNodup : l.Nodup := List.Nodup.sublist lSubl.left (List.nodup_finRange N)
+          simp [List.pairwise_iff_coe_toFinset_pairwise] at lPairwise          
+      | inr lProp =>
+        admit
 
-       
 theorem friendship : Ramsey₂ 3 3 = 6 := by
   unfold Ramsey₂
   rw [Nat.sInf_upward_closed_eq_succ_iff]
