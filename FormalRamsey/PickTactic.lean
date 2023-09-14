@@ -109,7 +109,7 @@ withMainContext do {
   return (info.fst, subsetEqExpr)
 }
 
-private partial def parseLBound : Expr → TacticM (Option (Expr × Expr × Expr × List Level))
+private def parseLBound : Expr → TacticM (Option (Expr × Expr × Expr × List Level))
 | .app (.app (.app (.app (.const `LT.lt _) _) _) b) (.app (.app (.const `Finset.card u) t) s) => return some (b, t, s, u)
 | _ => return none
 
@@ -117,22 +117,23 @@ private partial def parseLBound : Expr → TacticM (Option (Expr × Expr × Expr
 -- fst: the name of a member obtained in a recursive call
 -- snd: the name of the fact that that member belongs to the rest of the set of this level
 -- It is the responsibility of each level to upgrade the recursive list at the calling level
-private def doPick : List Name → Name → TacticM (List (Name × Expr))
+private def doPick : List Name → Expr → TacticM (List (Name × Expr))
 | [], _ => return []
 | (name :: names), bineq => withMainContext do
-    let some (.cdecl _ bineqVar _ e _ _) := (← getLCtx).findFromUserName? bineq | throwNameError bineq;
     let subsetName ← getUnusedUserName "t";
     let atCardName ← getUnusedUserName "atCard";
     let aNotIntName ← getUnusedUserName "aNotInt";
     let aInstName ← getUnusedUserName "aInst";
-    let some (lowerBound, ty, s, levels) ← parseLBound e | throwError bineq ++ " is not a lower-bound expression!";
+    let bineqType ← match bineq with | .fvar id => id.getType | _ => inferType bineq;
+    let bineqType ← instantiateMVars bineqType;
+    let some (lowerBound, ty, s, levels) ← parseLBound bineqType | throwError bineq ++ " is not a lower-bound expression!";
     let (eqCls, loCls) ← detectMode ty;
     let mg ← getMainGoal;
     let sType ← inferType s;
     let u ← mkFreshLevelMVar;
     let pickLemma ← (match loCls with
-      | none => return (mkApp4 (.const `Pick.pick_one_eq []) ty s eqCls (mkApp7 (.const `lt_of_le_of_lt [u]) (.const `Nat []) (← mkFreshExprMVar none) (.const `Nat.zero []) lowerBound (mkApp2 (.const `Finset.card levels) ty s) (.app (.const `Nat.zero_le []) lowerBound) (.fvar bineqVar)))
-      | some cls => return (mkApp4 (.const `Pick.pick_one_lo []) ty s cls (mkApp7 (.const `lt_of_le_of_lt [u]) (.const `Nat []) (← mkFreshExprMVar none) (.const `Nat.zero []) lowerBound (mkApp2 (.const `Finset.card levels) ty s) (.app (.const `Nat.zero_le []) lowerBound) (.fvar bineqVar))));
+      | none => return (mkApp4 (.const `Pick.pick_one_eq []) ty s eqCls (mkApp7 (.const `lt_of_le_of_lt [u]) (.const `Nat []) (← mkFreshExprMVar none) (.const `Nat.zero []) lowerBound (mkApp2 (.const `Finset.card levels) ty s) (.app (.const `Nat.zero_le []) lowerBound) bineq))
+      | some cls => return (mkApp4 (.const `Pick.pick_one_lo []) ty s cls (mkApp7 (.const `lt_of_le_of_lt [u]) (.const `Nat []) (← mkFreshExprMVar none) (.const `Nat.zero []) lowerBound (mkApp2 (.const `Finset.card levels) ty s) (.app (.const `Nat.zero_le []) lowerBound) bineq)));
     -- DO NOT REMOVE
     let pickLemma ← instantiateMVars pickLemma;
     check pickLemma;
@@ -142,26 +143,20 @@ private def doPick : List Name → Name → TacticM (List (Name × Expr))
     let u ← mkFreshLevelMVar;
     let v ← mkFreshLevelMVar;
     let some b' := lowerBound.numeral? | throwError lowerBound ++ " is not a number!";
-    let newBoundName ← getUnusedUserName "newBound";
     -- TODO Figure out if there is an elegant way to reload the context
     withMainContext do {
       let some a := (← getLCtx).findFromUserName? name | throwNameError name;
       let some atCard := (← getLCtx).findFromUserName? atCardName | throwNameError atCardName;
       let some tset := (← getLCtx).findFromUserName? subsetName | throwNameError subsetName;
       let some aInst := (← getLCtx).findFromUserName? aInstName | throwNameError aInstName;
-      let clearArray := #[a.fvarId, atCard.fvarId, tset.fvarId, aInst.fvarId];
+      -- let clearArray := #[a.fvarId, atCard.fvarId, tset.fvarId, aInst.fvarId];
       let aInParent ← instantiateMVars (mkApp6 (.const `Eq.subst [(← mkFreshLevelMVar)]) sType (.lam  `x sType (mkApp5 (.const `Membership.mem [← mkFreshLevelMVar, ← mkFreshLevelMVar]) ty sType (← mkFreshExprMVar none) a.toExpr (.bvar 0)) .default) (← mkFreshExprMVar none) s aInst.toExpr (mkApp4 (.const `Finset.mem_insert_self [(← mkFreshLevelMVar)]) ty eqCls a.toExpr tset.toExpr));
       check aInParent;
       if b' == 0 then return [(name, aInParent)] else
-      let newBoundType := mkApp4 (.const `LT.lt [u]) (.const `Nat []) (← mkFreshExprMVar none) (mkNatLit b'.pred) (mkApp2 (.const `Finset.card levels) ty tset.toExpr);
-      let newBoundProof := mkApp6 (.const `Eq.subst [v]) (.const `Nat []) (.lam `x (.const `Nat []) (mkApp4 (.const `LT.lt [u]) (.const `Nat []) (← mkFreshExprMVar none) (mkNatLit b'.pred) (.bvar 0)) .default) (← mkFreshExprMVar none) (← mkFreshExprMVar none) (mkApp4 (.const `Eq.symm [v]) (.const `Nat []) (mkApp2 (.const `Finset.card levels) ty tset.toExpr) (← mkFreshExprMVar none) atCard.toExpr) (mkApp4 (.const `Nat.pred_lt_pred []) (mkNatLit b') (mkApp2 (.const `Finset.card levels) ty s) (.app (.const `Nat.succ_ne_zero []) (mkNatLit b'.pred)) (.fvar bineqVar));
-      let newBoundType ← instantiateMVars newBoundType;
+      let newBoundProof := mkApp6 (.const `Eq.subst [v]) (.const `Nat []) (.lam `x (.const `Nat []) (mkApp4 (.const `LT.lt [u]) (.const `Nat []) (← mkFreshExprMVar none) (mkNatLit b'.pred) (.bvar 0)) .default) (← mkFreshExprMVar none) (← mkFreshExprMVar none) (mkApp4 (.const `Eq.symm [v]) (.const `Nat []) (mkApp2 (.const `Finset.card levels) ty tset.toExpr) (← mkFreshExprMVar none) atCard.toExpr) (mkApp4 (.const `Nat.pred_lt_pred []) (mkNatLit b') (mkApp2 (.const `Finset.card levels) ty s) (.app (.const `Nat.succ_ne_zero []) (mkNatLit b'.pred)) bineq);
       let newBoundProof ← instantiateMVars newBoundProof;
-      check newBoundType;
       check newBoundProof;
-      let ngs ← (← getMainGoal).assertHypotheses #[{ userName := newBoundName, type := newBoundType, value := newBoundProof }];
-      replaceMainGoal [ngs.snd];
-      let recCall ← doPick names newBoundName;
+      let recCall ← doPick names newBoundProof;
       let some aNotInt := (← getLCtx).findFromUserName? aNotIntName | throwError ("Could not find declaration " ++ aNotIntName ++ " in current context!");
       (match loCls with
         | none => recCall.forA (λ i => diffHyp name aNotInt.toExpr i)
@@ -169,20 +164,13 @@ private def doPick : List Name → Name → TacticM (List (Name × Expr))
                  let (recHead :: _) := recCall | throwError "Nothing picked in the previous level!";
                  ltHyp name aNotInt.toExpr recHead);
       let recCall ← recCall.mapM (upgradeProof eqCls aInst.toExpr);
-      withMainContext do {
-        let some newBound := (← getLCtx).findFromUserName? newBoundName | throwNameError newBoundName;
-        let mainG ← getMainGoal;
-        let newG ← mainG.tryClearMany (clearArray.push newBound.fvarId);
-        -- NOTE This does nothing because in Lean 4 you cannot clear much due to dependencies
-        replaceMainGoal [newG];
-        return (name, aInParent) :: recCall;
-      }
+      return (name, aInParent) :: recCall;
     }
 
-private partial def isLBound (s : Expr) : (l : LocalDecl) → TacticM (Option (Name × Expr))
-  | .cdecl _ _ name e _ _ => do
-                          let some (_, _, s', _) ← parseLBound e | return none;
-                          if (← isDefEq s' s) then return (some (name, e)) else return none
+private partial def isLBound (s : Expr) : (l : LocalDecl) → TacticM (Option (Name × FVarId))
+  | .cdecl _ id name t _ _ => do
+                          let some (_, _, s', _) ← parseLBound t | return none;
+                          if (← isDefEq s' s) then return (some (name, id)) else return none
   | .ldecl .. => return none
 
 def pickFn (is :  List Name) (s : TSyntax `term) : TacticM Unit :=
@@ -192,17 +180,19 @@ withMainContext do
   let w ← ctx.findDeclM? (isLBound sexp);
   match w with
     | none => throwError "No lower-bound found in context!"
-    | some (sBoundName, sBoundExp) => do (match (← parseLBound sBoundExp) with
-      | none => throwError ("Could not parse lower-bound expression " ++ sBoundExp)
+    | some (sBoundName, sBoundID) => do
+      let sbt ← sBoundID.getType;
+      match (← parseLBound sbt) with
+      | none => throwError ("Could not parse lower-bound expression " ++ sBoundName)
       | some (b, _, sexp, _) => (match b.numeral? with
         | none => throwError ("For some reason lower-bound " ++ b ++ " is not ℕ!")
         | some n => if n.succ < is.length then throwError "Picking too many elements!" else
-                  do
-                    match (← inferType sexp) with
-                      | .app (.const `Finset _) _ => do
-                                                     let insList ← doPick is sBoundName;
-                                                     insList.forA (wrapup sexp);
-                      | _ => throwError ("Could not find the element type of " ++ s)))
+          do
+          match (← inferType sexp) with
+            | .app (.const `Finset _) _ => do
+              let insList ← doPick is (.fvar sBoundID)
+              insList.forA (wrapup sexp);
+            | _ => throwError ("Could not find the element type of " ++ s))
 
 syntax (name := pick) "pick " (ppSpace ident)+ fromTerm : tactic
 
