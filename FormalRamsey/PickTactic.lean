@@ -207,5 +207,4 @@ withMainContext do
 syntax (name := pick) "pick " (ppSpace ident)+ fromTerm : tactic
 
 @[tactic pick] elab_rules : tactic
-  | `(tactic| pick $name from $s) => pickFn [getNameOfIdent' name.raw] s
-  | `(tactic| pick $name $names:ident* from $s) =>  pickFn ((name :: names.data).map (fun i => getNameOfIdent' i.raw)) s
+  | `(tactic| pick $names:ident* from $s) => pickFn (names.data.map (λ i ↦ getNameOfIdent' i.raw)) s
