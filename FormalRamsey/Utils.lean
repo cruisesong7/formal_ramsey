@@ -2,6 +2,7 @@ import Mathlib.Combinatorics.SimpleGraph.DegreeSum
 import Mathlib.Combinatorics.DoubleCounting
 import Mathlib.Data.Rat.Floor 
 import Mathlib.Algebra.Parity
+import Mathlib.LinearAlgebra.AffineSpace.Combination
 
 lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : ∀ {s : Finset α} {t : Finset β}, s.card = t.card → ((s = ∅ ∧ t = ∅) ∨ ∃ f : ↥s → ↥t, Function.Bijective f) := by
   
@@ -127,32 +128,28 @@ lemma floormagic : ∀ (n m : ℕ) (q : ℚ), q < 1 → ↑n ≤ ⌊(↑m + q)�
   -- }
 lemma notc : ∀ {c x y : Fin 2}, x ≠ c → y ≠ c → x = y := by
 
-  intros c x y h₁ h₂
+  intros c x y _ _
   fin_cases c 
+  all_goals{
+    fin_cases x 
+    try{tauto}
+    fin_cases y 
+    all_goals{
+      tauto
+    }
+  }
+  done
 
-  fin_cases x 
-  contradiction
-  fin_cases y 
-  contradiction
-  simp
-
-  simp_all
-  fin_cases x 
-  simp_all
-  fin_cases y 
-  simp_all
-  contradiction
-  simp
-  contradiction
+ 
 
 lemma not0_eq1: ∀ {x: Fin 2}, x ≠ 0 ↔ x = 1 := by
   intro 
   apply Iff.intro 
-  intro xneq0
-  have _1_neq0 : (1 : Fin 2) ≠ 0 := by simp
-  apply notc xneq0 _1_neq0
-  intro
-  simp_all
+  · intro xneq0
+    have _1_neq0 : (1 : Fin 2) ≠ 0 := by simp
+    apply notc xneq0 _1_neq0
+  · intro
+    simp_all
   done
 
 lemma missing_pigeonhole {α β : Type} [DecidableEq α] [LinearOrderedSemiring β] : ∀ {s : Finset α}, Finset.Nonempty s → ∀ {f g : α → β}, s.sum f ≤ s.sum g → ∃ a : α, a ∈ s ∧ f a ≤ g a := by
