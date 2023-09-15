@@ -64,7 +64,7 @@ theorem Ramsey₂PropSymm : ∀ N s t, Ramsey₂Prop N s t ↔ Ramsey₂Prop N t
   let f' : Sym2 (Fin N) → Fin 2 := λ e ↦ if f e = 0 then 1 else 0
   rcases (R f') with ⟨S, ⟨i, ⟨SClique, SCard⟩⟩⟩ 
   use S
-  fin_cases i; use 1; rotate_left; use 0
+  fin_cases i; use 1; swap; use 0
   all_goals{
     simp_all
     simp [Vector.head] at SCard 
@@ -157,7 +157,7 @@ theorem friendshipUpperbound : Ramsey₂Prop 6 3 3 := by
   have zProp := Subtype.prop z
   simp at zProp
 
-  rotate_left
+  swap
   rcases c0 with ⟨a, b, _⟩
   fin_cases c
   · use {0, a, b}, 0
@@ -582,32 +582,31 @@ theorem Ramsey₂Finite : ∀ s t : ℕ, { N : ℕ | Ramsey₂Prop N s.succ t.su
   intros s t h
   cases s<;>
   cases t
-  use 1
-  simp [Ramsey₂1Prop]
-  use 1
-  simp [Ramsey₂1Prop]
-  use 1
-  simp
-  rw [Ramsey₂PropSymm]
-  simp [Ramsey₂1Prop]
-  next s t => 
-  have stsuccpred := congr_arg Nat.pred h
-  have s1t : st = s + t.succ
-  simp at stsuccpred
-  rw [stsuccpred]
-  simp [Nat.succ_add]
-  have st1 : st = s.succ + t
-  simp at stsuccpred
-  rw [stsuccpred]
-  simp [Nat.add_succ]
-  have RamseyS := ih s t.succ s1t
-  have RamseyT := ih s.succ t st1
-  rcases RamseyS with ⟨S, Sprop⟩ 
-  rcases RamseyT with ⟨T, Tprop⟩ 
-  simp at Sprop Tprop
-  use S + T
-  simp
-  apply Ramsey₂PropIneq <;> assumption
+  pick_goal -1
+  · next s t => 
+    have stsuccpred := congr_arg Nat.pred h
+    have s1t : st = s + t.succ
+    simp at stsuccpred
+    rw [stsuccpred]
+    simp [Nat.succ_add]
+    have st1 : st = s.succ + t
+    simp at stsuccpred
+    rw [stsuccpred]
+    simp [Nat.add_succ]
+    rcases (ih s t.succ s1t) with ⟨S, Sprop⟩ 
+    rcases (ih s.succ t st1) with ⟨T, Tprop⟩ 
+    simp at Sprop Tprop
+    use S + T
+    simp
+    apply Ramsey₂PropIneq <;> assumption
+  all_goals{
+    use 1
+    simp [Ramsey₂1Prop]
+    try{
+      rw [Ramsey₂PropSymm]
+      simp [Ramsey₂1Prop]
+    }
+  }
   done
 
 theorem Ramsey₂Ineq : ∀ s t : ℕ, Ramsey₂ s.succ.succ t.succ.succ ≤ Ramsey₂ s.succ t.succ.succ + Ramsey₂ s.succ.succ t.succ := by 
@@ -687,7 +686,7 @@ theorem Ramsey₂ByList : ∀ (N s t : ℕ), Ramsey₂Prop N s.succ t.succ ↔ (
     have hs: Symmetric fun u v => f (Quotient.mk (Sym2.Rel.setoid (Fin N)) (u, v)) = i := by
       unfold Symmetric
       simp[Sym2.eq_swap]
-    fin_cases i; simp [Vector.head] at SProp hs; left; rotate_left 1; simp [Vector.get, List.nthLe] at SProp hs; right;
+    fin_cases i; simp [Vector.head] at SProp hs; left; swap; simp [Vector.get, List.nthLe] at SProp hs; right;
     all_goals {   
       use Slist
       apply And.intro
@@ -737,7 +736,7 @@ theorem Ramsey₂ByList : ∀ (N s t : ℕ), Ramsey₂Prop N s.succ t.succ ↔ (
       have fSymm : Symmetric fun u v => f (Quotient.mk (Sym2.Rel.setoid (Fin N)) (u, v)) = 0 := by
         unfold Symmetric
         simp[Sym2.eq_swap]
-      rotate_left 
+      swap 
       use l.toFinset, 1
       have fSymm : Symmetric fun u v => f (Quotient.mk (Sym2.Rel.setoid (Fin N)) (u, v)) = 1 := by
         unfold Symmetric
