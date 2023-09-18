@@ -1,5 +1,4 @@
 import Mathlib.Combinatorics.Pigeonhole
-import Mathlib.Combinatorics.SimpleGraph.Clique
 import Mathlib.Data.Vector3
 import Mathlib.Data.Rat.NNRat
 
@@ -9,47 +8,9 @@ import Mathlib.Tactic
 import FormalRamsey.PickTactic
 import FormalRamsey.Utils
 
-def graphAtColor {N k : ℕ} (G : SimpleGraph (Fin N)) (ϕ : Sym2 (Fin N) → Fin k)
- (i : Fin k): SimpleGraph (Fin N) := {
-  Adj := λ u v ↦ (G.Adj u v) ∧ (ϕ ⟦(u, v)⟧ = i),
-  symm := by
-    unfold Symmetric
-    intros _ _ h
-    rcases h with ⟨Gxy,ϕxy⟩
-    apply And.intro
-    apply G.symm Gxy
-    rw [Sym2.eq_swap]
-    exact ϕxy,
-  loopless :=  by
-    unfold Irreflexive
-    intros _ h
-    simp at h
- }
-
-def RamseyProp (N k : ℕ) (s : Vector ℕ k) : Prop := N > 0 ∧
-∀ f : Sym2 (Fin N) → Fin k,
-(∃ S i, (graphAtColor (completeGraph (Fin N)) f i).IsNClique (s.get i) S) 
+open Ramsey
 
 def Ramsey₂Prop (N s t : ℕ) : Prop := RamseyProp N 2 ⟨[s, t], by simp⟩
-
-lemma RamseyMonotone : ∀ {N k s}, RamseyProp N k s → ∀ {M}, N ≤ M → RamseyProp M k s := by
-  unfold RamseyProp
-  intros N k s R M NleqM
-  rcases R with ⟨Ngt0, R⟩
-  apply And.intro
-  linarith only[Ngt0, NleqM]
-  intros f
-  let f' : Sym2 (Fin N) → Fin k := λ e ↦ f (Sym2.map (Fin.castLE NleqM) e)
-  rcases (R f') with ⟨S,⟨i, Sclique, Scard⟩⟩
-  use Finset.map (Fin.castLEEmb NleqM).toEmbedding S, i
-  constructor
-  simp [graphAtColor, SimpleGraph.isClique_iff, Set.Pairwise] at Sclique ⊢
-  intros a ainS b binS aneqb_cast
-  have aneqb : ¬ a = b := by intro h; simp[h] at aneqb_cast
-  have ScliqueMap := Sclique ainS binS aneqb
-  simp_all
-  simp [Scard]
-  done
 
 theorem Ramsey₂PropSymm : ∀ N s t, Ramsey₂Prop N s t ↔ Ramsey₂Prop N t s := by
   
