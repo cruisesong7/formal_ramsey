@@ -36,14 +36,14 @@ syntax "throwNameError " term : term
 macro_rules
   | `(throwNameError $msg:term) => `(throwError ("Could not find " ++ $msg ++ " in the current context!"))
 
-private def diffHyp (a : Name) (aNotInt : Expr) (info : Name × Expr) : TacticM PUnit :=
+private def diffHyp (a : Name) (aNotInt : Expr) (info : Name × Expr × FVarSubst) : TacticM PUnit :=
 withMainContext do {
   let some aDecl := (← getLCtx).findFromUserName? a | throwNameError a;
   let some bDecl := (← getLCtx).findFromUserName? info.fst | throwNameError info.fst;
   let .app (.const `Not _) setEqExpr ← inferType aNotInt | throwError ("Could not parse expression " ++ aNotInt);
   let .app (.app (.app (.app (.app (.const `Membership.mem levels) eType) sType) memInst) _) s := setEqExpr | throwError ("Could not parse expression " ++ aNotInt);
   let neqExpr ← instantiateMVars (mkApp3 (.const `Ne [(← mkFreshLevelMVar)]) eType aDecl.toExpr bDecl.toExpr);
-  let neqProof ← instantiateMVars (.lam `x (mkApp3 (.const `Eq [← mkFreshLevelMVar]) eType aDecl.toExpr bDecl.toExpr) (.app aNotInt (mkApp6 (.const `Eq.subst [(← mkFreshLevelMVar)]) eType (.lam `y eType (mkApp5 (.const `Membership.mem levels) eType sType memInst (.bvar 0) s) .default) bDecl.toExpr aDecl.toExpr (mkApp4 (.const `Eq.symm [(← mkFreshLevelMVar)]) (← mkFreshTypeMVar) aDecl.toExpr bDecl.toExpr (.bvar 0)) info.snd)) .default);
+  let neqProof ← instantiateMVars (info.snd.snd.apply (.lam `x (mkApp3 (.const `Eq [← mkFreshLevelMVar]) eType aDecl.toExpr bDecl.toExpr) (.app aNotInt (mkApp6 (.const `Eq.subst [(← mkFreshLevelMVar)]) eType (.lam `y eType (mkApp5 (.const `Membership.mem levels) eType sType memInst (.bvar 0) s) .default) bDecl.toExpr aDecl.toExpr (mkApp4 (.const `Eq.symm [(← mkFreshLevelMVar)]) (← mkFreshTypeMVar) aDecl.toExpr bDecl.toExpr (.bvar 0)) info.snd.fst)) .default));
   let neqName ← getUnusedUserName (a ++ "Neq" ++ info.fst);
   -- DO NOT REMOVE
   check neqExpr;
@@ -52,14 +52,14 @@ withMainContext do {
   replaceMainGoal [ngs.snd];
 }
 
-private def ltHyp (a : Name) (aLtt : Expr) (info : Name × Expr) : TacticM Unit :=
+private def ltHyp (a : Name) (aLtt : Expr) (info : Name × Expr × FVarSubst) : TacticM Unit :=
 withMainContext do {
   let .str _ aStr := a | throwError ("Name " ++ a ++ " is not a string?");
   let .str _ bStr := info.fst | throwError ("Name " ++ info.fst ++ " is not a string?");
   let some aDecl := (← getLCtx).findFromUserName? a | throwNameError a;
   let some bDecl := (← getLCtx).findFromUserName? info.fst | throwNameError info.fst;
   let ltExpr ← instantiateMVars (mkApp4 (.const `LT.lt [← mkFreshLevelMVar]) aDecl.type (← mkFreshExprMVar none) aDecl.toExpr bDecl.toExpr);
-  let ltProof ← instantiateMVars (mkApp2 aLtt bDecl.toExpr info.snd);
+  let ltProof ← instantiateMVars (info.snd.snd.apply (mkApp2 aLtt bDecl.toExpr info.snd.fst));
   let uname := aStr ++ "Lt" ++ bStr;
   let ltName ← getUnusedUserName uname;
   check ltExpr;
@@ -69,7 +69,7 @@ withMainContext do {
   return()
 }
 
-private def wrapup (s : Expr) (info : Name × Expr) : TacticM Unit :=
+private def wrapup (s : Expr) (info : Name × Expr × FVarSubst) : TacticM Unit :=
 withMainContext do {
   let .str _ aStr := info.fst | throwError ("Name " ++ info.fst ++ " is not a string?");
   let uname := aStr ++ "Ins";
@@ -78,7 +78,7 @@ withMainContext do {
   let sType ← inferType s;
   let some aDecl := (← getLCtx).findFromUserName? info.fst | throwNameError info.fst;
   let inExpr ← instantiateMVars (mkApp5 (.const `Membership.mem [← mkFreshLevelMVar, ← mkFreshLevelMVar]) (← mkFreshTypeMVar) sType (← mkFreshExprMVar none) aDecl.toExpr s);
-  let inVal ← instantiateMVars info.snd;
+  let inVal ← instantiateMVars (info.snd.snd.apply info.snd.fst);
   -- DO NOT REMOVE
   check inExpr;
   check inVal;
@@ -117,13 +117,9 @@ private def parseLBound : Expr → TacticM (Option (Expr × Expr × Expr × List
 -- fst: the name of a member obtained in a recursive call
 -- snd: the name of the fact that that member belongs to the rest of the set of this level
 -- It is the responsibility of each level to upgrade the recursive list at the calling level
-private def doPick : List Name → Expr → TacticM (List (Name × Expr))
+private def doPick : List Name → Expr → TacticM (List (Name × Expr × FVarSubst))
 | [], _ => return []
 | (name :: names), bineq => withMainContext do
-    let subsetName ← getUnusedUserName "t";
-    let atCardName ← getUnusedUserName "atCard";
-    let aNotIntName ← getUnusedUserName "aNotInt";
-    let aInstName ← getUnusedUserName "aInst";
     let bineqType ← match bineq with | .fvar id => id.getType | _ => inferType bineq;
     let bineqType ← instantiateMVars bineqType;
     let some (lowerBound, ty, s, levels) ← parseLBound bineqType | throwError bineq ++ " is not a lower-bound expression!";
@@ -137,34 +133,40 @@ private def doPick : List Name → Expr → TacticM (List (Name × Expr))
     -- DO NOT REMOVE
     let pickLemma ← instantiateMVars pickLemma;
     check pickLemma;
-    let pls ← pickLemma.toSyntax;
-    let ngs ← Std.Tactic.RCases.rcases #[(none, pls)] (.tuple' (List.map (.one (mkNullNode)) [name, subsetName, atCardName, aNotIntName, aInstName])) mg;
-    replaceMainGoal ngs;
+    let a := Expr.proj `Exists 0 pickLemma;
+    let t := Expr.proj `Exists 0 (.proj `Exists 1 pickLemma);
+    let atSpec := Expr.proj `Exists 1 (.proj `Exists 1 pickLemma);
+    let atCard := Expr.proj `And 0 atSpec;
+    let aNotInt := Expr.proj `And 0 (.proj `And 1 atSpec);
+    let aInst := Expr.proj `And 1 (.proj `And 1 atSpec);
+    log (← inferType aInst);
     let u ← mkFreshLevelMVar;
     let v ← mkFreshLevelMVar;
     let some b' := lowerBound.numeral? | throwError lowerBound ++ " is not a number!";
+    let aInParent ← instantiateMVars (mkApp6 (.const `Eq.subst [(← mkFreshLevelMVar)]) sType (.lam  `x sType (mkApp5 (.const `Membership.mem [← mkFreshLevelMVar, ← mkFreshLevelMVar]) ty sType (← mkFreshExprMVar none) a (.bvar 0)) .default) (← mkFreshExprMVar none) s aInst (mkApp4 (.const `Finset.mem_insert_self [(← mkFreshLevelMVar)]) ty eqCls a t));
+    check aInParent;
+    let some last := (← getLCtx).lastDecl | unreachable!;
+    let aType ← inferType a;
+    let aDecl ← mg.assertAfter last.fvarId name aType a;
+    let aSubst := FVarSubst.insert FVarSubst.empty aDecl.fvarId a;
+    replaceMainGoal [aDecl.mvarId];
     -- TODO Figure out if there is an elegant way to reload the context
     withMainContext do {
-      let some a := (← getLCtx).findFromUserName? name | throwNameError name;
-      let some atCard := (← getLCtx).findFromUserName? atCardName | throwNameError atCardName;
-      let some tset := (← getLCtx).findFromUserName? subsetName | throwNameError subsetName;
-      let some aInst := (← getLCtx).findFromUserName? aInstName | throwNameError aInstName;
-      -- let clearArray := #[a.fvarId, atCard.fvarId, tset.fvarId, aInst.fvarId];
-      let aInParent ← instantiateMVars (mkApp6 (.const `Eq.subst [(← mkFreshLevelMVar)]) sType (.lam  `x sType (mkApp5 (.const `Membership.mem [← mkFreshLevelMVar, ← mkFreshLevelMVar]) ty sType (← mkFreshExprMVar none) a.toExpr (.bvar 0)) .default) (← mkFreshExprMVar none) s aInst.toExpr (mkApp4 (.const `Finset.mem_insert_self [(← mkFreshLevelMVar)]) ty eqCls a.toExpr tset.toExpr));
-      check aInParent;
-      if b' == 0 then return [(name, aInParent)] else
-      let newBoundProof := mkApp6 (.const `Eq.subst [v]) (.const `Nat []) (.lam `x (.const `Nat []) (mkApp4 (.const `LT.lt [u]) (.const `Nat []) (← mkFreshExprMVar none) (mkNatLit b'.pred) (.bvar 0)) .default) (← mkFreshExprMVar none) (← mkFreshExprMVar none) (mkApp4 (.const `Eq.symm [v]) (.const `Nat []) (mkApp2 (.const `Finset.card levels) ty tset.toExpr) (← mkFreshExprMVar none) atCard.toExpr) (mkApp4 (.const `Nat.pred_lt_pred []) (mkNatLit b') (mkApp2 (.const `Finset.card levels) ty s) (.app (.const `Nat.succ_ne_zero []) (mkNatLit b'.pred)) bineq);
+      if (b' == 0 || names.length == 0) then return [(name, aInParent, aSubst)] else
+      let newBoundProof := mkApp6 (.const `Eq.subst [v]) (.const `Nat []) (.lam `x (.const `Nat []) (mkApp4 (.const `LT.lt [u]) (.const `Nat []) (← mkFreshExprMVar none) (mkNatLit b'.pred) (.bvar 0)) .default) (← mkFreshExprMVar none) (← mkFreshExprMVar none) (mkApp4 (.const `Eq.symm [v]) (.const `Nat []) (mkApp2 (.const `Finset.card levels) ty t) (← mkFreshExprMVar none) atCard) (mkApp4 (.const `Nat.pred_lt_pred []) (mkNatLit b') (mkApp2 (.const `Finset.card levels) ty s) (.app (.const `Nat.succ_ne_zero []) (mkNatLit b'.pred)) bineq);
       let newBoundProof ← instantiateMVars newBoundProof;
       check newBoundProof;
       let recCall ← doPick names newBoundProof;
-      let some aNotInt := (← getLCtx).findFromUserName? aNotIntName | throwError ("Could not find declaration " ++ aNotIntName ++ " in current context!");
-      (match loCls with
-        | none => recCall.forA (λ i => diffHyp name aNotInt.toExpr i)
-        | some _ => do
-                 let (recHead :: _) := recCall | throwError "Nothing picked in the previous level!";
-                 ltHyp name aNotInt.toExpr recHead);
-      let recCall ← recCall.mapM (upgradeProof eqCls aInst.toExpr);
-      return (name, aInParent) :: recCall;
+      -- TODO Figure out if there is an elegant way to reload the context
+      withMainContext do {
+        (match loCls with
+          | none => recCall.forA (λ i => diffHyp name aNotInt i)
+          | some _ => do
+                   let (recHead :: _) := recCall | throwError "Nothing picked in the previous level!";
+                   ltHyp name aNotInt recHead);
+        -- let recCall ← recCall.mapM (upgradeProof eqCls aInst);
+        return (name, aInParent, aSubst) :: recCall;
+      }
     }
 
 private partial def isLBound (s : Expr) : (l : LocalDecl) → TacticM (Option (Name × FVarId))
