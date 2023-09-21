@@ -1,16 +1,38 @@
 import Mathlib.Combinatorics.Pigeonhole
-import Mathlib.Data.Vector3
 import Mathlib.Data.Rat.NNRat
 
 import Mathlib.Tactic.PermuteGoals
 import Lean.Parser.Tactic
 import Mathlib.Tactic
+
 import FormalRamsey.PickTactic
 import FormalRamsey.Utils
+import FormalRamsey.RamseyGraphs
 
 open Ramsey
 
 def Ramsey₂Prop (N s t : ℕ) : Prop := RamseyProp N (s ::ᵥ t ::ᵥ Vector.nil)
+
+def Ramsey₂GraphProp (N s t : ℕ) : Ramsey₂Prop N s t ↔ RamseyGraphProp N s t := by
+  unfold Ramsey₂Prop RamseyProp RamseyGraphProp
+  apply Iff.intro
+  · intro Ramsey₂N
+    apply And.intro
+    · exact Ramsey₂N.left
+    · intros G _
+      have coloredClique := Ramsey₂N.right (λ e ↦ if e ∈ G.edgeSet then 0 else 1)
+      rcases coloredClique with ⟨S, i, Sclique⟩
+      fin_cases i <;> simp [graphAtColor] at Sclique
+      admit
+  · intro RamseyGraphN
+    apply And.intro
+    · exact RamseyGraphN.left
+    · intro f
+      let GAdj : Fin N → Fin N → Prop := λ u v ↦ ((u ≠ v) ∧ (f ⟦(u, v)⟧ = 0))
+      have GAdjSym : Symmetric GAdj := sorry
+      have GAdjLoopless : Irreflexive GAdj := by simp [Irreflexive]
+      have graphClique := RamseyGraphN.right { Adj := GAdj, symm := GAdjSym, loopless := GAdjLoopless }
+      admit
 
 theorem Ramsey₂PropSymm : ∀ N s t, Ramsey₂Prop N s t ↔ Ramsey₂Prop N t s := by
   
