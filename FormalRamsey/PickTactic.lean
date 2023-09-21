@@ -1,5 +1,6 @@
 import Mathlib.Data.Finset.Card
 import Mathlib.Data.Finset.Lattice
+import Mathlib.Data.Finset.Powerset
 
 open Lean Lean.Meta Lean.Parser.Tactic Lean.Parser.Term Lean.Elab.Tactic Lean.Elab.Term
 
@@ -14,20 +15,153 @@ lemma pick_one_eq {α : Type} {s : Finset α} [DecidableEq α] : 0 < s.card → 
   use t
   tauto
 
-lemma pick_one_lo {α : Type} {s : Finset α} [LinearOrder α] : 0 < s.card → ∃ (a : α) (t : Finset α), (t.card = s.card.pred) ∧ (∀ a' ∈ t, a < a') ∧ (insert a t = s) := by
+lemma pick_one_lo {α : Type} {s : Finset α} [LinearOrder α] : 0 < s.card → ∃! (a : α), a ∈ s ∧ ∃! (t : Finset α), t ∈ s.powerset ∧ (t.card = s.card.pred) ∧ (∀ a' ∈ t, a < a') ∧ (insert a t = s) := by
   intro sPos
   rw [Finset.card_pos] at sPos
   let a := s.min' sPos
   let t := s.erase a
   use a
-  use t
-  have aIns := s.min'_mem sPos
-  apply And.intro
-  exact Finset.card_erase_of_mem aIns
-  apply And.intro
-  intros b bInt
-  apply s.min'_lt_of_mem_erase_min' sPos bInt
-  apply s.insert_erase aIns
+  apply And.intro <;> simp (config := { zeta := false })
+  · apply And.intro
+    · exact Finset.min'_mem s sPos
+    · use t
+      simp (config := { zeta := false })
+      apply And.intro
+      · apply And.intro
+        · exact Finset.erase_subset (s.min' sPos) s
+        · apply And.intro
+          · exact Finset.card_erase_of_mem (Finset.min'_mem s sPos)
+          · apply And.intro
+            · intro b bNotMin bIns
+              rw [← ne_eq] at bNotMin
+              exact lt_of_le_of_ne (Finset.min'_le s b bIns) bNotMin.symm
+            · exact Finset.insert_erase (Finset.min'_mem s sPos)
+      · intro t' _ _ t'Min t'Insert
+        have aNotInt' : a ∉ t' := λ aInt' ↦ lt_irrefl a (t'Min a aInt')
+        have repl := Finset.erase_insert aNotInt'
+        rw [t'Insert] at repl
+        simp [repl]
+  · intro b bIns tUniqueProp
+    have tProp := ExistsUnique.exists tUniqueProp
+    rcases tProp with ⟨t', _, _, bMin, bInsert⟩
+    apply le_antisymm
+    · have minIns := Finset.min'_mem s sPos
+      simp [← bInsert] at minIns
+      cases minIns
+      next bVal =>
+        rw [← bVal]
+        simp [bInsert]
+      next minInt' =>
+        simp [bInsert] at minInt'
+        exact le_of_lt (bMin (s.min' sPos) minInt')
+    · exact Finset.min'_le s b bIns
+
+instance decPickatProp {α : Type} [LinearOrder α] : ∀ (s : Finset α) (a : α), DecidablePred (λ (t : Finset α) ↦ (t.card = s.card.pred) ∧ (∀ a' ∈ t, a < a') ∧ (insert a t = s)) := by
+  intros s a
+  unfold DecidablePred
+  intros t
+  cases s.decidableNonempty with
+  | isFalse sEmpty =>
+    apply isFalse
+    intro tProp
+    rcases tProp with ⟨_, _, tInsert⟩
+    rw [← tInsert] at sEmpty
+    exact sEmpty (Finset.insert_nonempty a t)
+  | isTrue sNonempty =>
+    cases s.decidableMem a with
+    | isFalse aNonMem =>
+      apply isFalse
+      intro tProp
+      rcases tProp with ⟨_, _, tInsert⟩
+      simp [← tInsert] at aNonMem
+    | isTrue aMem =>
+      by_cases a = (s.min' sNonempty)
+      · by_cases t = s.erase a
+        · apply isTrue
+          simp
+          apply And.intro <;> rw [h]
+          · exact Finset.card_erase_of_mem aMem
+          · apply And.intro
+            · intros b bInt
+              simp at bInt
+              rw [← ne_eq] at bInt
+              subst a
+              exact lt_of_le_of_ne (Finset.min'_le s b bInt.right) bInt.left.symm
+            · exact Finset.insert_erase aMem
+        · apply isFalse
+          intro tProp
+          rcases tProp with ⟨_, aMin, tInsert⟩
+          have aNotInt : a ∉ t := λ aInt ↦ lt_irrefl a (aMin a aInt)
+          have absd := Finset.erase_insert aNotInt
+          rw [tInsert] at absd
+          simp [absd] at h
+      · apply isFalse
+        simp
+        intros _ aMin tInsert
+        have minIns := Finset.min'_mem s sNonempty
+        simp [← tInsert] at minIns
+        cases minIns with
+        | inl aMin =>
+          simp [tInsert] at aMin
+          simp [aMin] at h
+        | inr minInt =>
+          simp [tInsert] at minInt
+          exact (not_lt_of_le (Finset.min'_le s a aMem)) (aMin (s.min' sNonempty) minInt)
+  done
+
+instance decPickaProp {α : Type} [LinearOrder α] : ∀ (s : Finset α), DecidablePred (λ (a : α) ↦ ∃! (t : Finset α), t ∈ s.powerset ∧ ((t.card = s.card.pred) ∧ (∀ a' ∈ t, a < a') ∧ (insert a t = s))) := by
+  intros s
+  unfold DecidablePred
+  intro a
+  cases Nat.zero.decLt s.card with
+  | isFalse sCard =>
+    apply isFalse
+    intro atProp
+    rcases (ExistsUnique.exists atProp) with ⟨t, _, _, _, tInsert⟩
+    simp [← tInsert] at sCard
+  | isTrue sCardPos =>
+    rw [Finset.card_pos] at sCardPos
+    cases s.decidableMem a with
+    | isFalse aNonMem =>
+      apply isFalse
+      intro tProp
+      rcases (ExistsUnique.exists tProp) with ⟨t, _, ⟨_, _, tInsert⟩⟩
+      simp [← tInsert] at aNonMem
+    | isTrue aMem =>
+      by_cases a = (s.min' sCardPos)
+      · apply isTrue
+        simp
+        use s.erase a
+        apply And.intro <;> simp
+        · apply And.intro
+          · exact Finset.erase_subset a s
+          · apply And.intro
+            · exact Finset.card_erase_of_mem aMem
+            · apply And.intro
+              · intros b bNea bIns
+                rw [h] at bNea ⊢
+                rw [← ne_eq] at bNea
+                exact lt_of_le_of_ne (Finset.min'_le s b bIns) bNea.symm
+              · exact Finset.insert_erase aMem
+        · intros t' _ _ aMin t'Ins
+          have aNotInt : a ∉ t' := λ aInt ↦ lt_irrefl a (aMin a aInt)
+          have t'Val := Finset.erase_insert aNotInt
+          rw [t'Ins] at t'Val
+          rw [← t'Val]
+      · apply isFalse
+        simp
+        intro tUniqueProp
+        rcases (ExistsUnique.exists tUniqueProp) with ⟨t, _, ⟨_, aMin, tInsert⟩⟩
+        have minIns := Finset.min'_mem s sCardPos
+        simp [← tInsert] at minIns
+        cases minIns with
+        | inl aMin =>
+          simp [tInsert] at aMin
+          simp [aMin] at h
+        | inr minInt =>
+          simp [tInsert] at minInt
+          exact (not_lt_of_le (Finset.min'_le s a aMem)) (aMin (s.min' sCardPos) minInt)
+  done
 
 end Pick
 
@@ -86,27 +220,14 @@ withMainContext do {
   replaceMainGoal [ngs.snd];
 }
 
-private def detectMode (α : Expr) : TacticM (Expr × Option Expr) :=
-  do {
-    let loClass := (Expr.app (.const `LinearOrder [← mkFreshLevelMVar]) α);
-    let e ← synthInstance loClass;
-    return (mkApp2 (.const `LinearOrder.decidableEq [← mkFreshLevelMVar]) α e, e)
-  } <|>
-  do {
-    let u ← mkFreshLevelMVar;
-    let eqClass := (Expr.app (.const `DecidableEq [u]) α);
-    let e ← synthInstance eqClass;
-    return (e, none)
-  } <|> throwError ("No LinearOrder or DecidableEq in type " ++ α)
-
-private def upgradeProof (decEqExpr : Expr) (aInst : Expr) (info : Name × Expr) : TacticM (Name × Expr) :=
+private def upgradeProof (decEqExpr : Expr) (aInst : Expr) (info : Name × Expr × FVarSubst) : TacticM (Name × Expr × FVarSubst) :=
 withMainContext do {
   let .app (.app (.app (.const `Eq _) sType) insExpr) sExpr ← inferType aInst | throwError ("Could not parse type of expression " ++ aInst);
   let some bDecl := (← getLCtx).findFromUserName? info.fst | throwNameError info.fst;
   let eType ← inferType bDecl.toExpr;
-  let subsetEqExpr := mkApp6 (.const `Eq.subst [(← mkFreshLevelMVar)]) sType (.lam `x sType (mkApp5 (.const `Membership.mem [← mkFreshLevelMVar, ← mkFreshLevelMVar]) (← mkFreshExprMVar none) sType (← mkFreshExprMVar none) bDecl.toExpr (.bvar 0)) .default) insExpr sExpr aInst (mkApp6 (.const `Finset.mem_insert_of_mem [← mkFreshLevelMVar]) eType decEqExpr (← mkFreshExprMVar none) bDecl.toExpr (← mkFreshExprMVar none) info.snd);
+  let subsetEqExpr := info.snd.snd.apply (mkApp6 (.const `Eq.subst [(← mkFreshLevelMVar)]) sType (.lam `x sType (mkApp5 (.const `Membership.mem [← mkFreshLevelMVar, ← mkFreshLevelMVar]) (← mkFreshExprMVar none) sType (← mkFreshExprMVar none) bDecl.toExpr (.bvar 0)) .default) insExpr sExpr aInst (mkApp6 (.const `Finset.mem_insert_of_mem [← mkFreshLevelMVar]) eType decEqExpr (← mkFreshExprMVar none) bDecl.toExpr (← mkFreshExprMVar none) info.snd.fst));
   check subsetEqExpr;
-  return (info.fst, subsetEqExpr)
+  return (info.fst, subsetEqExpr, info.snd.snd)
 }
 
 private def parseLBound : Expr → TacticM (Option (Expr × Expr × Expr × List Level))
@@ -123,23 +244,23 @@ private def doPick : List Name → Expr → TacticM (List (Name × Expr × FVarS
     let bineqType ← match bineq with | .fvar id => id.getType | _ => inferType bineq;
     let bineqType ← instantiateMVars bineqType;
     let some (lowerBound, ty, s, levels) ← parseLBound bineqType | throwError bineq ++ " is not a lower-bound expression!";
-    let (eqCls, loCls) ← detectMode ty;
+    let loClassExpr := (Expr.app (.const `LinearOrder [← mkFreshLevelMVar]) ty);
+    let loClass ← synthInstance loClassExpr;
+    let eqCls ← instantiateMVars (mkApp2 (.const `LinearOrder.decidableEq [← mkFreshLevelMVar]) ty loClass)
     let mg ← getMainGoal;
     let sType ← inferType s;
-    let u ← mkFreshLevelMVar;
-    let pickLemma ← (match loCls with
-      | none => return (mkApp4 (.const `Pick.pick_one_eq []) ty s eqCls (mkApp7 (.const `lt_of_le_of_lt [u]) (.const `Nat []) (← mkFreshExprMVar none) (.const `Nat.zero []) lowerBound (mkApp2 (.const `Finset.card levels) ty s) (.app (.const `Nat.zero_le []) lowerBound) bineq))
-      | some cls => return (mkApp4 (.const `Pick.pick_one_lo []) ty s cls (mkApp7 (.const `lt_of_le_of_lt [u]) (.const `Nat []) (← mkFreshExprMVar none) (.const `Nat.zero []) lowerBound (mkApp2 (.const `Finset.card levels) ty s) (.app (.const `Nat.zero_le []) lowerBound) bineq)));
-    -- DO NOT REMOVE
-    let pickLemma ← instantiateMVars pickLemma;
+    let pickLemma ← instantiateMVars (mkApp4 (.const `Pick.pick_one_lo []) ty s loClass (mkApp7 (.const `lt_of_le_of_lt [← mkFreshLevelMVar]) (.const `Nat []) (← mkFreshExprMVar none) (.const `Nat.zero []) lowerBound (mkApp2 (.const `Finset.card levels) ty s) (.app (.const `Nat.zero_le []) lowerBound) bineq));
     check pickLemma;
-    let a := Expr.proj `Exists 0 pickLemma;
-    let t := Expr.proj `Exists 0 (.proj `Exists 1 pickLemma);
-    let atSpec := Expr.proj `Exists 1 (.proj `Exists 1 pickLemma);
+    let a ← instantiateMVars (mkApp5 (.const `Finset.choose [← mkFreshLevelMVar]) ty (← mkFreshExprMVar none) (mkApp3 (.const `Pick.decPickaProp []) ty loClass s) s pickLemma);
+    let tProp ← instantiateMVars (mkApp5 (.const `Finset.choose_property [← mkFreshLevelMVar]) ty (← mkFreshExprMVar none) (mkApp3 (.const `Pick.decPickaProp []) ty loClass s) s pickLemma);
+    let t ← instantiateMVars (mkApp5 (.const `Finset.choose [← mkFreshLevelMVar]) (mkApp (.const `Finset [← mkFreshLevelMVar]) ty) (← mkFreshExprMVar none) (mkApp4 (.const `Pick.decPickatProp []) ty loClass s a) (mkApp2 (.const `Finset.powerset [← mkFreshLevelMVar]) ty s) tProp);
+    check a;
+    check t;
+    let atSpec ← instantiateMVars (mkApp5 (.const `Finset.choose_property [← mkFreshLevelMVar]) (mkApp (.const `Finset [← mkFreshLevelMVar]) ty) (← mkFreshExprMVar none) (mkApp4 (.const `Pick.decPickatProp []) ty loClass s a) (mkApp2 (.const `Finset.powerset [← mkFreshLevelMVar]) ty s) tProp);
     let atCard := Expr.proj `And 0 atSpec;
     let aNotInt := Expr.proj `And 0 (.proj `And 1 atSpec);
+    -- TODO Maybe use Finset.choose_spec instead?
     let aInst := Expr.proj `And 1 (.proj `And 1 atSpec);
-    log (← inferType aInst);
     let u ← mkFreshLevelMVar;
     let v ← mkFreshLevelMVar;
     let some b' := lowerBound.numeral? | throwError lowerBound ++ " is not a number!";
@@ -159,12 +280,9 @@ private def doPick : List Name → Expr → TacticM (List (Name × Expr × FVarS
       let recCall ← doPick names newBoundProof;
       -- TODO Figure out if there is an elegant way to reload the context
       withMainContext do {
-        (match loCls with
-          | none => recCall.forA (λ i => diffHyp name aNotInt i)
-          | some _ => do
-                   let (recHead :: _) := recCall | throwError "Nothing picked in the previous level!";
-                   ltHyp name aNotInt recHead);
-        -- let recCall ← recCall.mapM (upgradeProof eqCls aInst);
+        let (recHead :: _) := recCall | throwError "Nothing picked in the previous level!";
+        ltHyp name aNotInt recHead;
+        let recCall ← recCall.mapM (upgradeProof eqCls aInst);
         return (name, aInParent, aSubst) :: recCall;
       }
     }
