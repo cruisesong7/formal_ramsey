@@ -24,11 +24,11 @@ def graphAtColor {N k : ℕ} (G : SimpleGraph (Fin N)) (ϕ : Sym2 (Fin N) → Fi
     simp at h
  }
 
-def RamseyProp (N k : ℕ) (s : Vector ℕ k.succ) : Prop := N > 0 ∧
+def RamseyProp {k : ℕ} (N : ℕ) (s : Vector ℕ k.succ) : Prop := N > 0 ∧
 ∀ f : Sym2 (Fin N) → Fin k.succ,
 (∃ S i, (graphAtColor (completeGraph (Fin N)) f i).IsNClique (s.get i) S) 
 
-lemma RamseyMonotone : ∀ {N k s}, RamseyProp N k s → ∀ {M}, N ≤ M → RamseyProp M k s := by
+lemma RamseyMonotone : ∀ {N k : ℕ} {s : Vector ℕ k.succ}, RamseyProp N s → ∀ {M}, N ≤ M → RamseyProp M s := by
   unfold RamseyProp
   intros N k s R M NleqM
   rcases R with ⟨Ngt0, R⟩
