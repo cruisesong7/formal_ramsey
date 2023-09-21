@@ -1,12 +1,6 @@
 import Mathlib.Combinatorics.Pigeonhole
 import Mathlib.Combinatorics.SimpleGraph.Clique
--- import Mathlib.Data.Vector3
--- import Mathlib.Data.Rat.NNRat
-
--- import Lean.Parser.Tactic
-import Mathlib.Tactic
--- import FormalRamsey.PickTactic
--- import FormalRamsey.Utils
+import Mathlib.Data.Nat.Lattice
 
 def RamseyGraphProp (N s t : ℕ) : Prop := N > 0 ∧ (∀ (G : SimpleGraph (Fin N)) [DecidableRel G.Adj], (∃ S, G.IsNClique s S) ∨ (∃ T, Gᶜ.IsNClique t T))
 
@@ -15,7 +9,7 @@ lemma RamseyGraphMonotone : ∀ {N s t}, RamseyGraphProp N s t → ∀ {M}, N �
   intros N s t R M NleqM
   rcases R with ⟨Ngt0, R⟩
   apply And.intro
-  linarith only[Ngt0, NleqM]
+  use (lt_of_lt_of_le Ngt0.lt NleqM)
   intros G _
   let subAdj : Fin N → Fin N → Prop := λ u v ↦ G.Adj (Fin.castLE NleqM u) (Fin.castLE NleqM v)
   have subAdjSym : Symmetric subAdj := by 
@@ -82,7 +76,7 @@ theorem RamseyGraph2 : ∀ k : ℕ, Ramsey 2 k.succ = k.succ := by
     right
     use Finset.univ
     simp_all
-    intros x y xneqy
+    intros x y _
     let e: Sym2 (Fin (k + 1)) := ⟦(x, y)⟧
     have tmp := GEmp e
     simp_all
@@ -219,20 +213,21 @@ theorem RamseyGraph_binomial_coefficient_ineq : ∀ s t : ℕ, Ramsey s.succ t.s
   rw [RamseyGraphSymm]
   simp [RamseyGraph1 s'.succ]
   transitivity Ramsey s'.succ t'.succ.succ + Ramsey s'.succ.succ t'.succ
-  apply Ramsey₂Ineq s' t'
+  sorry
+  sorry
 
-  have temp₁: Ramsey₂ s'.succ t'.succ.succ + Ramsey₂ s'.succ.succ t'.succ
-  ≤ (s'.succ + t'.succ.succ - 2).choose s' + (s'.succ.succ + t'.succ - 2).choose s'.succ
-  apply add_le_add
-  exact ihp₁ t'.succ
-  exact ihp₂
+  -- have temp₁: Ramsey₂ s'.succ t'.succ.succ + Ramsey₂ s'.succ.succ t'.succ
+  -- ≤ (s'.succ + t'.succ.succ - 2).choose s' + (s'.succ.succ + t'.succ - 2).choose s'.succ
+  -- apply add_le_add
+  -- exact ihp₁ t'.succ
+  -- exact ihp₂
 
-  have temp₂ :(s'.succ.succ + t'.succ.succ - 2).choose (s'.succ.succ - 1) = 
-  (s'.succ + t'.succ.succ - 2).choose s' + (s'.succ.succ + t'.succ - 2).choose s'.succ
-  := by simp [Nat.succ_add, Nat.add_succ,Nat.choose_succ_succ]
-  rw [temp₂]
-  exact temp₁
-  done
+  -- have temp₂ :(s'.succ.succ + t'.succ.succ - 2).choose (s'.succ.succ - 1) = 
+  -- (s'.succ + t'.succ.succ - 2).choose s' + (s'.succ.succ + t'.succ - 2).choose s'.succ
+  -- := by simp [Nat.succ_add, Nat.add_succ,Nat.choose_succ_succ]
+  -- rw [temp₂]
+  -- exact temp₁
+  -- done
 
 -- #eval (List.finRange 8).sublistsLen 3
 
