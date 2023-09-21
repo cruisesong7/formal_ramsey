@@ -8,7 +8,7 @@ import Mathlib.Tactic
 -- import FormalRamsey.PickTactic
 -- import FormalRamsey.Utils
 
-def RamseyGraphProp (N s t : ℕ) : Prop := N > 0 ∧ (∀ (G : SimpleGraph (Fin N)), (∃ S, G.IsNClique s S) ∨ (∃ T, Gᶜ.IsNClique t T))
+def RamseyGraphProp (N s t : ℕ) : Prop := N > 0 ∧ (∀ (G : SimpleGraph (Fin N)) [DecidableRel G.Adj], (∃ S, G.IsNClique s S) ∨ (∃ T, Gᶜ.IsNClique t T))
 
 lemma RamseyGraphMonotone : ∀ {N s t}, RamseyGraphProp N s t → ∀ {M}, N ≤ M → RamseyGraphProp M s t := by
   unfold RamseyGraphProp
@@ -16,7 +16,7 @@ lemma RamseyGraphMonotone : ∀ {N s t}, RamseyGraphProp N s t → ∀ {M}, N �
   rcases R with ⟨Ngt0, R⟩
   apply And.intro
   linarith only[Ngt0, NleqM]
-  intros G
+  intros G _
   let subAdj : Fin N → Fin N → Prop := λ u v ↦ G.Adj (Fin.castLE NleqM u) (Fin.castLE NleqM v)
   have subAdjSym : Symmetric subAdj := by 
     unfold Symmetric
@@ -44,7 +44,7 @@ theorem RamseyGraphPropSymm : ∀ N s t, RamseyGraphProp N s t ↔ RamseyGraphPr
     simp [RamseyGraphProp]
     intros N s t Ngt0 R
     simp [Ngt0]
-    intro G
+    intros G _
     cases R Gᶜ with
     | inl R =>
       right
@@ -75,8 +75,7 @@ theorem RamseyGraph2 : ∀ k : ℕ, Ramsey 2 k.succ = k.succ := by
   simp
   apply And.intro
   simp [RamseyGraphProp, SimpleGraph.isNClique_iff, SimpleGraph.IsClique, Set.Pairwise]
-  intros G
-  haveI : DecidableRel G.Adj := by tauto
+  intros G _
   rcases Finset.eq_empty_or_nonempty (G.edgeFinset) with GEmp| ⟨⟨x,y⟩, xyInG⟩ 
 
   · rw [Finset.eq_empty_iff_forall_not_mem] at GEmp
@@ -108,7 +107,7 @@ theorem RamseyGraph2 : ∀ k : ℕ, Ramsey 2 k.succ = k.succ := by
   use (⊥ : SimpleGraph (Fin k))
   by_contra h
   simp at h
-  rcases h with ⟨_, ⟨_, h⟩⟩ | ⟨S, h⟩ 
+  rcases (h (SimpleGraph.Bot.adjDecidable (Fin k))) with ⟨_, ⟨_, h⟩⟩ | ⟨S, h⟩ 
   rw [Finset.card_eq_two] at h
   rcases h with ⟨_, _, _, _⟩
   simp_all
@@ -158,7 +157,7 @@ theorem RamseyGraphFinite : ∀ s t : ℕ, { N : ℕ | RamseyGraphProp N s.succ 
   use 1
   simp
   simp [RamseyGraphProp]
-  intro
+  intros
   left
   use {0}
   simp [SimpleGraph.isNClique_iff, SimpleGraph.IsClique]
