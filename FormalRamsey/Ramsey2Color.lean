@@ -10,7 +10,7 @@ import FormalRamsey.Utils
 
 open Ramsey
 
-def Ramsey₂Prop (N s t : ℕ) : Prop := RamseyProp N 2 ⟨[s, t], by simp⟩
+def Ramsey₂Prop (N s t : ℕ) : Prop := RamseyProp N (s ::ᵥ t ::ᵥ Vector.nil)
 
 theorem Ramsey₂PropSymm : ∀ N s t, Ramsey₂Prop N s t ↔ Ramsey₂Prop N t s := by
   
