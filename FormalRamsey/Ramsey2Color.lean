@@ -22,17 +22,48 @@ def Ramsey₂GraphProp (N s t : ℕ) : Ramsey₂Prop N s t ↔ RamseyGraphProp N
     · intros G _
       have coloredClique := Ramsey₂N.right (λ e ↦ if e ∈ G.edgeSet then 0 else 1)
       rcases coloredClique with ⟨S, i, Sclique⟩
-      fin_cases i <;> simp [graphAtColor] at Sclique
-      admit
+      fin_cases i <;> simp [graphAtColor] at Sclique <;>
+      simp [SimpleGraph.isNClique_iff, SimpleGraph.IsClique, Set.Pairwise] at Sclique ⊢
+      . left
+        use S
+        simp [Sclique.right]
+        intros _ xInS _ yInS xneqy
+        have tmp := Sclique.left xInS yInS xneqy
+        by_contra h
+        simp[h] at tmp
+      · right
+        use S
+        simp [Sclique.right, Vector.get, List.nthLe]
+        intros _ xInS _ yInS xneqy
+        have tmp := Sclique.left xInS yInS xneqy
+        simp[xneqy]
+        by_contra h
+        simp[h] at tmp
+        
   · intro RamseyGraphN
     apply And.intro
     · exact RamseyGraphN.left
     · intro f
       let GAdj : Fin N → Fin N → Prop := λ u v ↦ ((u ≠ v) ∧ (f ⟦(u, v)⟧ = 0))
-      have GAdjSym : Symmetric GAdj := sorry
+      have GAdjSym : Symmetric GAdj := by 
+        simp [Symmetric]
+        intros _ _ xneqy fxyeq0
+        simp [Ne.symm xneqy, Sym2.eq_swap, fxyeq0]
       have GAdjLoopless : Irreflexive GAdj := by simp [Irreflexive]
       have graphClique := RamseyGraphN.right { Adj := GAdj, symm := GAdjSym, loopless := GAdjLoopless }
-      admit
+      rcases graphClique with ⟨S, Sclique⟩ | ⟨T, Tclique⟩ 
+      · use S, 0
+        simp [SimpleGraph.isNClique_iff, SimpleGraph.IsClique, Set.Pairwise] at Sclique ⊢
+        simp [Sclique.right, graphAtColor] 
+        intros _ xInS _ yInS xneqy
+        simp_all
+      · use T, 1
+        simp [SimpleGraph.isNClique_iff, SimpleGraph.IsClique, Set.Pairwise] at Tclique ⊢
+        simp [Tclique.right, graphAtColor, Vector.get, List.nthLe] 
+        intros _ xInT _ yInT xneqy
+        have tmp :=  (Tclique.left xInT yInT xneqy).right xneqy
+        simp [not0_eq1] at tmp
+        simp [xneqy, tmp]
 
 theorem Ramsey₂PropSymm : ∀ N s t, Ramsey₂Prop N s t ↔ Ramsey₂Prop N t s := by
   
@@ -273,7 +304,7 @@ theorem Ramsey₂1 : ∀ k : ℕ, Ramsey₂ 1 k.succ = 1 := by
 
 def monochromaticVicinity {α : Type} [Fintype α] {c : ℕ} (g : SimpleGraph α) [DecidableRel g.Adj] (v : α) (f : Sym2 α → Fin c) (i : Fin c) : Finset α := Finset.filter (λ x ↦  f ⟦(v, x)⟧ = i) (g.neighborFinset v)
 
-lemma monochromaticVicinity_Ramsey {N c : ℕ} : ∀ (v : Fin N) (f : Sym2 (Fin N) → Fin c) (i : Fin c) (s : Vector ℕ c), RamseyProp (monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card c s → (∃ S, (graphAtColor (completeGraph (Fin N)) f i).IsNClique (s.get i).succ S) ∨ (∃ i' S, i' ≠ i ∧ (graphAtColor (completeGraph (Fin N)) f i').IsNClique (s.get i') S) := by
+lemma monochromaticVicinity_Ramsey {N c : ℕ} : ∀ (v : Fin N) (f : Sym2 (Fin N) → Fin c.succ) (i : Fin c.succ) (s : Vector ℕ c.succ), RamseyProp ((monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card) s → (∃ S, (graphAtColor (completeGraph (Fin N)) f i).IsNClique (s.get i).succ S) ∨ (∃ i' S, i' ≠ i ∧ (graphAtColor (completeGraph (Fin N)) f i').IsNClique (s.get i') S) := by
   intros v f i s Ramsey
   unfold RamseyProp at Ramsey
   rcases Ramsey with ⟨cardgt0, vicinityProp⟩ 
@@ -292,7 +323,7 @@ lemma monochromaticVicinity_Ramsey {N c : ℕ} : ∀ (v : Fin N) (f : Sym2 (Fin 
   exact a₁a₂eq
   let ftransemb : Function.Embedding (Fin (monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card) (Fin N) := ⟨λ x ↦ ↑(ftrans ⟨x, Finset.mem_univ x⟩), ftransembinj⟩
   rcases vicinityProp (λ e ↦ f (e.map ((λ x ↦ ↑(ftrans ⟨x, Finset.mem_univ x⟩)):(Fin (monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card → Fin N)))) with ⟨S, ⟨i', Sclique⟩⟩
-  rcases (instDecidableEqFin c i' i) with h|h
+  rcases (instDecidableEqFin c.succ i' i) with h|h
 
   right
   use i'
