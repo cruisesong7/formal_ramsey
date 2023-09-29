@@ -3,13 +3,23 @@ import Mathlib.Data.Fintype.Card
 -- import data.bitvec.core
 -- import Mathlib.Data.Fin.Basic
 import Mathlib.Combinatorics.Pigeonhole
+import Mathlib.Data.Bitvec.Defs
+import Mathlib.Tactic.Linarith.Frontend
+
+
 -- import data.nat.lattice
 -- import tactic.fin_cases
+import Std.Data.Fin.Lemmas
+import Mathlib.Tactic.FinCases
+import Mathlib.Data.Vector
+import Init.Prelude
+import FormalRamsey.Utils
 
 -- import data.nat.cast
 -- import data.nat.basic
 
 import FormalRamsey.PickTactic
+set_option maxHeartbeats 4000000
 
 structure Arithprog (α : Type) (length : ℕ) [HAdd α α α] := (start : α) (diff : α)
 
@@ -107,6 +117,91 @@ example : ∀ f : Fin 5 → Fin 2, ∃ a b c : Fin 5, (a ≠ b) ∧ (b ≠ c) �
 -- rw [b.elem,c.elem],
 -- end
 
+lemma vdW325 : vdWProp 325 3 2 := by
+  unfold vdWProp
+  intros f
+  let g : Fin 33 → Bitvec 5 := λ k => Vector.ofFn (λ i=> f (5 * k + i) = 0)
+  have fin533 : Fintype.card (Bitvec 5) • 1 < Fintype.card (Fin 33)
+  simp
+  have ghyp := Fintype.exists_lt_card_fiber_of_mul_lt_card g fin533
+  rcases ghyp with ⟨y₅, y₅hyp⟩
+  pick block₁ block₂ from (Finset.filter (λ (x : Fin 33) => g x = y₅) Finset.univ)
+  simp at block₁Ins block₂Ins
+  have notc : ∀ {c : Fin 2}, ∀ {x y : ℕ}, f x ≠ c → f y ≠ c → f x = f y := sorry
+  have blockeq : ∀ (i : Fin 5), f (5 * ↑block₁ + i) = f (5 * ↑block₂ + i):=sorry
+  --intro i
+  --have fb₁b₂ := congr_arg (λ v => Vector.get v i) (Eq.trans block₂_1 (Eq.symm block₁_1))
+  --let fb := f (5 * ↑block₁ + ↑i)
+  --fin_cases i
+  --simp_all
+  --by_contra fbneq
+  --simp at fbneq
+  
+  have block₁.lt.block₂.cast_bound : ↑block₁ < ↑block₂ := block₁Ltblock₂
+  let targetfinset:Finset ℕ := {5 * block₁.val, 5 * block₁.val + 1, 5 * block₁.val + 2}
+  have fin25 : Fintype.card (Fin 2) • 1 <  Fintype.card { x // x ∈ targetfinset} := by simp
+ -- Define f': takes one of the elemnet in finset ∅, return its color
+ -- let f' : ({5 * block₁.val, 5 * block₁.val + 1,  5 * block₁.val + 2}:Finset ℕ)→ Fin 2 := λ k => f k
+  let f' :({5*block₁.val, 5*block₁.val+1, block₁.val+2}:Finset ℕ) → Fin 2 := λ k => f k 
+ -- There exists more than 1 elements that have the same color
+  have fh' := Fintype.exists_lt_card_fiber_of_mul_lt_card f' fin25
+  rcases fh' with ⟨c, chyp⟩
+  pick a₁ a₂ from (Finset.filter (λ (x :({5 * block₁.val, 5 * block₁.val + 1, 5 * block₁.val + 2}:Finset ℕ )) => f' x = c) Finset.univ)
+  simp at a₁.Ins a₂.Ins
+-- clear fin25 chyp,
+
+  have a₁.lt.a₂.cast_bound : ↑a₁ < ↑a₂ := by exact a₁.lt.a₂
+-- -- express a2 as 5b2+i and prove
+  have out₂ : ∃ i, (↑a₂ = 5 * ↑block₁ + i) ∧ (i < 3):=sorry
+-- -- three cases for a2: i =0,1,2
+--  rcases a₂.elem.left with rfl | rfl | rfl
+--  use 0,
+--  simp,
+--  use 1,
+--  simp,
+--  use 2,
+--  simp,
+ rcases out₂ with ⟨i₂, a₂eq, i₂ineq⟩
+--  simp [a₂eq] at a₁.lt.a₂.cast_bound,
+
+-- express a1 as 5b1+i and prove
+have out₁ : ∃ i, (↑a₁ = 5 * ↑block₁ + i) ∧ (i < i₂):=sorry
+-- three cases for a1: i =0,1,2
+-- rcases a₁.elem.left with rfl | rfl | rfl,
+-- use 0,
+-- simp at a₁.lt.a₂.cast_bound ⊢,
+-- exact a₁.lt.a₂.cast_bound,
+-- use 1,
+-- simp at a₁.lt.a₂.cast_bound ⊢,
+-- exact a₁.lt.a₂.cast_bound,
+-- use 2,
+-- simp at a₁.lt.a₂.cast_bound ⊢,
+-- exact a₁.lt.a₂.cast_bound,
+rcases out₁ with ⟨i₁, a₁eq, i₁ineq⟩
+-- simp [a₁eq, a₂eq, tsub_add_eq_tsub_tsub],
+-- clear targetfinset a₁.lt.a₂ a₁.lt.a₂.cast_bound,
+
+let I := i₂ - i₁
+let B : ℕ := ↑block₂ - ↑block₁
+have Ibound : i₁ + I < 3
+change i₁ + (i₂ - i₁) < 3,
+rw ← nat.add_sub_assoc (le_of_lt i₁ineq) i₁
+simp
+exact i₂ineq
+
+have Bbound : ↑block₁ + B < 33
+change ↑block₁ + (↑block₂ - ↑block₁) < 33
+rw ← Nat.add_sub_assoc (le_of_lt block₁.lt.block₂.cast_bound) block₁
+simp
+have b₂.cast_bound: ↑block₂ < 33 := by exact block₂.property
+exact b₂.cast_bound
+
+let a₃ : ℕ := ↑a₁ + (I + I)
+
+  
+
+
+
 -- lemma vdW325 : vdW_prop 325 3 2 :=
 -- begin
 -- unfold vdW_prop,
@@ -178,7 +273,6 @@ example : ∀ f : Fin 5 → Fin 2, ∃ a b c : Fin 5, (a ≠ b) ∧ (b ≠ c) �
 -- pick 2 from (finset.filter (λ (x : ↥{5 * block₁.val, 5 * block₁.val + 1, 5 * block₁.val + 2}), f' x = c) finset.univ) with a₁ a₂,
 -- simp at a₁.elem a₂.elem,
 -- clear fin25 chyp,
-
 -- have a₁.lt.a₂.cast_bound : ↑a₁ < ↑a₂ := by exact a₁.lt.a₂, 
 -- -- express a2 as 5b2+i and prove
 -- have out₂ : ∃ i, (↑a₂ = 5 * ↑block₁ + i) ∧ (i < 3),
@@ -413,5 +507,6 @@ example : ∀ f : Fin 5 → Fin 2, ∃ a b c : Fin 5, (a ≠ b) ∧ (b ≠ c) �
 -- apply vdW_monotone k₁; assumption,
 -- rw (nat.Inf_upward_closed_eq_succ_iff hs 8),
 -- simp,
--- sorry
--- end
+  --sorry
+  --end
+
