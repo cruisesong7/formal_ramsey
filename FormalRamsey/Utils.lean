@@ -138,6 +138,166 @@ lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : �
   simp_all
   split <;> simp_all;simp_all
 
+lemma bijection_of_List_perm {α : Type} : ∀ {l₁ l₂ : List α}, l₁ ~ l₂ → ∃ (f : Fin l₁.length → Fin l₂.length), Function.Bijective f ∧ ∀ (i : Fin l₁.length), l₁.get i = l₂.get (f i) := by
+  intro l₁ l₂ permProp
+  induction permProp
+  case nil =>
+    simp
+    intro i
+    apply Fin.elim0' i
+  case cons h l₁ l₂ _ ih =>
+    rcases ih with ⟨f, fProp⟩
+    haveI : NeZero (h :: l₁).length := by simp; infer_instance
+    haveI : NeZero (h :: l₂).length := by simp; infer_instance
+    use Fin.cases 0 (λ i ↦ (f i).succ)
+    apply And.intro
+    · unfold Function.Bijective
+      apply And.intro
+      · intros a b fab
+        simp at fab
+        cases Fin.eq_zero_or_eq_succ a with
+        | inl i0 =>
+          cases Fin.eq_zero_or_eq_succ b with
+          | inl j0 => simp [i0, j0]
+          | inr jsucc =>
+            rcases jsucc with ⟨j', j'Val⟩
+            simp [i0, j'Val] at fab
+            cases (Fin.succ_ne_zero (f j')).symm fab
+        | inr isucc =>
+          cases Fin.eq_zero_or_eq_succ b with
+          | inl j0 =>
+            rcases isucc with ⟨i', i'Val⟩
+            simp [j0, i'Val] at fab
+            cases (Fin.succ_ne_zero (f i')) fab
+          | inr jsucc =>
+            rcases isucc with ⟨i', i'Val⟩
+            rcases jsucc with ⟨j', j'Val⟩
+            simp [i'Val, j'Val] at fab
+            have ijeq := fProp.left.left fab
+            rw [ijeq] at i'Val
+            simp [i'Val, j'Val]
+      · intros a
+        cases Fin.eq_zero_or_eq_succ a with
+        | inl a0 =>
+          use 0
+          simp [a0]
+        | inr asucc =>
+          rcases asucc with ⟨a', a'Val⟩
+          rcases (fProp.left.right a') with ⟨b, bProp⟩
+          use b.succ
+          simp [a'Val]
+          exact bProp
+    · intro i
+      cases Fin.eq_zero_or_eq_succ i with
+      | inl i0 => simp [i0]
+      | inr isucc =>
+        rcases isucc with ⟨j, jVal⟩
+        simp [jVal]
+        exact fProp.right j
+  case swap x y l =>
+    haveI : NeZero (x :: y :: l).length := by simp; infer_instance
+    haveI : NeZero (y :: x :: l).length := by simp; infer_instance
+    use Fin.cases 1 (Fin.cases 0 (λ i => i.succ.succ))
+    apply And.intro
+    · apply And.intro
+      · intro a b fab
+        simp at fab
+        cases Fin.eq_zero_or_eq_succ a with
+        | inl i0 =>
+          cases Fin.eq_zero_or_eq_succ b with
+          | inl j0 => simp [i0, j0]
+          | inr jsucc =>
+            rcases jsucc with ⟨j', j'Val⟩
+            simp [i0, j'Val] at fab
+            cases Fin.eq_zero_or_eq_succ j' with
+            | inl j'0 => simp [j'0] at fab
+            | inr j'succ =>
+              rcases j'succ with ⟨j'', j''Val⟩
+              rw [j''Val, ← Fin.succ_zero_eq_one, Fin.cases_succ, Fin.succ_inj] at fab
+              cases (Fin.succ_ne_zero j'') fab.symm
+        | inr isucc =>
+          cases Fin.eq_zero_or_eq_succ b with
+          | inl j0 =>
+            rcases isucc with ⟨i', i'Val⟩
+            simp [j0, i'Val] at fab
+            cases Fin.eq_zero_or_eq_succ i' with
+            | inl i''0 => simp [i''0] at fab
+            | inr i'succ =>
+              rcases i'succ with ⟨i'', i''Val⟩ 
+              simp [i''Val] at fab
+              rw [← Fin.succ_zero_eq_one, Fin.succ_inj] at fab
+              cases (Fin.succ_ne_zero i'') fab
+          | inr jsucc =>
+            rcases isucc with ⟨i', i'Val⟩
+            rcases jsucc with ⟨j', j'Val⟩
+            simp [i'Val, j'Val] at fab
+            cases Fin.eq_zero_or_eq_succ i' with
+            | inl i'0 =>
+              cases Fin.eq_zero_or_eq_succ j' with
+              | inl j'0 =>
+                simp [i'Val, j'Val, i'0, j'0]
+              | inr j'succ =>
+                rcases j'succ with ⟨j'', j''Val⟩
+                simp [i'0, j''Val] at fab
+                cases (Fin.succ_ne_zero j''.succ).symm fab
+            | inr i'succ =>
+              cases Fin.eq_zero_or_eq_succ j' with
+              | inl j'0 =>
+                rcases i'succ with ⟨i'', i''Val⟩
+                simp [i''Val, j'0] at fab
+                cases (Fin.succ_ne_zero i''.succ) fab
+              | inr j'succ =>
+                rcases i'succ with ⟨i'', i''Val⟩
+                rcases j'succ with ⟨j'', j''Val⟩
+                simp [i''Val, j''Val] at fab
+                simp [i'Val, j'Val, i''Val, j''Val, fab]
+      · intros a
+        cases Fin.eq_zero_or_eq_succ a with
+        | inl a0 =>
+          use 1
+          simp [a0]
+          rw [← Fin.succ_zero_eq_one, Fin.cases_succ]
+          simp
+        | inr asucc =>
+          rcases asucc with ⟨a', a'Val⟩
+          cases Fin.eq_zero_or_eq_succ a' with
+          | inl a'0 =>
+            use 0
+            simp [a'Val, a'0]
+          | inr a'succ =>
+            rcases a'succ with ⟨a'', a''Val⟩
+            use a''.succ.succ
+            simp [a'Val, a''Val]
+    · intro i
+      cases Fin.eq_zero_or_eq_succ i with
+      | inl i0 => simp [i0]
+      | inr isucc =>
+        rcases isucc with ⟨j, jVal⟩
+        cases Fin.eq_zero_or_eq_succ j with
+        | inl j0 => simp [jVal]
+                    simp [j0]
+        | inr jsucc =>
+          rcases jsucc with ⟨k, kVal⟩
+          simp [jVal, kVal]
+  case trans l₁ l₂ l₃ _ _ ih₁ ih₂ =>
+    rcases ih₁ with ⟨f₁, f₁Prop⟩
+    rcases ih₂ with ⟨f₂, f₂Prop⟩
+    use f₂ ∘ f₁
+    apply And.intro
+    · apply And.intro
+      · intros a b fab
+        exact f₁Prop.left.left (f₂Prop.left.left fab)
+      · intro a
+        rcases f₂Prop.left.right a with ⟨b, bProp⟩
+        rcases f₁Prop.left.right b with ⟨c, cProp⟩
+        use c
+        simp [bProp, cProp]
+    · intro i
+      simp
+      trans (l₂.get (f₁ i))
+      · exact f₁Prop.right i
+      · exact f₂Prop.right (f₁ i)
+
 lemma floormagic : ∀ (n m : ℕ) (q : ℚ), q < 1 → ↑n ≤ ⌊(↑m + q)⌋  → n ≤ m := by
   intros n m q smallqat nlemfloor
   rw  [Int.floor_nat_add] at nlemfloor
@@ -275,7 +435,7 @@ lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 
   apply And.intro
   intros x _ _ xeqb
   simp_all
-  simp[Finset.filter] at bint
+  --simp[Finset.filter] at bint
   simp[toEdge, bint]
   --NOTE: try avoid temp
   have temp := Finset.card_mul_eq_card_mul r hm hn
