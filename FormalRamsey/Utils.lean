@@ -331,31 +331,6 @@ lemma floormagic : ∀ (n m : ℕ) (q : ℚ), q < 1 → ↑n ≤ ⌊(↑m + q)�
   -- --rw [le_iff_lt_or_eq] at mlen
   -- cases xoreven
   -- }
-lemma notc : ∀ {c x y : Fin 2}, x ≠ c → y ≠ c → x = y := by
-
-  intros c x y _ _
-  fin_cases c 
-  all_goals{
-    fin_cases x 
-    try{tauto}
-    fin_cases y 
-    all_goals{
-      tauto
-    }
-  }
-  done
-
- 
-
-lemma not0_eq1: ∀ {x: Fin 2}, x ≠ 0 ↔ x = 1 := by
-  intro 
-  apply Iff.intro 
-  · intro xneq0
-    have _1_neq0 : (1 : Fin 2) ≠ 0 := by simp
-    apply notc xneq0 _1_neq0
-  · intro
-    simp_all
-  done
 
 lemma missing_pigeonhole {α β : Type} [DecidableEq α] [LinearOrderedSemiring β] : ∀ {s : Finset α}, Finset.Nonempty s → ∀ {f g : α → β}, s.sum f ≤ s.sum g → ∃ a : α, a ∈ s ∧ f a ≤ g a := by
   
@@ -441,14 +416,6 @@ lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 
   have temp := Finset.card_mul_eq_card_mul r hm hn
   simp[mul_one (t.card)] at temp
   simp[← temp,mul_comm]
-
--- NOTE: use Finset.univ_fin2
-/- lemma univexpand : (@Finset.univ (Fin 2) _) = {0, 1} := by
-  symm
-  rw [Finset.eq_univ_iff_forall]
-  intros
-  fin_cases x; simp
- -/
 
 lemma mkRat_one_den : ∀ (n : ℤ), (mkRat n 1).den = 1 := by intros; simp [mkRat, Rat.normalize]
 
