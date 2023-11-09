@@ -8,7 +8,7 @@ import Mathlib.Tactic
 -- import FormalRamsey.PickTactic
 import FormalRamsey.Utils
 import FormalRamsey.RamseyGraphs
-
+import FormalRamsey.Fin2
 open Ramsey
 
 def Ramsey₂Prop (N s t : ℕ) : Prop := RamseyProp N (s ::ᵥ t ::ᵥ Vector.nil)
@@ -81,8 +81,6 @@ theorem Ramsey₂PropSymm : ∀ N s t, Ramsey₂Prop N s t ↔ Ramsey₂Prop N t
   fin_cases i; use 1; swap; use 0
   all_goals{
     simp_all
-    simp [Vector.head] at SCard
-    simp [Vector.get,List.nthLe]
     constructor
     simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at SClique ⊢
     intros _ xinS _ yinS xneqy
@@ -132,8 +130,7 @@ theorem friendshipUpperbound : Ramsey₂Prop 6 3 3 := by
 
   rcases Nat.eq_zero_or_pos (Finset.filter (λ e ↦ e = c) {f ⟦(↑x, ↑y)⟧,f ⟦(↑y, ↑z)⟧,f ⟦(↑x, ↑z)⟧}).card with h|h
   simp at h
-  rw [Finset.filter_eq_empty_iff {f ⟦(↑x, ↑y)⟧, f ⟦(↑y, ↑z)⟧, f ⟦(↑x, ↑z)⟧}] at h
-  simp at h
+  simp [Finset.filter_eq_empty_iff ] at h
   rcases h with ⟨fxyneqc, fyzneqc, fxzneqc⟩
 
   have fxy_eq_fyz:= notc fxyneqc fyzneqc
@@ -153,7 +150,7 @@ theorem friendshipUpperbound : Ramsey₂Prop 6 3 3 := by
   simp [not0_eq1] at fxyneqc
   simp [fxyneqc] at d0
   use {↑x,↑y,↑z}, 1
-  simp[Vector.get, List.nthLe,d0]
+  simp[Vector.get,List.nthLe,d0]
 
   simp [← not0_eq1] at fxyneqc
   simp [fxyneqc] at d0
@@ -230,7 +227,7 @@ theorem Ramsey₂2 : ∀ k : ℕ, Ramsey₂ 2 k.succ = k.succ := by
   rcases (Quotient.exists_rep a) with ⟨⟨fst,snd⟩,aprop⟩
   simp_all
   have nDiag : ¬Sym2.IsDiag a := by simp_all
-  cases aprop <;> simp[← not0_eq1, (h a nDiag)]
+  cases aprop <;> simp[← not0_eq1, (h nDiag)]
   simp [Vector.get, List.nthLe]
   rcases h with ⟨⟨fst,snd⟩ ,wprop⟩
   simp at wprop
@@ -252,7 +249,7 @@ theorem Ramsey₂2 : ∀ k : ℕ, Ramsey₂ 2 k.succ = k.succ := by
   unfold RamseyProp
   simp
   intro
-  let f : Sym2 (Fin k) → Fin 2 := λ e ↦ 1
+  let f : Sym2 (Fin k) → Fin 2 := λ _ ↦ 1
   use f
   by_contra h
   simp at h
@@ -527,7 +524,7 @@ theorem Ramsey₂PropStrictIneq : ∀ M N s t : ℕ, Even M → Even N → Ramse
   have pghineq : (@Finset.univ (Fin (M' + N').succ) _).card • M' < ↑((Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart)↦ f ⟦x.toProd⟧ = 0) Finset.univ).card) := by simp [ghalt]
   have pgh := Finset.exists_lt_card_fiber_of_mul_lt_card_of_maps_to (λ (e : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart) _ ↦ Finset.mem_univ e.snd) pghineq
   rcases pgh with ⟨v, _, vprop⟩
-  simp at vprop
+ -- simp at vprop
   have cardeq : (Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart)↦ x.toProd.snd = v)
         (Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart)↦ f ⟦x.toProd⟧ = 0) Finset.univ)).card = (monochromaticVicinity (⊤ : SimpleGraph (Fin (M' + N').succ)) v f 0).card
   all_goals{
