@@ -65,7 +65,7 @@ def Ramsey₂GraphProp (N s t : ℕ) : Ramsey₂Prop N s t ↔ RamseyGraphProp N
         simp [not0_eq1] at tmp
         simp [xneqy, tmp]
 
-theorem Ramsey₂PropSymm : ∀ N s t, Ramsey₂Prop N s t ↔ Ramsey₂Prop N t s := by
+theorem Ramsey₂PropSymm : ∀ {N s t}, Ramsey₂Prop N s t ↔ Ramsey₂Prop N t s := by
 
   suffices helper : ∀ N s t, Ramsey₂Prop N s t → Ramsey₂Prop N t s
   intros N s t
@@ -625,6 +625,14 @@ theorem Ramsey₂Finite : ∀ s t : ℕ, { N : ℕ | Ramsey₂Prop N s.succ t.su
   }
   done
 
+theorem Ramsey₂ToRamsey₂Prop : ∀ {N s t : ℕ}, Ramsey₂ s.succ t.succ = N → Ramsey₂Prop N s.succ t.succ := by
+  intros N s t Ramsey
+  simp [Ramsey₂] at Ramsey
+  simp [← Ramsey]
+  have RamseyMem := Nat.sInf_mem (Ramsey₂Finite s t)
+  simp at RamseyMem
+  exact RamseyMem
+
 theorem Ramsey₂Ineq : ∀ s t : ℕ, Ramsey₂ s.succ.succ t.succ.succ ≤ Ramsey₂ s.succ t.succ.succ + Ramsey₂ s.succ.succ t.succ := by
   intros s t
   have RamseyM := Nat.sInf_mem (Ramsey₂Finite s t.succ)
@@ -669,7 +677,7 @@ theorem Ramsey₂StrictIneq : ∀ s t : ℕ, Even (Ramsey₂ s.succ t.succ.succ)
   simp at absurd
   done
 
-theorem Ramsey₂Symm : ∀  s t: ℕ, Ramsey₂ s.succ t.succ = Ramsey₂ t.succ s.succ := by
+theorem Ramsey₂Symm : ∀  {s t: ℕ}, Ramsey₂ s.succ t.succ = Ramsey₂ t.succ s.succ := by
   intros s t
   apply Nat.le_antisymm
   have RamseyM := Nat.sInf_mem (Ramsey₂Finite t s)
@@ -686,7 +694,7 @@ theorem Ramsey₂Symm : ∀  s t: ℕ, Ramsey₂ s.succ t.succ = Ramsey₂ t.suc
 
 theorem friendship_upper_bound_alt : Ramsey₂ 3 3 ≤ 6 := by
   have R33 := Ramsey₂Ineq 1 1
-  rw [Ramsey₂Symm 2 1, Ramsey₂2] at R33
+  rw [@Ramsey₂Symm 2 1, Ramsey₂2] at R33
   exact R33
   done
 
