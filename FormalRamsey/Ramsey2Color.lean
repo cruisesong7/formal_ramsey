@@ -788,6 +788,26 @@ theorem friendship : Ramsey₂ 3 3 = 6 := by
     intros M N MleN Ramsey₂M
     exact RamseyMonotone Ramsey₂M MleN
 
+theorem R43 : Ramsey₂ 4 3 = 9 := by
+  unfold Ramsey₂
+  rw [Nat.sInf_upward_closed_eq_succ_iff]
+  · simp
+    apply And.intro
+    · have Ramsey4 := Ramsey₂ToRamsey₂Prop (Ramsey₂2 3)
+      rw [Ramsey₂PropSymm] at Ramsey4
+      have Ramsey9 := Ramsey₂PropStrictIneq 6 4 2 1 (by simp) (by simp) friendshipUpperbound Ramsey4
+      exact Ramsey9
+    · -- Proof 1
+      -- rw [Ramsey₂ByList, not_forall]
+      -- use (λ (e : Sym2 (Fin 8)) ↦ if e ∈ ({⟦(0, 1)⟧, ⟦(1, 2)⟧, ⟦(2, 3)⟧, ⟦(3, 4)⟧, ⟦(4, 5)⟧, ⟦(5, 6)⟧, ⟦(6, 7)⟧, ⟦(7, 0)⟧, ⟦(0, 4)⟧, ⟦(1, 5)⟧}:Finset (Sym2 (Fin 8))) then 1 else 0)
+      -- simp
+      -- Proof 2
+      rw [Ramsey₂PropSymm, Ramsey₂GraphProp]
+      exact R34
+  · simp [Ramsey₂Prop]
+    intros M N MleN Ramsey₂M
+    exact RamseyMonotone Ramsey₂M MleN
+
 theorem Ramsey₂_binomial_coefficient_ineq : ∀ s t : ℕ, Ramsey₂ s.succ t.succ
 ≤ Nat.choose (s.succ + t.succ - 2) (s.succ - 1) := by
   intros s t
