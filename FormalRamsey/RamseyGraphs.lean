@@ -2,6 +2,8 @@ import Mathlib.Combinatorics.Pigeonhole
 import Mathlib.Combinatorics.SimpleGraph.Clique
 import Mathlib.Data.Nat.Lattice
 
+import FormalRamsey.G6
+
 def RamseyGraphProp (N s t : ℕ) : Prop := N > 0 ∧ (∀ (G : SimpleGraph (Fin N)) [DecidableRel G.Adj], (∃ S, G.IsNClique s S) ∨ (∃ T, Gᶜ.IsNClique t T))
 
 lemma RamseyGraphMonotone : ∀ {N s t}, RamseyGraphProp N s t → ∀ {M}, N ≤ M → RamseyGraphProp M s t := by
@@ -135,3 +137,20 @@ theorem RamseyGraph1 : ∀ k : ℕ, Ramsey 1 k.succ = 1 := by
   simp [RamseyGraphProp]
   assumption
   done
+
+theorem R34 : ¬(RamseyGraphProp 8 3 4) := by
+  simp [RamseyGraphProp]
+  -- use readG6 "GhdGKC", (by infer_instance)
+  g6 "GhdGKC"
+  simp [not_or]
+  apply And.intro
+  · intros S
+    rw [← SimpleGraph.mem_cliqueFinset_iff]
+    have cliqueFree : SimpleGraph.cliqueFinset (readG6 "GhdGKC") 3 = Finset.empty := by native_decide
+    rw [cliqueFree]
+    exact Finset.not_mem_empty S
+  · intros T
+    rw [← SimpleGraph.mem_cliqueFinset_iff]
+    have cliqueFree : SimpleGraph.cliqueFinset (readG6 "GhdGKC")ᶜ 4 = Finset.empty := by native_decide
+    rw [cliqueFree]
+    exact Finset.not_mem_empty T
