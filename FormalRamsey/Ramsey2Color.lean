@@ -456,7 +456,7 @@ theorem Ramsey₂PropIneq : ∀ M N s t : ℕ, Ramsey₂Prop M s t.succ → Rams
   done
 
 -- FIXME: Remove one .succ from the arguments
-theorem Ramsey₂PropStrictIneq : ∀ M N s t : ℕ, Even M → Even N → Ramsey₂Prop M s.succ t.succ.succ → Ramsey₂Prop N s.succ.succ t.succ → Ramsey₂Prop (M + N).pred s.succ.succ t.succ.succ := by
+theorem Ramsey₂PropStrictIneq : ∀ M N s t : ℕ, Even M → Even N → Ramsey₂Prop M s t.succ → Ramsey₂Prop N s.succ t → Ramsey₂Prop (M + N).pred s.succ t.succ := by
   intros M N s t evenM evenN RamseyM RamseyN
   rcases (Nat.exists_eq_succ_of_ne_zero (Ne.symm (ne_of_lt RamseyM.left))) with ⟨M', rfl⟩
   rcases (Nat.exists_eq_succ_of_ne_zero (Ne.symm (ne_of_lt RamseyN.left))) with ⟨N', rfl⟩
@@ -554,7 +554,7 @@ theorem Ramsey₂PropStrictIneq : ∀ M N s t : ℕ, Even M → Even N → Ramse
     }
     try{
       rw [cardeq] at vprop
-      have cliquecases := monochromaticVicinity_Ramsey v f 0 ⟨[s.succ, t.succ.succ], by simp⟩ (RamseyMonotone RamseyM vprop)
+      have cliquecases := monochromaticVicinity_Ramsey v f 0 ⟨[s, t.succ], by simp⟩ (RamseyMonotone RamseyM vprop)
       rcases cliquecases with ⟨S, Sclique⟩ | cliquecases
       use S, 0
       exact Sclique
@@ -566,7 +566,7 @@ theorem Ramsey₂PropStrictIneq : ∀ M N s t : ℕ, Even M → Even N → Ramse
     }
     try{
       rw [cardeq] at vprop
-      have cliquecases := monochromaticVicinity_Ramsey v f 1 ⟨[s.succ.succ, t.succ], by simp⟩ (RamseyMonotone RamseyN vprop)
+      have cliquecases := monochromaticVicinity_Ramsey v f 1 ⟨[s.succ, t], by simp⟩ (RamseyMonotone RamseyN vprop)
       rcases cliquecases with ⟨T, Tclique⟩ | cliquecases
       use T, 1
       exact Tclique
@@ -652,40 +652,40 @@ theorem Ramsey₂Ineq : ∀ s t : ℕ, Ramsey₂ s.succ t.succ ≤ Ramsey₂ s t
   done
 
 -- FIXME: Adjust to the parameters in Ramsey₂PropStrictIneq
--- theorem Ramsey₂StrictIneq : ∀ s t : ℕ, Even (Ramsey₂ s.succ t.succ.succ) → Even (Ramsey₂ s.succ.succ t.succ) → Ramsey₂ s.succ.succ t.succ.succ < Ramsey₂ s.succ t.succ.succ + Ramsey₂ s.succ.succ t.succ := by
---   intros s t evenM evenN
---   have lt_or_eq := Decidable.lt_or_eq_of_le (Ramsey₂Ineq s t)
---   rcases lt_or_eq with lt | eq
---   exact lt
+theorem Ramsey₂StrictIneq : ∀ s t : ℕ, Even (Ramsey₂ s t.succ) → Even (Ramsey₂ s.succ t) → Ramsey₂ s.succ t.succ < Ramsey₂ s t.succ + Ramsey₂ s.succ t := by
+  intros s t evenM evenN
+  have lt_or_eq := Decidable.lt_or_eq_of_le (Ramsey₂Ineq s t)
+  rcases lt_or_eq with lt | eq
+  exact lt
 
---   have temp := Ramsey₂PropStrictIneq (Ramsey₂ s.succ t.succ.succ) (Ramsey₂ s.succ.succ t.succ) (s) (t) evenM evenN
---   unfold Ramsey₂ at temp
---   have RamseyM := Nat.sInf_mem (Ramsey₂Finite s t.succ)
---   have RamseyN := Nat.sInf_mem (Ramsey₂Finite s.succ t)
---   simp at RamseyM RamseyN
---   unfold Ramsey₂ at eq
+  have temp := Ramsey₂PropStrictIneq (Ramsey₂ s t.succ) (Ramsey₂ s.succ t) (s) (t) evenM evenN
+  unfold Ramsey₂ at temp
+  have RamseyM := Nat.sInf_mem (Ramsey₂Finite s t.succ)
+  have RamseyN := Nat.sInf_mem (Ramsey₂Finite s.succ t)
+  simp at RamseyM RamseyN
+  unfold Ramsey₂ at eq
 
---   have pos : (sInf {N : ℕ | Ramsey₂Prop N s.succ t.succ.succ} + sInf {N : ℕ | Ramsey₂Prop N s.succ.succ t.succ}) ≠ 0
---   simp[← eq]
---   by_contra h
---   rcases h with h | h
---   unfold Ramsey₂Prop RamseyProp at h
---   simp at h
---   have contra := Ramsey₂Finite s.succ t.succ
---   simp [h] at contra
+  have pos : (sInf {N : ℕ | Ramsey₂Prop N s t.succ} + sInf {N : ℕ | Ramsey₂Prop N s.succ t}) ≠ 0
+  simp[← eq]
+  by_contra h
+  rcases h with h | h
+  unfold Ramsey₂Prop RamseyProp at h
+  simp at h
+  have contra := Ramsey₂Finite s.succ t.succ
+  simp [h] at contra
 
---   have pred_lt : (sInf {N : ℕ | Ramsey₂Prop N s.succ t.succ.succ} + sInf {N : ℕ | Ramsey₂Prop N s.succ.succ t.succ}).pred <
---   (sInf {N : ℕ | Ramsey₂Prop N s.succ t.succ.succ} + sInf {N : ℕ | Ramsey₂Prop N s.succ.succ t.succ}) := by simp[ Nat.pred_lt pos]
+  have pred_lt : (sInf {N : ℕ | Ramsey₂Prop N s t.succ} + sInf {N : ℕ | Ramsey₂Prop N s.succ t}).pred <
+  (sInf {N : ℕ | Ramsey₂Prop N s t.succ} + sInf {N : ℕ | Ramsey₂Prop N s.succ t}) := by simp[ Nat.pred_lt pos]
 
---   have predInSet : (sInf {N : ℕ | Ramsey₂Prop N s.succ t.succ.succ} +
---   sInf {N : ℕ | Ramsey₂Prop N s.succ.succ t.succ}).pred ∈
---   {N : ℕ | Ramsey₂Prop N s.succ.succ t.succ.succ} := by simp[temp RamseyM RamseyN]
+  have predInSet : (sInf {N : ℕ | Ramsey₂Prop N s t.succ} +
+  sInf {N : ℕ | Ramsey₂Prop N s.succ t}).pred ∈
+  {N : ℕ | Ramsey₂Prop N s.succ t.succ} := by simp[temp RamseyM RamseyN]
 
---   have le_pred :=  Nat.sInf_le predInSet
---   simp[eq] at le_pred
---   have absurd := lt_of_le_of_lt le_pred pred_lt
---   simp at absurd
---   done
+  have le_pred :=  Nat.sInf_le predInSet
+  simp[eq] at le_pred
+  have absurd := lt_of_le_of_lt le_pred pred_lt
+  simp at absurd
+  done
 
 theorem Ramsey₂Symm : ∀  {s t: ℕ}, Ramsey₂ s t = Ramsey₂ t s := by
   intros s t
@@ -805,7 +805,7 @@ theorem R43 : Ramsey₂ 4 3 = 9 := by
     apply And.intro
     · have Ramsey4 := Ramsey₂ToRamsey₂Prop (Ramsey₂2 3)
       rw [Ramsey₂PropSymm] at Ramsey4
-      have Ramsey9 := Ramsey₂PropStrictIneq 6 4 2 1 (by simp) (by simp) friendshipUpperbound Ramsey4
+      have Ramsey9 := Ramsey₂PropStrictIneq 6 4 3 2 (by simp) (by simp) friendshipUpperbound Ramsey4
       exact Ramsey9
     · -- Proof 1
       -- rw [Ramsey₂ByList, not_forall]
@@ -819,28 +819,28 @@ theorem R43 : Ramsey₂ 4 3 = 9 := by
     exact RamseyMonotone Ramsey₂M MleN
 
 -- FIXME: Something broke in this proof
--- theorem Ramsey₂_binomial_coefficient_ineq : ∀ s t : ℕ, Ramsey₂ s.succ t.succ
--- ≤ Nat.choose (s.succ + t.succ - 2) (s.succ - 1) := by
---   intros s t
+theorem Ramsey₂_binomial_coefficient_ineq : ∀ s t : ℕ, Ramsey₂ s.succ t.succ
+≤ Nat.choose (s.succ + t.succ - 2) (s.succ - 1) := by
+  intros s t
 
---   induction' s with s' ihp₁ generalizing t
---   simp [Ramsey₂1 t]
+  induction' s with s' ihp₁ generalizing t
+  simp [Ramsey₂1 t]
 
---   induction' t with t' ihp₂
---   rw [Ramsey₂Symm]
---   simp [Ramsey₂1 s'.succ]
---   transitivity Ramsey₂ s' t'.succ.succ + Ramsey₂ s'.succ.succ t'.succ
---   apply Ramsey₂Ineq s' t'
+  induction' t with t' ihp₂
+  rw [Ramsey₂Symm]
+  simp [Ramsey₂1 s'.succ]
+  transitivity Ramsey₂ s'.succ t'.succ.succ + Ramsey₂ s'.succ.succ t'.succ
+  apply Ramsey₂Ineq s'.succ t'.succ
 
---   have temp₁: Ramsey₂ s'.succ t'.succ.succ + Ramsey₂ s'.succ.succ t'.succ
---   ≤ (s'.succ + t'.succ.succ - 2).choose s' + (s'.succ.succ + t'.succ - 2).choose s'.succ
---   apply add_le_add
---   exact ihp₁ t'.succ
---   exact ihp₂
+  have temp₁: Ramsey₂ s'.succ t'.succ.succ + Ramsey₂ s'.succ.succ t'.succ
+  ≤ (s'.succ + t'.succ.succ - 2).choose s' + (s'.succ.succ + t'.succ - 2).choose s'.succ
+  apply add_le_add
+  exact ihp₁ t'.succ
+  exact ihp₂
 
---   have temp₂ :(s'.succ.succ + t'.succ.succ - 2).choose (s'.succ.succ - 1) =
---   (s'.succ + t'.succ.succ - 2).choose s' + (s'.succ.succ + t'.succ - 2).choose s'.succ
---   := by simp [Nat.succ_add, Nat.add_succ,Nat.choose_succ_succ]
---   rw [temp₂]
---   exact temp₁
---   done
+  have temp₂ :(s'.succ.succ + t'.succ.succ - 2).choose (s'.succ.succ - 1) =
+  (s'.succ + t'.succ.succ - 2).choose s' + (s'.succ.succ + t'.succ - 2).choose s'.succ
+  := by simp [Nat.succ_add, Nat.add_succ,Nat.choose_succ_succ]
+  rw [temp₂]
+  exact temp₁
+  done
