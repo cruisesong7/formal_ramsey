@@ -428,3 +428,86 @@ lemma mkRat_num_one : ∀ (n : ℕ), (mkRat 1 n.succ).num = 1 := by intros; simp
 lemma mkRat_den_one : ∀ (n : ℕ), (mkRat 1 n.succ).den = n.succ := by intros; simp [mkRat, Rat.normalize]
 
 end Rat
+
+namespace Finset
+
+/-- A finite partition of `a : Finset α` is a pairwise disjoint finite set of elements whose supremum is `a`. -/
+@[ext]
+structure FinpartitionWithEmpty {α : Type} [DecidableEq α] (a : Finset α) where
+  /-- The elements of the finite partition of `a` -/
+  parts : Finset (Finset α)
+  /-- The parts are pairwise disjoint -/
+  pwDisj : Set.PairwiseDisjoint ↑parts (@id (Finset α))
+  /-- The supremum of the partition is `a` -/
+  supParts : parts.sup id = a
+  -- deriving DecidableEq
+
+open BigOperators
+
+namespace FinpartitionWithEmpty
+
+variable {α : Type} [DecidableEq α] {a : Finset α} {P : FinpartitionWithEmpty a}
+
+theorem biUnion_parts : P.parts.biUnion id = a :=
+  (sup_eq_biUnion _ _).symm.trans P.supParts
+
+theorem sum_card_parts_with_empty (P : FinpartitionWithEmpty a) : ∑ i in P.parts, Finset.card i = a.card := by
+  convert congr_arg Finset.card P.biUnion_parts
+  rw [card_biUnion P.pwDisj]
+  rfl
+
+end FinpartitionWithEmpty
+
+theorem sum_image_vanishing {β : Type u} {α : Type v} {γ : Type w} {f : α → β} [AddCommMonoid β] [DecidableEq α] [DecidableEq γ] {s : Finset γ} {g : γ → α} : (∀ x ∈ s, ∀ y ∈ s, g x = g y → f (g x) ≠ 0 → x = y) → (s.image g).sum (λ x ↦ f x) = s.sum (f ∘ g) := by
+  induction s using Finset.induction with
+  | empty => simp
+  | insert anotins ih =>
+    next a s' =>
+      intro aProp
+      simp [Finset.sum_insert anotins]
+      by_cases (g a) ∈ s'.image g
+      · rw [Finset.insert_eq_of_mem h]
+        simp at h
+        rcases h with ⟨b, bins', gaeqgb⟩
+        have bProp := aProp b
+        simp [bins'] at bProp
+        rcases bProp with ⟨gbProp, _⟩
+        by_cases f (g b) = 0
+        · rw [gaeqgb] at h
+          simp [h]
+          apply ih
+          intros x xins' y yins' gxy fgx
+          apply aProp <;> try { assumption } <;> { simp; right; assumption }
+        · rw [gbProp gaeqgb h] at bins'
+          contradiction
+      · simp [Finset.sum_insert h]
+        rw [ih]
+        · simp
+        · intros x xins' y yins'
+          exact aProp x (Finset.mem_insert_of_mem xins') y (Finset.mem_insert_of_mem yins')
+
+end Finset
+
+namespace Fin
+
+lemma univ_disjUnion_zero_succ : ∀ n, (Finset.univ : Finset (Fin n.succ)) = Finset.disjUnion {0} (Finset.univ.map (Fin.succEmbedding n).toEmbedding) (by simp) := by
+  simp [Finset.ext_iff]
+  intro n
+  apply Fin.cases <;> simp [Fin.succ_ne_zero]
+
+-- TODO: Is this really missing? There are embeddings for LE, LE, succ, etc...
+def castEmb {n : Nat} {m : Nat} (eq : n = m) : Fin n ↪ Fin m := ⟨Fin.cast eq, by simp [Function.Injective, Fin.cast, Fin.ext_iff]⟩
+
+end Fin
+
+lemma vector_list_finset_sum : ∀ {n : ℕ} (V : Vector ℕ n), List.sum (List.map Nat.cast V.toList) = Finset.sum Finset.univ (λ x ↦ ↑(V.get x) : (Fin n) → ℚ) := by
+  intro n
+  induction n with
+  | zero => simp
+  | succ k' ih =>
+    intro V
+    rw [← Vector.cons_head_tail V, Fin.univ_disjUnion_zero_succ, Finset.sum_disjUnion]
+    simp [-Vector.cons_head_tail]
+    have ihv := ih V.tail
+    simp at ihv
+    exact ihv
