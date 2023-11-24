@@ -55,11 +55,11 @@ theorem RamseyGraphPropSymm : ∀ N s t, RamseyGraphProp N s t ↔ RamseyGraphPr
   use helper N s t, helper N t s
   done
 
-noncomputable def Ramsey (s t : ℕ) : ℕ := sInf { N : ℕ | RamseyGraphProp N s t }
+noncomputable def GraphRamsey (s t : ℕ) : ℕ := sInf { N : ℕ | RamseyGraphProp N s t }
 
-theorem RamseyGraph2 : ∀ k : ℕ, Ramsey 2 k.succ = k.succ := by
+theorem GraphRamsey2 : ∀ k : ℕ, GraphRamsey 2 k.succ = k.succ := by
   intros k
-  unfold Ramsey
+  unfold GraphRamsey
 
   have RamseyGraph2Monotone : ∀ M₁ M₂, M₁ ≤ M₂ → M₁ ∈ { N : ℕ | RamseyGraphProp N 2 k.succ } → M₂ ∈ { N : ℕ | RamseyGraphProp N 2 k.succ }
   intros M₁ M₂ M₁leM₂
@@ -123,9 +123,9 @@ theorem RamseyGraph1Prop : ∀ N k : ℕ, RamseyGraphProp N.succ 1 k := by
   simp [SimpleGraph.isNClique_iff]
   done
 
-theorem RamseyGraph1 : ∀ k : ℕ, Ramsey 1 k.succ = 1 := by
+theorem RamseyGraph1 : ∀ k : ℕ, GraphRamsey 1 k.succ = 1 := by
   intro k
-  simp [Ramsey]
+  simp [GraphRamsey]
   have Ramsey1Monotone : ∀ M₁ M₂, M₁ ≤ M₂ → M₁ ∈ { N : ℕ | RamseyGraphProp N 1 k.succ } → M₂ ∈ { N : ℕ | RamseyGraphProp N 1 k.succ }
   intros M₁ M₂ M₁leM₂
   simp
