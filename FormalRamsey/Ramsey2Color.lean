@@ -426,7 +426,7 @@ theorem Ramsey₂PropIneq : ∀ M N s t : ℕ, Ramsey₂Prop M s.succ t.succ.suc
   rw [Int.ofNat_sub MNpos.lt]
   -- NOTE Again, these lines should all be part of a single simp call but we get whnf timeout
   rw [Rat.add_def', Rat.coe_nat_num M, Rat.coe_nat_den M, Rat.coe_nat_num N, Rat.coe_nat_den N, Int.ofNat_one, ← Distrib.right_distrib, Int.mul_one, ← Int.ofNat_add, Nat.mul_one]
-  rw [Rat.sub_def', Rat.one_den, Rat.one_num, Int.ofNat_one, Int.mul_one, Int.one_mul, Nat.mul_one, mkRat_one_num, mkRat_one_den, Int.ofNat_one]
+  rw [Rat.sub_def', Rat.one_den, Rat.one_num, Int.ofNat_one, Int.mul_one, Int.one_mul, Nat.mul_one, Rat.mkRat_one_num, Rat.mkRat_one_den, Int.ofNat_one]
 
   have mp := missing_pigeonhole (Exists.intro (0 : Fin 2) (Finset.mem_univ (0 : Fin 2))) (le_of_eq hgsum)
   rcases mp with ⟨a, _, gha⟩

@@ -417,6 +417,14 @@ lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 
   simp[mul_one (t.card)] at temp
   simp[← temp,mul_comm]
 
-lemma mkRat_one_den : ∀ (n : ℤ), (mkRat n 1).den = 1 := by intros; simp [mkRat, Rat.normalize]
+namespace Rat
 
-lemma mkRat_one_num : ∀ (n : ℤ), (mkRat n 1).num = n := by intros; simp [mkRat, Rat.normalize]
+lemma mkRat_one_num : ∀ (z : ℤ), (mkRat z 1).num = z := by intros; simp [mkRat, Rat.normalize]
+
+lemma mkRat_one_den : ∀ (z : ℤ), (mkRat z 1).den = 1 := by intros; simp [mkRat, Rat.normalize]
+
+lemma mkRat_num_one : ∀ (n : ℕ), (mkRat 1 n.succ).num = 1 := by intros; simp [mkRat, Rat.normalize]
+
+lemma mkRat_den_one : ∀ (n : ℕ), (mkRat 1 n.succ).den = n.succ := by intros; simp [mkRat, Rat.normalize]
+
+end Rat
