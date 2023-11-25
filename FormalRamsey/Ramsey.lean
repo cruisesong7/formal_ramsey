@@ -419,96 +419,104 @@ theorem RamseyPropIneq : ∀ {k : ℕ} {M : Vector ℕ k.succ.succ} (MPos : 1 �
 --   }
 --   done
 
-theorem RamseyFinite : ∀ {k : ℕ} (s : Vector ℕ k.succ.succ), { N : ℕ | RamseyProp N s }.Nonempty := by
+theorem RamseyFinite : ∀ {k : ℕ} (s : Vector ℕ k.succ), { N : ℕ | RamseyProp N s }.Nonempty := by
   intro k
-  induction k with
+  cases k with
   | zero =>
     intro s
-    cases s
-    next s sLength =>
-      rw [List.length_eq_two] at sLength
-      rcases sLength with ⟨a, b, sEq⟩
-      rcases (Ramsey₂Finite a b) with ⟨R, RProp⟩
-      simp [Ramsey₂Prop] at RProp
-      use R
-      simp [sEq]
-      exact RProp
-  | succ k' ih =>
-    intro s
-    rcases (ih s.tail) with ⟨R, RProp⟩
-    rcases (Ramsey₂Finite s.head R) with ⟨R', R'Prop⟩
-    simp at RProp R'Prop
-    simp [Ramsey₂Prop, RamseyProp] at R'Prop
-    use R'
+    use s.head.succ
     simp [RamseyProp]
-    apply And.intro
-    · exact R'Prop.left
-    · intro f
-      rcases (R'Prop.right (λ e ↦ if f e = 0 then 0 else 1)) with ⟨R'', i, R''Prop⟩
-      fin_cases i
-      · use R'', 0
-        simp [graphAtColor] at R''Prop ⊢
-        cases R''Prop
-        next R''Clique R''Card =>
+    intro f
+    use (Finset.univ.map Fin.castSuccEmb.toEmbedding), 0
+    constructor <;>  simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor]
+  | succ k =>
+    induction k with
+    | zero =>
+      intro s
+      cases s
+      next s sLength =>
+        rw [List.length_eq_two] at sLength
+        rcases sLength with ⟨a, b, sEq⟩
+        rcases (Ramsey₂Finite a b) with ⟨R, RProp⟩
+        simp [Ramsey₂Prop] at RProp
+        use R
+        simp [sEq]
+        exact RProp
+    | succ k' ih =>
+      intro s
+      rcases (ih s.tail) with ⟨R, RProp⟩
+      rcases (Ramsey₂Finite s.head R) with ⟨R', R'Prop⟩
+      simp at RProp R'Prop
+      simp [Ramsey₂Prop, RamseyProp] at R'Prop
+      use R'
+      simp [RamseyProp]
+      apply And.intro
+      · exact R'Prop.left
+      · intro f
+        rcases (R'Prop.right (λ e ↦ if f e = 0 then 0 else 1)) with ⟨R'', i, R''Prop⟩
+        fin_cases i
+        · use R'', 0
+          simp [graphAtColor] at R''Prop ⊢
+          cases R''Prop
+          next R''Clique R''Card =>
+            constructor
+            · simp [SimpleGraph.IsClique, Set.Pairwise] at R''Clique ⊢
+              intros x xinR y yinR xneqy
+              cases (R''Clique xinR yinR xneqy)
+              next _ notnot =>
+                simp [xneqy]
+                rw [← @Decidable.not_not (f (Quotient.mk (Sym2.Rel.setoid (Fin R')) (x, y)) = 0)]
+                exact notnot
+            · exact R''Card
+        · simp at R''Prop
+          unfold RamseyProp at RProp
+          rcases R''Prop with ⟨R''Clique, R''Card⟩
+          have Rcard : (Finset.univ : Finset (Fin R)).card = R''.card := by
+            simp [Vector.get, List.nthLe] at R''Card
+            simp [R''Card]
+          have FinRNonempty : (Finset.univ : Finset (Fin R)) ≠ ∅ := by
+            haveI : Nonempty (Fin R) := by
+              rw [← Fin.pos_iff_nonempty]
+              exact RProp.left.lt
+            rw [← Finset.nonempty_iff_ne_empty]
+            apply Finset.univ_nonempty
+          have vertexMapEx := bijection_of_eq_card Rcard
+          simp [FinRNonempty] at vertexMapEx
+          rcases vertexMapEx with ⟨vmap, vmapBij⟩
+          have fneq0 : ∀ (e : Sym2 (Fin R)), f (e.map (λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v ))).val)) ≠ 0 := by
+            intros e feq0
+            simp [SimpleGraph.isClique_iff, Set.Pairwise] at R''Clique
+            have eversion : ∃ x, f (x.map (λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v ))).val)) = 0 := ⟨e, feq0⟩
+            rw [Sym2.exists] at eversion
+            rcases eversion with ⟨u, v, uvProp⟩
+            have vmapneq : ¬(vmap (Subtype.mk u (Finset.mem_univ u))).val = (vmap (Subtype.mk v (Finset.mem_univ v))).val := sorry
+            have cliqueInfo := R''Clique (vmap (Subtype.mk u (Finset.mem_univ u))).property (vmap (Subtype.mk v (Finset.mem_univ v))).property vmapneq
+            simp [graphAtColor] at cliqueInfo
+            exact cliqueInfo.right uvProp
+          have exClique := RProp.right (λ (e : Sym2 (Fin R)) ↦ (f (e.map (λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v))).val))).pred (fneq0 _))
+          rcases exClique with ⟨S, i, Sclique⟩
+          let vmap' := λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v))).val
+          have vmapInj : Function.Injective vmap' := by
+            simp [Function.Injective]
+            intros a₁ a₂ vmapa₁a₂
+            rw [← Subtype.ext_iff] at vmapa₁a₂
+            exact Subtype.ext_iff.mp (vmapBij.left vmapa₁a₂)
+          let vmapEmb : Function.Embedding (Fin R) (Fin R') := ⟨vmap', vmapInj⟩
+          use S.map vmapEmb, i.succ
+          rcases Sclique with ⟨Sclique, Scard⟩
           constructor
-          · simp [SimpleGraph.IsClique, Set.Pairwise] at R''Clique ⊢
-            intros x xinR y yinR xneqy
-            cases (R''Clique xinR yinR xneqy)
-            next _ notnot =>
-              simp [xneqy]
-              rw [← @Decidable.not_not (f (Quotient.mk (Sym2.Rel.setoid (Fin R')) (x, y)) = 0)]
-              exact notnot
-          · exact R''Card
-      · simp at R''Prop
-        unfold RamseyProp at RProp
-        rcases R''Prop with ⟨R''Clique, R''Card⟩
-        have Rcard : (Finset.univ : Finset (Fin R)).card = R''.card := by
-          simp [Vector.get, List.nthLe] at R''Card
-          simp [R''Card]
-        have FinRNonempty : (Finset.univ : Finset (Fin R)) ≠ ∅ := by
-          haveI : Nonempty (Fin R) := by
-            rw [← Fin.pos_iff_nonempty]
-            exact RProp.left.lt
-          rw [← Finset.nonempty_iff_ne_empty]
-          apply Finset.univ_nonempty
-        have vertexMapEx := bijection_of_eq_card Rcard
-        simp [FinRNonempty] at vertexMapEx
-        rcases vertexMapEx with ⟨vmap, vmapBij⟩
-        have fneq0 : ∀ (e : Sym2 (Fin R)), f (e.map (λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v ))).val)) ≠ 0 := by
-          intros e feq0
-          simp [SimpleGraph.isClique_iff, Set.Pairwise] at R''Clique
-          have eversion : ∃ x, f (x.map (λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v ))).val)) = 0 := ⟨e, feq0⟩
-          rw [Sym2.exists] at eversion
-          rcases eversion with ⟨u, v, uvProp⟩
-          have vmapneq : ¬(vmap (Subtype.mk u (Finset.mem_univ u))).val = (vmap (Subtype.mk v (Finset.mem_univ v))).val := sorry
-          have cliqueInfo := R''Clique (vmap (Subtype.mk u (Finset.mem_univ u))).property (vmap (Subtype.mk v (Finset.mem_univ v))).property vmapneq
-          simp [graphAtColor] at cliqueInfo
-          exact cliqueInfo.right uvProp
-        have exClique := RProp.right (λ (e : Sym2 (Fin R)) ↦ (f (e.map (λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v))).val))).pred (fneq0 _))
-        rcases exClique with ⟨S, i, Sclique⟩
-        let vmap' := λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v))).val
-        have vmapInj : Function.Injective vmap' := by
-          simp [Function.Injective]
-          intros a₁ a₂ vmapa₁a₂
-          rw [← Subtype.ext_iff] at vmapa₁a₂
-          exact Subtype.ext_iff.mp (vmapBij.left vmapa₁a₂)
-        let vmapEmb : Function.Embedding (Fin R) (Fin R') := ⟨vmap', vmapInj⟩
-        use S.map vmapEmb, i.succ
-        rcases Sclique with ⟨Sclique, Scard⟩
-        constructor
-        · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at Sclique ⊢
-          intros x xinS y yinS xneqy
-          apply And.intro
-          · exact xneqy
-          · have xneqy' : ¬(x = y) := sorry
-             -- intro xeqy
-             -- rw [← Subtype.ext_iff] at xneqy
-            have lemmesee := Sclique xinS yinS xneqy'
-            rw [Fin.pred_eq_iff_eq_succ] at lemmesee
-            exact lemmesee.right
-        · simp at Scard ⊢
-          exact Scard
-  done
+          · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at Sclique ⊢
+            intros x xinS y yinS xneqy
+            apply And.intro
+            · exact xneqy
+            · have xneqy' : ¬(x = y) := sorry
+               -- intro xeqy
+               -- rw [← Subtype.ext_iff] at xneqy
+              have lemmesee := Sclique xinS yinS xneqy'
+              rw [Fin.pred_eq_iff_eq_succ] at lemmesee
+              exact lemmesee.right
+          · simp at Scard ⊢
+            exact Scard
 
 -- TODO Figure out how to state this theorem
 -- theorem Ramsey₂Ineq : ∀ s t : ℕ, Ramsey₂ s.succ.succ t.succ.succ ≤ Ramsey₂ s.succ t.succ.succ + Ramsey₂ s.succ.succ t.succ := by 
