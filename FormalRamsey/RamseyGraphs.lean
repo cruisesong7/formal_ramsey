@@ -3,7 +3,7 @@ import Mathlib.Combinatorics.SimpleGraph.Clique
 import Mathlib.Data.Nat.Lattice
 
 import FormalRamsey.G6
-
+import FormalRamsey.G6Visualizer
 def RamseyGraphProp (N s t : ℕ) : Prop := N > 0 ∧ (∀ (G : SimpleGraph (Fin N)) [DecidableRel G.Adj], (∃ S, G.IsNClique s S) ∨ (∃ T, Gᶜ.IsNClique t T))
 
 lemma RamseyGraphMonotone : ∀ {N s t}, RamseyGraphProp N s t → ∀ {M}, N ≤ M → RamseyGraphProp M s t := by
@@ -138,10 +138,13 @@ theorem RamseyGraph1 : ∀ k : ℕ, GraphRamsey 1 k.succ = 1 := by
   assumption
   done
 
+open ProofWidgets
+
 theorem R34 : ¬(RamseyGraphProp 8 3 4) := by
   simp [RamseyGraphProp]
   -- use readG6 "GhdGKC", (by infer_instance)
   g6 "GhdGKC"
+  with_panel_widgets [SelectionPanel]
   simp [not_or]
   apply And.intro
   · intros S
