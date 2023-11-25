@@ -14,7 +14,7 @@ lemma RamseyGraphMonotone : ∀ {N s t}, RamseyGraphProp N s t → ∀ {M}, N �
   use (lt_of_lt_of_le Ngt0.lt NleqM)
   intros G _
   let subAdj : Fin N → Fin N → Prop := λ u v ↦ G.Adj (Fin.castLE NleqM u) (Fin.castLE NleqM v)
-  have subAdjSym : Symmetric subAdj := by 
+  have subAdjSym : Symmetric subAdj := by
     unfold Symmetric
     simp
     intros _ _ xAdjy
@@ -34,7 +34,7 @@ lemma RamseyGraphMonotone : ∀ {N s t}, RamseyGraphProp N s t → ∀ {M}, N �
     have xNeqy : x ≠ y := by intro; simp_all
     simp_all
   }
-  
+
 theorem RamseyGraphPropSymm : ∀ N s t, RamseyGraphProp N s t ↔ RamseyGraphProp N t s := by
   have helper : ∀ N s t, RamseyGraphProp N s t → RamseyGraphProp N t s := by
     simp [RamseyGraphProp]
@@ -72,7 +72,7 @@ theorem GraphRamsey2 : ∀ k : ℕ, GraphRamsey 2 k.succ = k.succ := by
   apply And.intro
   simp [RamseyGraphProp, SimpleGraph.isNClique_iff, SimpleGraph.IsClique, Set.Pairwise]
   intros G _
-  rcases Finset.eq_empty_or_nonempty (G.edgeFinset) with GEmp| ⟨⟨x,y⟩, xyInG⟩ 
+  rcases Finset.eq_empty_or_nonempty (G.edgeFinset) with GEmp| ⟨⟨x,y⟩, xyInG⟩
 
   · rw [Finset.eq_empty_iff_forall_not_mem] at GEmp
     right
@@ -86,10 +86,10 @@ theorem GraphRamsey2 : ∀ k : ℕ, GraphRamsey 2 k.succ = k.succ := by
   · left
     use {x,y}
     simp[Finset.card_eq_two]
-    simp at xyInG 
+    simp at xyInG
     have tmp := @SimpleGraph.mem_edgeSet (Fin k.succ) G x y
     change Quot.mk Setoid.r (x, y) ∈ SimpleGraph.edgeSet G ↔ SimpleGraph.Adj G x y at tmp
-    rw [tmp] at xyInG 
+    rw [tmp] at xyInG
     apply And.intro
     swap
     · use x, y
@@ -103,14 +103,14 @@ theorem GraphRamsey2 : ∀ k : ℕ, GraphRamsey 2 k.succ = k.succ := by
   use (⊥ : SimpleGraph (Fin k))
   by_contra h
   simp at h
-  rcases (h (SimpleGraph.Bot.adjDecidable (Fin k))) with ⟨_, ⟨_, h⟩⟩ | ⟨S, h⟩ 
+  rcases (h (SimpleGraph.Bot.adjDecidable (Fin k))) with ⟨_, ⟨_, h⟩⟩ | ⟨S, h⟩
   rw [Finset.card_eq_two] at h
   rcases h with ⟨_, _, _, _⟩
   simp_all
   have tmp := card_finset_fin_le S
   rw [h , Nat.succ_eq_add_one] at tmp
   simp at tmp
-  
+
   assumption
   done
 
@@ -131,8 +131,8 @@ theorem RamseyGraph1 : ∀ k : ℕ, GraphRamsey 1 k.succ = 1 := by
   simp
   intro M₁RamseyG
   apply RamseyGraphMonotone M₁RamseyG M₁leM₂
-  --NOTE: used to be rewrite[Nat.sInf_upward_closed_eq_succ_iff] (Ramsey1Monotone) 
-  rw [Nat.sInf_upward_closed_eq_succ_iff] 
+  --NOTE: used to be rewrite[Nat.sInf_upward_closed_eq_succ_iff] (Ramsey1Monotone)
+  rw [Nat.sInf_upward_closed_eq_succ_iff]
   simp [RamseyGraph1Prop 0 k.succ]
   simp [RamseyGraphProp]
   assumption
@@ -154,3 +154,40 @@ theorem R34 : ¬(RamseyGraphProp 8 3 4) := by
     have cliqueFree : SimpleGraph.cliqueFinset (readG6 "GhdGKC")ᶜ 4 = Finset.empty := by native_decide
     rw [cliqueFree]
     exact Finset.not_mem_empty T
+
+
+theorem R35 : ¬(RamseyGraphProp 13 3 5) := by
+  simp [RamseyGraphProp]
+  -- use readG6 "LhEIHEPQHGaPaP", (by infer_instance)
+  g6 "LhEIHEPQHGaPaP"
+  simp [not_or]
+  apply And.intro
+  · intros S
+    rw [← SimpleGraph.mem_cliqueFinset_iff]
+    have cliqueFree : SimpleGraph.cliqueFinset (readG6 "LhEIHEPQHGaPaP") 3 = Finset.empty := by native_decide
+    rw [cliqueFree]
+    exact Finset.not_mem_empty S
+  · intros T
+    rw [← SimpleGraph.mem_cliqueFinset_iff]
+    have cliqueFree : SimpleGraph.cliqueFinset (readG6 "LhEIHEPQHGaPaP")ᶜ 5 = Finset.empty := by native_decide
+    rw [cliqueFree]
+    exact Finset.not_mem_empty T
+  done
+
+theorem R44' : ¬(RamseyGraphProp 17 4 4) := by
+  simp [RamseyGraphProp]
+  -- use readG6 "P}qTKukXaUja[IBjanPeMI\\K", (by infer_instance)
+  g6 "P}qTKukXaUja[IBjanPeMI\\K"
+  simp [not_or]
+  apply And.intro
+  · intros S
+    rw [← SimpleGraph.mem_cliqueFinset_iff]
+    have cliqueFree : SimpleGraph.cliqueFinset (readG6 "P}qTKukXaUja[IBjanPeMI\\K") 4 = Finset.empty := by native_decide
+    rw [cliqueFree]
+    exact Finset.not_mem_empty S
+  · intros T
+    rw [← SimpleGraph.mem_cliqueFinset_iff]
+    have cliqueFree : SimpleGraph.cliqueFinset (readG6 "P}qTKukXaUja[IBjanPeMI\\K")ᶜ 4 = Finset.empty := by native_decide
+    rw [cliqueFree]
+    exact Finset.not_mem_empty T
+  done

@@ -818,6 +818,39 @@ theorem R43 : Ramsey₂ 4 3 = 9 := by
     intros M N MleN Ramsey₂M
     exact RamseyMonotone Ramsey₂M MleN
 
+theorem R53 : Ramsey₂ 5 3 = 14 := by
+  unfold Ramsey₂
+  rw [Nat.sInf_upward_closed_eq_succ_iff]
+  · simp
+    apply And.intro
+    · have Ramsey5 := Ramsey₂ToRamsey₂Prop (Ramsey₂2 4)
+      rw [Ramsey₂PropSymm] at Ramsey5
+      have Ramsey4 := Ramsey₂ToRamsey₂Prop (R43)
+      have Ramsey14 := Ramsey₂PropIneq 9 5 4 2  Ramsey4 Ramsey5
+      exact Ramsey14
+    · rw [Ramsey₂PropSymm, Ramsey₂GraphProp]
+      exact R35
+  · simp [Ramsey₂Prop]
+    intros M N MleN Ramsey₂M
+    exact RamseyMonotone Ramsey₂M MleN
+
+theorem R44 : Ramsey₂ 4 4 = 18 := by
+  unfold Ramsey₂
+  rw [Nat.sInf_upward_closed_eq_succ_iff]
+  · simp
+    apply And.intro
+    · have Ramsey34 := Ramsey₂ToRamsey₂Prop (R43)
+      rw [Ramsey₂PropSymm] at Ramsey34
+      have Ramsey43 := Ramsey₂ToRamsey₂Prop (R43)
+      have Ramsey18 := Ramsey₂PropIneq 9 9 3 3  Ramsey34 Ramsey43
+      exact Ramsey18
+    · rw [Ramsey₂GraphProp]
+      exact R44'
+  · simp [Ramsey₂Prop]
+    intros M N MleN Ramsey₂M
+    exact RamseyMonotone Ramsey₂M MleN
+
+
 -- FIXME: Something broke in this proof
 theorem Ramsey₂_binomial_coefficient_ineq : ∀ s t : ℕ, Ramsey₂ s.succ t.succ
 ≤ Nat.choose (s.succ + t.succ - 2) (s.succ - 1) := by
