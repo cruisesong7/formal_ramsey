@@ -163,6 +163,7 @@ theorem R35 : ¬(RamseyGraphProp 13 3 5) := by
   simp [RamseyGraphProp]
   -- use readG6 "LhEIHEPQHGaPaP", (by infer_instance)
   g6 "LhEIHEPQHGaPaP"
+  with_panel_widgets [SelectionPanel]
   simp [not_or]
   apply And.intro
   · intros S
@@ -181,6 +182,7 @@ theorem R44' : ¬(RamseyGraphProp 17 4 4) := by
   simp [RamseyGraphProp]
   -- use readG6 "P}qTKukXaUja[IBjanPeMI\\K", (by infer_instance)
   g6 "P}qTKukXaUja[IBjanPeMI\\K"
+  with_panel_widgets [SelectionPanel]
   simp [not_or]
   apply And.intro
   · intros S
