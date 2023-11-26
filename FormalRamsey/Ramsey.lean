@@ -163,7 +163,7 @@ def increaseVectorExcept {k : ℕ} (s : Vector ℕ k) (i : Fin k) : Vector ℕ k
 
 set_option maxHeartbeats 500000
 
-theorem RamseyPropIneq : ∀ {k : ℕ} {M : Vector ℕ k.succ.succ} (MPos : 1 ≤ M.toList.sum) (s : Vector ℕ k.succ.succ), (∀ (i : Fin k.succ.succ), RamseyProp (M.get i) (increaseVectorExcept s i)) → RamseyProp M.toList.sum (increaseVector s) := by
+theorem RamseyPropIneq : ∀ {k : ℕ} {M : Vector ℕ k.succ.succ} (_ : 1 ≤ M.toList.sum) (s : Vector ℕ k.succ.succ), (∀ (i : Fin k.succ.succ), RamseyProp (M.get i) (increaseVectorExcept s i)) → RamseyProp M.toList.sum (increaseVector s) := by
   intros k M MPos s RamseyM
   have MSumPos : M.toList.sum > 0 := by
     have headPos := (RamseyM 0).left
@@ -196,9 +196,9 @@ theorem RamseyPropIneq : ∀ {k : ℕ} {M : Vector ℕ k.succ.succ} (MPos : 1 �
         · rw [Nat.cast_inj]
           have partCard : ∀ {n m : ℕ} (f' : Sym2 (Fin n.succ) → Fin m.succ), Finset.univ.sum (λ x ↦ (((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).filter (λ v ↦ f' ⟦(0, v)⟧ = x)).card) = ((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).card := by
             intro n
-            induction n with
+            cases n with
             | zero => simp
-            | succ n' ih =>
+            | succ n' =>
               simp
               intro m f'
               let partition : Finset (Finset (Fin n'.succ.succ)) := Finset.univ.image (λ x ↦ ((⊤ : SimpleGraph (Fin n'.succ.succ)).neighborFinset 0).filter (λ v ↦ f' ⟦(0, v)⟧ = x))
