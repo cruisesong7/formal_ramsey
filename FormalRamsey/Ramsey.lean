@@ -5,7 +5,7 @@ import FormalRamsey.Ramsey2Color
 
 open Ramsey
 
-theorem RamseyPropSymm : ∀ {N k : ℕ} (s s' : Vector ℕ k.succ), RamseyProp N s → s.toList ~ s'.toList → RamseyProp N s' := by
+theorem RamseyPropSymm : ∀ {N k : ℕ} {s s' : Vector ℕ k.succ}, RamseyProp N s → s.toList ~ s'.toList → RamseyProp N s' := by
   intros N k s s' RamseyN sPerm
   unfold RamseyProp at RamseyN ⊢
   simp [RamseyN.left]
