@@ -1,13 +1,6 @@
-import Mathlib.Combinatorics.Pigeonhole
-import Mathlib.Data.Rat.NNRat
 import Mathlib.Data.Vector.Mem
 
-import Mathlib.Tactic.PermuteGoals
-import Lean.Parser.Tactic
-import Mathlib.Tactic
-import FormalRamsey.PickTactic
 import FormalRamsey.Utils
-
 import FormalRamsey.Ramsey2Color
 
 open Ramsey
