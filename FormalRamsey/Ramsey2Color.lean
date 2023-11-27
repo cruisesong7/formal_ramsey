@@ -850,8 +850,6 @@ theorem R44 : Ramsey₂ 4 4 = 18 := by
     intros M N MleN Ramsey₂M
     exact RamseyMonotone Ramsey₂M MleN
 
-
--- FIXME: Something broke in this proof
 theorem Ramsey₂_binomial_coefficient_ineq : ∀ s t : ℕ, Ramsey₂ s.succ t.succ
 ≤ Nat.choose (s.succ + t.succ - 2) (s.succ - 1) := by
   intros s t
