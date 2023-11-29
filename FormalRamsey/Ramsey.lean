@@ -1,18 +1,11 @@
-import Mathlib.Combinatorics.Pigeonhole
-import Mathlib.Data.Rat.NNRat
 import Mathlib.Data.Vector.Mem
 
-import Mathlib.Tactic.PermuteGoals
-import Lean.Parser.Tactic
-import Mathlib.Tactic
-import FormalRamsey.PickTactic
 import FormalRamsey.Utils
-
 import FormalRamsey.Ramsey2Color
 
 open Ramsey
 
-theorem RamseyPropSymm : ∀ {N k : ℕ} (s s' : Vector ℕ k.succ), RamseyProp N s → s.toList ~ s'.toList → RamseyProp N s' := by
+theorem RamseyPropSymm : ∀ {N k : ℕ} {s s' : Vector ℕ k.succ}, RamseyProp N s → s.toList ~ s'.toList → RamseyProp N s' := by
   intros N k s s' RamseyN sPerm
   unfold RamseyProp at RamseyN ⊢
   simp [RamseyN.left]
@@ -557,12 +550,12 @@ theorem RamseyFinite : ∀ {k : ℕ} (s : Vector ℕ k.succ), { N : ℕ | Ramsey
 --   simp at absurd
 --   done
 
--- theorem RamseyToRamseyProp : ∀ {N k : ℕ} {s : Vector ℕ k.succ}, Ramsey s = N → RamseyProp N s := by
---   intros N k s Ramsey
---   unfold Ramsey at Ramsey
---   have RamseyMem := Nat.sInf_mem (RamseyFinite s)
---   simp at RamseyMem
---   simp [← Ramsey, RamseyMem]
+theorem RamseyToRamseyProp : ∀ {N k : ℕ} {s : Vector ℕ k.succ}, Ramsey s = N → RamseyProp N s := by
+  intros N k s Ramsey
+  unfold Ramsey at Ramsey
+  have RamseyMem := Nat.sInf_mem (RamseyFinite s)
+  simp at RamseyMem
+  simp [← Ramsey, RamseyMem]
 
 theorem Ramsey2 : ∀ {k : ℕ} (s : Vector ℕ k.succ), Ramsey (2 ::ᵥ s) = Ramsey s := by
   intros k s
@@ -586,3 +579,32 @@ theorem Ramsey2 : ∀ {k : ℕ} (s : Vector ℕ k.succ), Ramsey (2 ::ᵥ s) = Ra
   apply And.intro
   · apply RamseyProp2True N1Prop
   · apply RamseyProp2False NProp
+
+-- NOTE: Maybe a theorem like Rleq should become the standard theorem
+theorem R333 : Ramsey (Vector.ofFn ![3, 3, 3]) = 18 := by
+  simp [Ramsey]
+  have Rleq : ∀ (k₁ k₂ : ℕ), k₁ ≤ k₂ → k₁ ∈ {N | RamseyProp N (Vector.ofFn ![3, 3, 3])} → k₂ ∈ {N | RamseyProp N (Vector.ofFn ![3, 3, 3])} := by
+    intros k₁ k₂
+    intros kleq kRamsey
+    simp at kRamsey ⊢
+    exact RamseyMonotone kRamsey kleq
+  rw [Nat.sInf_upward_closed_eq_succ_iff Rleq]
+  apply And.intro
+  · have V3Pos : 1 ≤ (Vector.ofFn ![6, 6, 6]).toList.sum := by simp
+    simp [Vector.ofFn]
+    have wtf := RamseyPropIneq V3Pos (Vector.ofFn ![2, 2 , 2])
+    apply wtf
+    intro i
+    have Ramsey233 := RamseyToRamseyProp (Ramsey2 (Vector.ofFn ![3, 3]))
+    simp [Vector.ofFn] at Ramsey233
+    have R33 := friendship
+    simp [Ramsey₂, Ramsey₂Prop] at R33
+    unfold Ramsey at Ramsey233
+    rw [R33] at Ramsey233
+    fin_cases i <;> simp [increaseVectorExcept, Vector.ofFn, Vector.get, List.nthLe]
+    · exact Ramsey233
+    · have vecPerm : (Vector.ofFn ![2, 3, 3]).toList ~ (Vector.ofFn ![3, 2, 3]).toList := by simp
+      apply RamseyPropSymm Ramsey233 vecPerm
+    · have vecPerm : (Vector.ofFn ![2, 3, 3]).toList ~ (Vector.ofFn ![3, 3, 2]).toList := by simp
+      apply RamseyPropSymm Ramsey233 vecPerm      
+  · admit
