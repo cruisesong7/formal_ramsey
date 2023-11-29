@@ -75,10 +75,12 @@ def createCircleAtCoord (coord : Float × Float) : String :=
 def createLineBetweenCoords (startCoord endCoord : Float × Float) (isRed : Bool) : String :=
   let (x1, y1) := startCoord
   let (x2, y2) := endCoord
-  let strokeColor := if isRed then "red" else "blue"
+  let strokeColor := "red" --if isRed then "red" else "blue"
   let strokeWidth := 0.02
-  s!"<line x1='{x1}' y1='{y1}' x2='{x2}' y2='{y2}' stroke='{strokeColor}' stroke-width='{strokeWidth}' />\n"
-
+  if isRed then
+    ""
+  else
+    s!"<line x1='{x1}' y1='{y1}' x2='{x2}' y2='{y2}' stroke='{strokeColor}' stroke-width='{strokeWidth}' />\n"
 def createAllVertexLines (vertices : Array (Float × Float)) (adjMatrix : Array (Array (Fin 2))) : List String :=
   let n := vertices.size
   List.join (List.range n |>.map (λ i =>
@@ -133,6 +135,7 @@ def polygonSvg (g6 : String) : String :=
   let svgContent := String.join svgElements.toList
   s!"<svg viewBox='-2 -2 4 4' xmlns='http://www.w3.org/2000/svg'>\n{svgContent}\n</svg>"
 
+--#eval decodeG6 ("P}qTKukXaUja[IBjanPeMI\\K")
 -- private def polygonSvg (g6 : String): Svg frame :=
 --   let adjMat := decodeG6 g6
 --   let vertices := regularPolygonVertices adjMat.size 1.5 0.0 0.0
