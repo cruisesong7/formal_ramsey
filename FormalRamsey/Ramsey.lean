@@ -8,7 +8,6 @@ open Ramsey
 theorem RamseyPropSymm : ∀ {N k : ℕ} {s s' : Vector ℕ k.succ}, RamseyProp N s → s.toList ~ s'.toList → RamseyProp N s' := by
   intros N k s s' RamseyN sPerm
   unfold RamseyProp at RamseyN ⊢
-  simp [RamseyN.left]
   intro f
   cases s
   next s sLength =>
@@ -16,7 +15,7 @@ theorem RamseyPropSymm : ∀ {N k : ℕ} {s s' : Vector ℕ k.succ}, RamseyProp 
     next s' s'Length =>
       simp [Vector.toList] at sPerm
       rcases (bijection_of_List_perm sPerm.symm) with ⟨μ, ⟨μBij, μProp⟩⟩
-      rcases (RamseyN.right (λ e ↦ Fin.cast sLength (μ (Fin.cast s'Length.symm (f e))))) with ⟨S, i, Sclique⟩
+      rcases (RamseyN (λ e ↦ Fin.cast sLength (μ (Fin.cast s'Length.symm (f e))))) with ⟨S, i, Sclique⟩
       simp [Vector.get] at Sclique
       haveI : Nonempty (Fin s'.length) := by simp [s'Length]; infer_instance
       use S, Fin.cast s'Length ((Function.invFun μ) (Fin.cast sLength.symm i))
@@ -63,67 +62,64 @@ theorem Ramsey1Prop : ∀ {k : ℕ} (N : ℕ) (s : Vector ℕ k.succ), RamseyPro
   · simp [SimpleGraph.isClique_iff, Set.Pairwise]
   · simp [Vector.get_zero]
 
-theorem Ramsey1 : ∀ {k : ℕ} (s : Vector ℕ k.succ), Ramsey (1 ::ᵥ s) = 1 := by
-  intro k s
-  simp [Ramsey]
-  have Ramsey1Monotone : ∀ M₁ M₂, M₁ ≤ M₂ → M₁ ∈ { N : ℕ | RamseyProp N (1 ::ᵥ s)} → M₂ ∈ { N : ℕ | RamseyProp N (1 ::ᵥ s) }
-  · intros M₁ M₂ M₁leM₂
-    simp
-    intro M₁Ramsey
-    apply RamseyMonotone M₁Ramsey M₁leM₂
-  · rw [Nat.sInf_upward_closed_eq_succ_iff]
-    · simp
-      apply And.intro
-      · apply Ramsey1Prop
-      · simp [RamseyProp]
-    · assumption
+-- NOTE: This is no longer true since s could have 0
+-- theorem Ramsey1 : ∀ {k : ℕ} (s : Vector ℕ k.succ), Ramsey (1 ::ᵥ s) = 1 := by
+--   intro k s
+--   simp [Ramsey]
+--   have Ramsey1Monotone : ∀ M₁ M₂, M₁ ≤ M₂ → M₁ ∈ { N : ℕ | RamseyProp N (1 ::ᵥ s)} → M₂ ∈ { N : ℕ | RamseyProp N (1 ::ᵥ s) }
+--   · intros M₁ M₂ M₁leM₂
+--     simp
+--     intro M₁Ramsey
+--     apply RamseyMonotone M₁Ramsey M₁leM₂
+--   · rw [Nat.sInf_upward_closed_eq_succ_iff]
+--     · simp
+--       apply And.intro
+--       · apply Ramsey1Prop
+--       · simp [RamseyProp]
+--     · assumption
 
 theorem RamseyProp2True : ∀ {k N : ℕ} {s : Vector ℕ k.succ}, RamseyProp N s → RamseyProp N (2 ::ᵥ s) := by
   intro k N s RamseyN
   simp [RamseyProp] at RamseyN ⊢
-  rcases RamseyN with ⟨NPos, RamseyN⟩
-  apply And.intro
-  · exact NPos
-  · intro f
-    by_cases (∃ u v, u ≠ v ∧ f ⟦(u, v)⟧ = 0)
-    · rcases h with ⟨u, v, fuv0⟩
-      use {u, v}, 0
-      constructor
-      · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor, fuv0.left, fuv0.left.symm, Sym2.eq_swap, fuv0.right]
-      · simp [Finset.card_eq_two]
-        use u, v
-        simp [fuv0.left]
-    · simp at h
-      have fProp : ∀ {e}, ¬e.IsDiag → f e ≠ 0 := by
-        intros e eNotDiag
-        rcases (Quotient.exists_rep e) with ⟨⟨u, v⟩, euv⟩
-        rw [← euv] at eNotDiag ⊢
-        simp at eNotDiag
-        exact (h u v eNotDiag)
-      let f' := nonzero_mapper fProp
-      rcases (RamseyN f') with ⟨S, i, Sclique⟩
-      use S, i.succ
-      rw [SimpleGraph.isNClique_iff] at Sclique
-      rcases Sclique with ⟨Sclique, Scard⟩
-      constructor
-      · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor, nonzero_mapper] at Sclique ⊢
-        intros u uinS v vinS uneqv
-        apply And.intro
-        · exact uneqv
-        · have fmapped := (Sclique uinS vinS uneqv).right
-          split at fmapped
-          next _ h _ =>
-            simp at h
-            contradiction
-          next =>
-            simp [← fmapped]
-      · simp [Scard]
+  intro f
+  by_cases (∃ u v, u ≠ v ∧ f ⟦(u, v)⟧ = 0)
+  · rcases h with ⟨u, v, fuv0⟩
+    use {u, v}, 0
+    constructor
+    · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor, fuv0.left, fuv0.left.symm, Sym2.eq_swap, fuv0.right]
+    · simp [Finset.card_eq_two]
+      use u, v
+      simp [fuv0.left]
+  · simp at h
+    have fProp : ∀ {e}, ¬e.IsDiag → f e ≠ 0 := by
+      intros e eNotDiag
+      rcases (Quotient.exists_rep e) with ⟨⟨u, v⟩, euv⟩
+      rw [← euv] at eNotDiag ⊢
+      simp at eNotDiag
+      exact (h u v eNotDiag)
+    let f' := nonzero_mapper fProp
+    rcases (RamseyN f') with ⟨S, i, Sclique⟩
+    use S, i.succ
+    rw [SimpleGraph.isNClique_iff] at Sclique
+    rcases Sclique with ⟨Sclique, Scard⟩
+    constructor
+    · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor, nonzero_mapper] at Sclique ⊢
+      intros u uinS v vinS uneqv
+      apply And.intro
+      · exact uneqv
+      · have fmapped := (Sclique uinS vinS uneqv).right
+        split at fmapped
+        next _ h _ =>
+          simp at h
+          contradiction
+        next =>
+          simp [← fmapped]
+    · simp [Scard]
 
 theorem RamseyProp2False : ∀ {k N : ℕ} {s : Vector ℕ k.succ}, ¬RamseyProp N s → ¬RamseyProp N (2 ::ᵥ s) := by
   intros k N s NotRamseyN
   simp [RamseyProp] at NotRamseyN ⊢
-  intro NPos
-  rcases (NotRamseyN NPos) with ⟨f, fProp⟩
+  rcases NotRamseyN with ⟨f, fProp⟩
   use (λ e ↦ (f e).succ)
   intros S c
   cases c.eq_zero_or_eq_succ with
@@ -156,130 +152,114 @@ def increaseVectorExcept {k : ℕ} (s : Vector ℕ k) (i : Fin k) : Vector ℕ k
 
 set_option maxHeartbeats 500000
 
-theorem RamseyPropIneq : ∀ {k : ℕ} {M : Vector ℕ k.succ.succ} (_ : 1 ≤ M.toList.sum) (s : Vector ℕ k.succ.succ), (∀ (i : Fin k.succ.succ), RamseyProp (M.get i) (increaseVectorExcept s i)) → RamseyProp M.toList.sum (increaseVector s) := by
-  intros k M MPos s RamseyM
-  have MSumPos : M.toList.sum > 0 := by
-    have headPos := (RamseyM 0).left
-    simp at headPos
-    have allMNNeg : ∀ (m : ℕ), m ∈ M.toList → 0 ≤ m := by simp
-    have sumLB := List.single_le_sum allMNNeg M.head M.head_mem
-    use lt_of_lt_of_le headPos sumLB
-  unfold RamseyProp
-  apply And.intro
-  · exact MSumPos
-  · intro f
-    haveI : NeZero M.toList.sum := by
-      constructor
-      intro h
-      simp [h] at MSumPos
-    have MSumNonzero : M.toList.sum ≠ 0 := by
-      intro MSumZero
-      simp [MSumZero] at MPos
-    rcases (Nat.exists_eq_succ_of_ne_zero MSumNonzero) with ⟨M', M'Prop⟩
-    let g : Fin k.succ.succ → ℚ := λ i ↦ ↑(M.get i) - mkRat 1 k.succ.succ
-    let h : Fin k.succ.succ → ℚ := λ c ↦ (((⊤ : SimpleGraph (Fin M'.succ)).neighborFinset 0).filter (λ v : Fin M'.succ ↦ (λ e : Sym2 (Fin M'.succ) ↦ f (e.map (Fin.cast M'Prop.symm))) ⟦(0, v)⟧ = c)).card
-    have hgsum : Finset.univ.sum h = Finset.univ.sum g := by
-      simp [Rat.add_def]
-      rw [Int.ofNat_add_one_out, Rat.normalize_eq_mkRat Nat.zero_ne_one.symm, Rat.mkRat_one_num, Rat.normalize_eq_mkRat]
-      simp only [Rat.mkRat_one_den ↑(k.succ), Int.ofNat_add_out, ← Nat.succ_eq_add_one, Rat.mkRat_mul_mkRat, Nat.mul_comm, Rat.mkRat_mul_left k.succ.succ_ne_zero]
-      simp [Rat.mkRat_one]
-      trans ↑((⊤ : SimpleGraph (Fin M'.succ)).neighborFinset 0).card
-      · trans ↑(Finset.sum Finset.univ (λ x ↦ (Finset.filter (λ v ↦ f ⟦(0, (Fin.cast M'Prop.symm v))⟧ = x) ((⊤ : SimpleGraph (Fin M'.succ)).neighborFinset 0)).card))
-        · simp
-        · rw [Nat.cast_inj]
-          have partCard : ∀ {n m : ℕ} (f' : Sym2 (Fin n.succ) → Fin m.succ), Finset.univ.sum (λ x ↦ (((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).filter (λ v ↦ f' ⟦(0, v)⟧ = x)).card) = ((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).card := by
-            intro n
-            cases n with
-            | zero => simp
-            | succ n' =>
-              simp
-              intro m f'
-              let partition : Finset (Finset (Fin n'.succ.succ)) := Finset.univ.image (λ x ↦ ((⊤ : SimpleGraph (Fin n'.succ.succ)).neighborFinset 0).filter (λ v ↦ f' ⟦(0, v)⟧ = x))
-              have partitionPwDisj : Set.PairwiseDisjoint ↑partition (@id (Finset (Fin n'.succ.succ))) := by
-                unfold Set.PairwiseDisjoint Set.Pairwise Disjoint id
-                intros x xinPart y yinPart xneqy
-                simp only [List.coe_toFinset, List.mem_ofFn] at xinPart yinPart
-                simp [Function.onFun_apply] at xinPart yinPart ⊢
-                intros a ainx ainy
-                rcases xinPart with ⟨x', xProp⟩
-                rcases yinPart with ⟨y', yProp⟩
-                rw [← xProp] at ainx
-                rw [← yProp] at ainy
-                rw [Finset.subset_iff] at ainx ainy ⊢
-                intros b bina
-                have binx := ainx bina
-                have biny := ainy bina
-                simp at binx biny
-                have x'eqy' := Eq.trans binx.right.symm biny.right
-                rw [x'eqy'] at xProp
-                have xeqy := Eq.trans xProp.symm yProp
-                contradiction
-              have partitionSupParts : partition.sup id = ((⊤ : SimpleGraph (Fin n'.succ.succ)).neighborFinset 0) := by
-                apply subset_antisymm <;> rw [Finset.subset_iff]
-                · intros v vinSup
-                  simp only [Finset.mem_sup, id] at vinSup
-                  rcases vinSup with ⟨a, ⟨aProp, vina⟩⟩
-                  simp at aProp
-                  rcases aProp with ⟨i, aProp⟩
-                  simp [← aProp] at vina ⊢
-                  exact vina.left
-                · intros v vneq0
-                  simp only [Finset.mem_sup, id]
-                  use ((⊤ : SimpleGraph (Fin n'.succ.succ)).neighborFinset 0).filter (λ u ↦ f' ⟦(0, u)⟧ = f' ⟦(0, v)⟧)
-                  simp at vneq0 ⊢
-                  exact vneq0
-              let parted : Finset.FinpartitionWithEmpty ((⊤ : SimpleGraph (Fin n'.succ.succ)).neighborFinset 0) := ⟨partition, partitionPwDisj, partitionSupParts⟩
-              have partedSum := parted.sum_card_parts_with_empty
-              simp at partedSum
-              rw [Finset.sum_image_vanishing] at partedSum
-              · exact partedSum
-              · simp
-                intros x y filtereq filternonempty
-                rw [← ne_eq, ← Finset.nonempty_iff_ne_empty] at filternonempty
-                rcases filternonempty with ⟨u, uinxFilter⟩
-                have uinyFilter := uinxFilter
-                rw [filtereq] at uinyFilter
-                simp at uinxFilter uinyFilter
-                exact Eq.trans uinxFilter.right.symm uinyFilter.right
-          have partRw := partCard (λ e : Sym2 (Fin (M'.succ)) ↦ f (e.map (Fin.cast M'Prop.symm)))
-          simp at partRw ⊢
-          exact partRw
+theorem RamseyPropIneq : ∀ {k : ℕ} {M : Vector ℕ k.succ.succ} (_ : 0 < M.toList.sum) (s : Vector ℕ k.succ.succ), (∀ (i : Fin k.succ.succ), RamseyProp (M.get i) (increaseVectorExcept s i)) → RamseyProp M.toList.sum (increaseVector s) := by
+  intros k M MSumPos s RamseyM f
+  haveI MSumNeZero : NeZero M.toList.sum := ⟨Nat.not_eq_zero_of_lt MSumPos⟩
+  rcases (Nat.exists_eq_succ_of_ne_zero MSumNeZero.ne) with ⟨M', M'Prop⟩
+  let g : Fin k.succ.succ → ℚ := λ i ↦ ↑(M.get i) - mkRat 1 k.succ.succ
+  let h : Fin k.succ.succ → ℚ := λ c ↦ (((⊤ : SimpleGraph (Fin M'.succ)).neighborFinset 0).filter (λ v : Fin M'.succ ↦ (λ e : Sym2 (Fin M'.succ) ↦ f (e.map (Fin.cast M'Prop.symm))) ⟦(0, v)⟧ = c)).card
+  have hgsum : Finset.univ.sum h = Finset.univ.sum g := by
+    simp [Rat.add_def]
+    rw [Int.ofNat_add_one_out, Rat.normalize_eq_mkRat Nat.zero_ne_one.symm, Rat.mkRat_one_num, Rat.normalize_eq_mkRat]
+    simp only [Rat.mkRat_one_den ↑(k.succ), Int.ofNat_add_out, ← Nat.succ_eq_add_one, Rat.mkRat_mul_mkRat, Nat.mul_comm, Rat.mkRat_mul_left k.succ.succ_ne_zero]
+    simp [Rat.mkRat_one]
+    trans ↑((⊤ : SimpleGraph (Fin M'.succ)).neighborFinset 0).card
+    · trans ↑(Finset.sum Finset.univ (λ x ↦ (Finset.filter (λ v ↦ f ⟦(0, (Fin.cast M'Prop.symm v))⟧ = x) ((⊤ : SimpleGraph (Fin M'.succ)).neighborFinset 0)).card))
       · simp
-        rw [← M'.succ_sub_one, ← M'Prop, Nat.cast_sub MPos]
-        simp
-        apply vector_list_finset_sum
-    -- NOTE: The hgsum lemma is backwards (should be ghsum) so here we need hgsum.symm
-    have mp := missing_pigeonhole (Exists.intro (0 : Fin k.succ.succ) (Finset.mem_univ 0)) (le_of_eq hgsum.symm)
-    rcases mp with ⟨a, _, gha⟩
-    simp at gha
-    rw [← Int.cast_ofNat, ← Rat.le_floor] at gha
-    have invLt1 : mkRat 1 k.succ.succ < 1 := by
-      rw [Rat.lt_def, Rat.mkRat_den_one, Rat.mkRat_num_one]
+      · rw [Nat.cast_inj]
+        have partCard : ∀ {n m : ℕ} (f' : Sym2 (Fin n.succ) → Fin m.succ), Finset.univ.sum (λ x ↦ (((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).filter (λ v ↦ f' ⟦(0, v)⟧ = x)).card) = ((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).card := by
+          intro n
+          cases n with
+          | zero => simp
+          | succ n' =>
+            simp
+            intro m f'
+            let partition : Finset (Finset (Fin n'.succ.succ)) := Finset.univ.image (λ x ↦ ((⊤ : SimpleGraph (Fin n'.succ.succ)).neighborFinset 0).filter (λ v ↦ f' ⟦(0, v)⟧ = x))
+            have partitionPwDisj : Set.PairwiseDisjoint ↑partition (@id (Finset (Fin n'.succ.succ))) := by
+              unfold Set.PairwiseDisjoint Set.Pairwise Disjoint id
+              intros x xinPart y yinPart xneqy
+              simp only [List.coe_toFinset, List.mem_ofFn] at xinPart yinPart
+              simp [Function.onFun_apply] at xinPart yinPart ⊢
+              intros a ainx ainy
+              rcases xinPart with ⟨x', xProp⟩
+              rcases yinPart with ⟨y', yProp⟩
+              rw [← xProp] at ainx
+              rw [← yProp] at ainy
+              rw [Finset.subset_iff] at ainx ainy ⊢
+              intros b bina
+              have binx := ainx bina
+              have biny := ainy bina
+              simp at binx biny
+              have x'eqy' := Eq.trans binx.right.symm biny.right
+              rw [x'eqy'] at xProp
+              have xeqy := Eq.trans xProp.symm yProp
+              contradiction
+            have partitionSupParts : partition.sup id = ((⊤ : SimpleGraph (Fin n'.succ.succ)).neighborFinset 0) := by
+              apply subset_antisymm <;> rw [Finset.subset_iff]
+              · intros v vinSup
+                simp only [Finset.mem_sup, id] at vinSup
+                rcases vinSup with ⟨a, ⟨aProp, vina⟩⟩
+                simp at aProp
+                rcases aProp with ⟨i, aProp⟩
+                simp [← aProp] at vina ⊢
+                exact vina.left
+              · intros v vneq0
+                simp only [Finset.mem_sup, id]
+                use ((⊤ : SimpleGraph (Fin n'.succ.succ)).neighborFinset 0).filter (λ u ↦ f' ⟦(0, u)⟧ = f' ⟦(0, v)⟧)
+                simp at vneq0 ⊢
+                exact vneq0
+            let parted : Finset.FinpartitionWithEmpty ((⊤ : SimpleGraph (Fin n'.succ.succ)).neighborFinset 0) := ⟨partition, partitionPwDisj, partitionSupParts⟩
+            have partedSum := parted.sum_card_parts_with_empty
+            simp at partedSum
+            rw [Finset.sum_image_vanishing] at partedSum
+            · exact partedSum
+            · simp
+              intros x y filtereq filternonempty
+              rw [← ne_eq, ← Finset.nonempty_iff_ne_empty] at filternonempty
+              rcases filternonempty with ⟨u, uinxFilter⟩
+              have uinyFilter := uinxFilter
+              rw [filtereq] at uinyFilter
+              simp at uinxFilter uinyFilter
+              exact Eq.trans uinxFilter.right.symm uinyFilter.right
+        have partRw := partCard (λ e : Sym2 (Fin (M'.succ)) ↦ f (e.map (Fin.cast M'Prop.symm)))
+        simp at partRw ⊢
+        exact partRw
+    · simp
+      rw [← M'.succ_sub_one, ← M'Prop, Nat.cast_sub MSumPos]
       simp
-    -- TODO: Make arguments in floormagic implicit
-    have MleqNeighbora := floormagic _ _ (mkRat 1 k.succ.succ) invLt1 gha
-    have cliqueCases := monochromaticVicinity_Ramsey 0 (λ e : Sym2 (Fin M'.succ) ↦ f (e.map (Fin.cast M'Prop.symm))) a (increaseVectorExcept s a) (RamseyMonotone (RamseyM a) MleqNeighbora)
-    cases cliqueCases with
-    | inl cliqueCase =>
-      rcases cliqueCase with ⟨S, Sclique⟩
-      use S.map (Fin.castEmb M'Prop.symm), a
-      rw [SimpleGraph.isNClique_iff] at Sclique
-      rcases Sclique with ⟨Sclique, Scard⟩
-      constructor
-      · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at Sclique ⊢
-        exact Sclique
-      · simp [increaseVector, increaseVectorExcept] at Scard ⊢
-        exact Scard
-    | inr cliqueCase =>
-      rcases cliqueCase with ⟨b, S, bneqa, Sclique⟩
-      use S.map (Fin.castEmb M'Prop.symm), b
-      rw [SimpleGraph.isNClique_iff] at Sclique
-      rcases Sclique with ⟨Sclique, Scard⟩
-      constructor
-      · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at Sclique ⊢
-        exact Sclique
-      · simp [increaseVector, increaseVectorExcept, bneqa.symm] at Scard ⊢
-        exact Scard
+      apply vector_list_finset_sum
+  -- NOTE: The hgsum lemma is backwards (should be ghsum) so here we need hgsum.symm
+  have mp := missing_pigeonhole (Exists.intro (0 : Fin k.succ.succ) (Finset.mem_univ 0)) (le_of_eq hgsum.symm)
+  rcases mp with ⟨a, _, gha⟩
+  simp at gha
+  rw [← Int.cast_ofNat, ← Rat.le_floor] at gha
+  have invLt1 : mkRat 1 k.succ.succ < 1 := by
+    rw [Rat.lt_def, Rat.mkRat_den_one, Rat.mkRat_num_one]
+    simp
+  -- TODO: Make arguments in floormagic implicit
+  have MleqNeighbora := floormagic _ _ (mkRat 1 k.succ.succ) invLt1 gha
+  have cliqueCases := monochromaticVicinity_Ramsey 0 (λ e : Sym2 (Fin M'.succ) ↦ f (e.map (Fin.cast M'Prop.symm))) a (increaseVectorExcept s a) (RamseyMonotone (RamseyM a) MleqNeighbora)
+  cases cliqueCases with
+  | inl cliqueCase =>
+    rcases cliqueCase with ⟨S, Sclique⟩
+    use S.map (Fin.castEmb M'Prop.symm), a
+    rw [SimpleGraph.isNClique_iff] at Sclique
+    rcases Sclique with ⟨Sclique, Scard⟩
+    constructor
+    · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at Sclique ⊢
+      exact Sclique
+    · simp [increaseVector, increaseVectorExcept] at Scard ⊢
+      exact Scard
+  | inr cliqueCase =>
+    rcases cliqueCase with ⟨b, S, bneqa, Sclique⟩
+    use S.map (Fin.castEmb M'Prop.symm), b
+    rw [SimpleGraph.isNClique_iff] at Sclique
+    rcases Sclique with ⟨Sclique, Scard⟩
+    constructor
+    · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at Sclique ⊢
+      exact Sclique
+    · simp [increaseVector, increaseVectorExcept, bneqa.symm] at Scard ⊢
+      exact Scard
 
 -- TODO Figure out how to state this theorem
 -- theorem Ramsey₂PropStrictIneq : ∀ M N s t : ℕ, Even M → Even N → Ramsey₂Prop M s.succ t.succ.succ → Ramsey₂Prop N s.succ.succ t.succ → Ramsey₂Prop (M + N).pred s.succ.succ t.succ.succ := by
@@ -436,38 +416,51 @@ theorem RamseyFinite : ∀ {k : ℕ} (s : Vector ℕ k.succ), { N : ℕ | Ramsey
       simp [Ramsey₂Prop, RamseyProp] at R'Prop
       use R'
       simp [RamseyProp]
-      apply And.intro
-      · exact R'Prop.left
-      · intro f
-        rcases (R'Prop.right (λ e ↦ if f e = 0 then 0 else 1)) with ⟨R'', i, R''Prop⟩
-        fin_cases i
-        · use R'', 0
-          simp [graphAtColor] at R''Prop ⊢
-          cases R''Prop
-          next R''Clique R''Card =>
-            constructor
-            · simp [SimpleGraph.IsClique, Set.Pairwise] at R''Clique ⊢
-              intros x xinR y yinR xneqy
-              cases (R''Clique xinR yinR xneqy)
-              next _ notnot =>
-                simp [xneqy]
-                rw [← @Decidable.not_not (f (Quotient.mk (Sym2.Rel.setoid (Fin R')) (x, y)) = 0)]
-                exact notnot
-            · exact R''Card
-        · simp at R''Prop
-          unfold RamseyProp at RProp
-          rcases R''Prop with ⟨R''Clique, R''Card⟩
-          have Rcard : (Finset.univ : Finset (Fin R)).card = R''.card := by
-            simp [Vector.get, List.nthLe] at R''Card
-            simp [R''Card]
-          have FinRNonempty : (Finset.univ : Finset (Fin R)) ≠ ∅ := by
-            haveI : Nonempty (Fin R) := by
-              rw [← Fin.pos_iff_nonempty]
-              exact RProp.left.lt
-            rw [← Finset.nonempty_iff_ne_empty]
-            apply Finset.univ_nonempty
-          have vertexMapEx := bijection_of_eq_card Rcard
-          simp [FinRNonempty] at vertexMapEx
+      intro f
+      rcases (R'Prop (λ e ↦ if f e = 0 then 0 else 1)) with ⟨R'', i, R''Prop⟩
+      fin_cases i
+      · use R'', 0
+        simp [graphAtColor] at R''Prop ⊢
+        cases R''Prop
+        next R''Clique R''Card =>
+          constructor
+          · simp [SimpleGraph.IsClique, Set.Pairwise] at R''Clique ⊢
+            intros x xinR y yinR xneqy
+            cases (R''Clique xinR yinR xneqy)
+            next _ notnot =>
+              simp [xneqy]
+              rw [← @Decidable.not_not (f (Quotient.mk (Sym2.Rel.setoid (Fin R')) (x, y)) = 0)]
+              exact notnot
+          · exact R''Card
+      · simp at R''Prop
+        unfold RamseyProp at RProp
+        rcases R''Prop with ⟨R''Clique, R''Card⟩
+        have Rcard : (Finset.univ : Finset (Fin R)).card = R''.card := by
+          simp [Vector.get, List.nthLe] at R''Card
+          simp [R''Card]
+        have cardBij := bijection_of_eq_card Rcard
+        cases cardBij with
+        | inl finREmpty =>
+          have R0 : R = 0 := by
+            cases Nat.decEq R 0 with
+            | isTrue p =>
+              exact p
+            | isFalse p =>
+              haveI : NeZero R := ⟨p⟩
+              have mem0 := Finset.mem_univ (0 : Fin R)
+              simp [finREmpty.left] at mem0
+          rcases (RProp (λ _ ↦ 0)) with ⟨S, i, SNclique⟩
+          simp [SimpleGraph.isNClique_iff] at SNclique
+          have Sempty : S = ∅ := by
+            cases Finset.eq_empty_or_nonempty S with
+            | inl _ => assumption
+            | inr Snonempty =>
+              rcases Snonempty with ⟨⟨s, sLt0⟩, _⟩
+              simp [R0] at sLt0
+          simp [Sempty] at SNclique
+          use ∅, i.succ
+          simp [← SNclique, SimpleGraph.isNClique_iff]
+        | inr vertexMapEx =>
           rcases vertexMapEx with ⟨vmap, vmapBij⟩
           have fneq0 : ∀ (e : Sym2 (Fin R)), f (e.map (λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v ))).val)) ≠ 0 := by
             intros e feq0
@@ -479,7 +472,7 @@ theorem RamseyFinite : ∀ {k : ℕ} (s : Vector ℕ k.succ), { N : ℕ | Ramsey
             have cliqueInfo := R''Clique (vmap (Subtype.mk u (Finset.mem_univ u))).property (vmap (Subtype.mk v (Finset.mem_univ v))).property vmapneq
             simp [graphAtColor] at cliqueInfo
             exact cliqueInfo.right uvProp
-          have exClique := RProp.right (λ (e : Sym2 (Fin R)) ↦ (f (e.map (λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v))).val))).pred (fneq0 _))
+          have exClique := RProp (λ (e : Sym2 (Fin R)) ↦ (f (e.map (λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v))).val))).pred (fneq0 _))
           rcases exClique with ⟨S, i, Sclique⟩
           let vmap' := λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v))).val
           have vmapInj : Function.Injective vmap' := by
@@ -566,19 +559,26 @@ theorem Ramsey2 : ∀ {k : ℕ} (s : Vector ℕ k.succ), Ramsey (2 ::ᵥ s) = Ra
     intros kleq kRamsey
     simp at kRamsey ⊢
     exact RamseyMonotone kRamsey kleq
-  have sInfPos : 0 < sInf {N | RamseyProp N s} := by
-    simp [RamseyProp] at RamseyMem ⊢
-    exact RamseyMem.left
-  rcases (Nat.exists_eq_succ_of_ne_zero (Nat.not_eq_zero_of_lt sInfPos)) with ⟨N, NProp⟩
-  rw [Nat.succ_eq_add_one] at NProp
-  rw [NProp]
-  rw [Nat.sInf_upward_closed_eq_succ_iff (Rleq k s)] at NProp
-  rw [Nat.sInf_upward_closed_eq_succ_iff (Rleq k.succ (2 ::ᵥ s))]
-  simp at NProp ⊢
-  rcases NProp with ⟨N1Prop, NProp⟩
-  apply And.intro
-  · apply RamseyProp2True N1Prop
-  · apply RamseyProp2False NProp
+  cases (Nat.eq_zero_or_pos (sInf {N | RamseyProp N s})) with
+  | inl sInf0 =>
+    simp [sInf0] at RamseyMem ⊢
+    rcases (RamseyProp0 RamseyMem) with ⟨i, i0⟩
+    left
+    unfold RamseyProp
+    intro _
+    use ∅, i.succ
+    simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, Set.Pairwise, i0]
+  | inr sInfPos =>
+    rcases (Nat.exists_eq_succ_of_ne_zero (Nat.not_eq_zero_of_lt sInfPos)) with ⟨N, NProp⟩
+    rw [Nat.succ_eq_add_one] at NProp
+    rw [NProp]
+    rw [Nat.sInf_upward_closed_eq_succ_iff (Rleq k s)] at NProp
+    rw [Nat.sInf_upward_closed_eq_succ_iff (Rleq k.succ (2 ::ᵥ s))]
+    simp at NProp ⊢
+    rcases NProp with ⟨N1Prop, NProp⟩
+    apply And.intro
+    · apply RamseyProp2True N1Prop
+    · apply RamseyProp2False NProp
 
 -- NOTE: Maybe a theorem like Rleq should become the standard theorem
 theorem R333 : Ramsey (Vector.ofFn ![3, 3, 3]) = 18 := by

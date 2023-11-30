@@ -4,15 +4,12 @@ import Mathlib.Data.Nat.Lattice
 
 import FormalRamsey.G6
 import FormalRamsey.G6Visualizer
-def RamseyGraphProp (N s t : ℕ) : Prop := N > 0 ∧ (∀ (G : SimpleGraph (Fin N)) [DecidableRel G.Adj], (∃ S, G.IsNClique s S) ∨ (∃ T, Gᶜ.IsNClique t T))
+
+def RamseyGraphProp (N s t : ℕ) : Prop := (∀ (G : SimpleGraph (Fin N)) [DecidableRel G.Adj], (∃ S, G.IsNClique s S) ∨ (∃ T, Gᶜ.IsNClique t T))
 
 lemma RamseyGraphMonotone : ∀ {N s t}, RamseyGraphProp N s t → ∀ {M}, N ≤ M → RamseyGraphProp M s t := by
   unfold RamseyGraphProp
-  intros N s t R M NleqM
-  rcases R with ⟨Ngt0, R⟩
-  apply And.intro
-  use (lt_of_lt_of_le Ngt0.lt NleqM)
-  intros G _
+  intros N s t R M NleqM G _
   let subAdj : Fin N → Fin N → Prop := λ u v ↦ G.Adj (Fin.castLE NleqM u) (Fin.castLE NleqM v)
   have subAdjSym : Symmetric subAdj := by
     unfold Symmetric
@@ -38,9 +35,7 @@ lemma RamseyGraphMonotone : ∀ {N s t}, RamseyGraphProp N s t → ∀ {M}, N �
 theorem RamseyGraphPropSymm : ∀ N s t, RamseyGraphProp N s t ↔ RamseyGraphProp N t s := by
   have helper : ∀ N s t, RamseyGraphProp N s t → RamseyGraphProp N t s := by
     simp [RamseyGraphProp]
-    intros N s t Ngt0 R
-    simp [Ngt0]
-    intros G _
+    intros N s t R G _
     cases R Gᶜ with
     | inl R =>
       right
@@ -99,7 +94,6 @@ theorem GraphRamsey2 : ∀ k : ℕ, GraphRamsey 2 k.succ = k.succ := by
     · apply And.intro <;> intros <;> simp [xyInG, SimpleGraph.Adj.symm]
 
   simp [RamseyGraphProp, SimpleGraph.isNClique_iff, SimpleGraph.IsClique, Set.Pairwise]
-  intro
   use (⊥ : SimpleGraph (Fin k))
   by_contra h
   simp at h
@@ -135,6 +129,11 @@ theorem RamseyGraph1 : ∀ k : ℕ, GraphRamsey 1 k.succ = 1 := by
   rw [Nat.sInf_upward_closed_eq_succ_iff]
   simp [RamseyGraph1Prop 0 k.succ]
   simp [RamseyGraphProp]
+  use (⊥ : SimpleGraph (Fin 0))
+  simp
+  intro x
+  have xempty : x = ∅ := by simp
+  simp [xempty, SimpleGraph.isNClique_iff]
   assumption
   done
 

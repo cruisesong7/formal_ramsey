@@ -24,16 +24,23 @@ def graphAtColor {N k : ℕ} (G : SimpleGraph (Fin N)) (ϕ : Sym2 (Fin N) → Fi
     simp at h
  }
 
-def RamseyProp {k : ℕ} (N : ℕ) (s : Vector ℕ k.succ) : Prop := N > 0 ∧
+def RamseyProp {k : ℕ} (N : ℕ) (s : Vector ℕ k.succ) : Prop :=
 ∀ f : Sym2 (Fin N) → Fin k.succ,
 (∃ S i, (graphAtColor (completeGraph (Fin N)) f i).IsNClique (s.get i) S) 
+
+lemma RamseyProp0 : ∀ {k : ℕ} {s : Vector ℕ k.succ}, RamseyProp 0 s → ∃ (i : Fin k.succ), s.get i = 0 := by
+  intros k s R
+  simp [RamseyProp] at R
+  rcases (R (λ _ ↦ 0)) with ⟨S, c, SNclique⟩
+  simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at SNclique
+  have Sempty : S = ∅ := by simp
+  simp [Sempty] at SNclique
+  use c
+  rw [SNclique]
 
 lemma RamseyMonotone : ∀ {N k : ℕ} {s : Vector ℕ k.succ}, RamseyProp N s → ∀ {M}, N ≤ M → RamseyProp M s := by
   unfold RamseyProp
   intros N k s R M NleqM
-  rcases R with ⟨Ngt0, R⟩
-  apply And.intro
-  linarith only[Ngt0, NleqM]
   intros f
   let f' : Sym2 (Fin N) → Fin k.succ := λ e ↦ f (Sym2.map (Fin.castLE NleqM) e)
   rcases (R f') with ⟨S,⟨i, Sclique, Scard⟩⟩
@@ -322,15 +329,6 @@ lemma floormagic : ∀ (n m : ℕ) (q : ℚ), q < 1 → ↑n ≤ ⌊(↑m + q)�
   cases' mlen with mltn meqn
   exact mltn
   simp [meqn] at hq
-  --NOTE: try using <;> to reduce redundancy 
-  -- rcases xoreven with xoreven |xoreven <;>{
-  -- rw [le_iff_lt_or_eq] at mlen
-  -- rcases mlen with mlen | mlen
-  -- exact mlen 
-  -- simp [mlen] at xoreven
-  -- --rw [le_iff_lt_or_eq] at mlen
-  -- cases xoreven
-  -- }
 
 lemma missing_pigeonhole {α β : Type} [DecidableEq α] [LinearOrderedSemiring β] : ∀ {s : Finset α}, Finset.Nonempty s → ∀ {f g : α → β}, s.sum f ≤ s.sum g → ∃ a : α, a ∈ s ∧ f a ≤ g a := by
   
