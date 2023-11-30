@@ -462,17 +462,25 @@ theorem RamseyFinite : ∀ {k : ℕ} (s : Vector ℕ k.succ), { N : ℕ | Ramsey
           simp [← SNclique, SimpleGraph.isNClique_iff]
         | inr vertexMapEx =>
           rcases vertexMapEx with ⟨vmap, vmapBij⟩
-          have fneq0 : ∀ (e : Sym2 (Fin R)), f (e.map (λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v ))).val)) ≠ 0 := by
-            intros e feq0
+          have fneq0 : ∀ {e : Sym2 (Fin R)}, ¬e.IsDiag → f (e.map (λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v ))).val)) ≠ 0 := by
+            intros e eNotDiag feq0
+            rcases (Quotient.exists_rep e) with ⟨⟨u, v⟩, uvProp⟩
+            simp [← uvProp] at eNotDiag
             simp [SimpleGraph.isClique_iff, Set.Pairwise] at R''Clique
-            have eversion : ∃ x, f (x.map (λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v ))).val)) = 0 := ⟨e, feq0⟩
-            rw [Sym2.exists] at eversion
-            rcases eversion with ⟨u, v, uvProp⟩
-            have vmapneq : ¬(vmap (Subtype.mk u (Finset.mem_univ u))).val = (vmap (Subtype.mk v (Finset.mem_univ v))).val := sorry
+            have vmapneq : ¬(vmap (Subtype.mk u (Finset.mem_univ u))).val = (vmap (Subtype.mk v (Finset.mem_univ v))).val := by
+              intro vmapeq
+              rw [← Subtype.ext_iff] at vmapeq
+              have uvEq := vmapBij.left vmapeq
+              simp at uvEq
+              contradiction
             have cliqueInfo := R''Clique (vmap (Subtype.mk u (Finset.mem_univ u))).property (vmap (Subtype.mk v (Finset.mem_univ v))).property vmapneq
             simp [graphAtColor] at cliqueInfo
-            exact cliqueInfo.right uvProp
-          have exClique := RProp (λ (e : Sym2 (Fin R)) ↦ (f (e.map (λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v))).val))).pred (fneq0 _))
+            rcases cliqueInfo with ⟨_, trouble⟩
+            simp [← uvProp] at feq0
+            contradiction
+          have exClique := RProp (λ (e : Sym2 (Fin R)) ↦ match (Sym2.IsDiag.decidablePred (Fin R) e) with
+  | isTrue p => 0
+  | isFalse p => (f (e.map (λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v))).val))).pred (fneq0 p))
           rcases exClique with ⟨S, i, Sclique⟩
           let vmap' := λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v))).val
           have vmapInj : Function.Injective vmap' := by
@@ -488,12 +496,15 @@ theorem RamseyFinite : ∀ {k : ℕ} (s : Vector ℕ k.succ), { N : ℕ | Ramsey
             intros x xinS y yinS xneqy
             apply And.intro
             · exact xneqy
-            · have xneqy' : ¬(x = y) := sorry
-               -- intro xeqy
-               -- rw [← Subtype.ext_iff] at xneqy
-              have lemmesee := Sclique xinS yinS xneqy'
-              rw [Fin.pred_eq_iff_eq_succ] at lemmesee
-              exact lemmesee.right
+            · rw [← Subtype.ext_iff, ← ne_eq, Function.Injective.ne_iff vmapBij.left, ne_eq, Subtype.mk_eq_mk] at xneqy
+              have fVal := (Sclique xinS yinS xneqy).right
+              split at fVal
+              next _ h _ =>
+                simp at h
+                contradiction
+              next =>
+                rw [Fin.pred_eq_iff_eq_succ] at fVal
+                exact fVal
           · simp at Scard ⊢
             exact Scard
 
