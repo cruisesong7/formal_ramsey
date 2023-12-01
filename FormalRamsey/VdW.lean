@@ -34,6 +34,34 @@ lemma vdWMonotone : ∀ m k r, vdWProp m k r → ∀ n, m ≤ n → vdWProp n k 
   apply lt_of_lt_of_le eLTn nLEm
   exact eColor
 
+lemma vdWProp2 : ∀ r : ℕ, vdWProp r.succ.succ 2 r := by
+  unfold vdWProp
+  intros r f
+  let g : Fin r.succ.succ → Fin r.succ := λ n : Fin r.succ.succ ↦ f n.val
+  have finrrsucc : Fintype.card (Fin r.succ) • 1 < Fintype.card (Fin r.succ.succ) := by simp
+  rcases (Fintype.exists_lt_card_fiber_of_mul_lt_card g finrrsucc) with ⟨y, yProp⟩
+  rw [Finset.one_lt_card_iff] at yProp
+  rcases yProp with ⟨a, b, aProp, bProp, aneb⟩
+  simp at aProp bProp
+  wlog aLtb : a.val < b.val
+  · rw [Nat.not_lt, Nat.le_iff_lt_or_eq] at aLtb
+    cases aLtb with
+    | inl bLta =>
+      apply this r f finrrsucc y b a aneb.symm bProp aProp bLta
+    | inr beqa =>
+      rw [← Fin.ext_iff] at beqa
+      cases (aneb.symm beqa)
+  use { start := a, diff := b - a }, y
+  simp
+  apply And.intro
+  · assumption
+  · intros e eins
+    rcases eins with ⟨i, rfl⟩
+    simp
+    fin_cases i <;> simp
+    · exact aProp
+    · simpa [← Nat.add_sub_assoc (Nat.le_of_lt aLtb)]
+
 set_option maxHeartbeats 500000
 
 lemma vdW325 : vdWProp 325 3 1 := by
@@ -219,6 +247,26 @@ lemma vdW325 : vdWProp 325 3 1 := by
   done
 
 noncomputable def vdW (k : ℕ) (r : ℕ) : ℕ := sInf { n : ℕ | vdWProp n k r.pred }
+
+theorem vdW2 : ∀ {r : ℕ}, vdW 2 r.succ = r.succ.succ := by
+  intro r
+  simp [vdW]
+  have hs : ∀ (k₁ k₂ : ℕ), k₁ ≤ k₂ → k₁ ∈ {n : ℕ | vdWProp n 2 r} → k₂ ∈ {n : ℕ | vdWProp n 2 r} := by
+    intros k₁ k₂ k₁leqk₂ k₁elem
+    simp at k₁elem ⊢
+    intro f
+    apply vdWMonotone k₁ <;> assumption
+  rw [Nat.sInf_upward_closed_eq_succ_iff hs r.succ]
+  apply And.intro
+  · simp
+    apply vdWProp2
+  · simp
+    intro vdWr
+    simp [vdWProp] at vdWr
+    rcases (vdWr (λ n ↦ Fin.ofNat n)) with ⟨s, sdiff, ⟨c, eProp⟩⟩
+    have estart := eProp s.start ⟨0, by simp⟩
+    have eend := eProp (s.start + s.diff) ⟨1, by simp⟩
+    admit
 
 def isArithProg {N : ℕ} (l : List (Fin N)) (d : Fin N) := List.Chain' (λ m n => m < n ∧ m + d = n) l
 
