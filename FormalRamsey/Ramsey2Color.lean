@@ -96,7 +96,7 @@ theorem friendshipUpperbound : Ramsey₂Prop 6 3 3 := by
   have ghyp := Fintype.exists_lt_card_fiber_of_mul_lt_card g ghyp
   rcases ghyp with ⟨c, chyp⟩
   simp [Finset.two_lt_card_iff] at chyp
-  rcases chyp with ⟨x,_,_,y,_,_,z,_,⟨xneqy,⟨_,xneqz⟩,yneqz⟩⟩
+  rcases chyp with ⟨x, _, _, y, _, _, z, _, ⟨xneqy, ⟨_, xneqz⟩, yneqz⟩⟩
   -- pick x y z  from (Finset.filter (λ (x : (⊤:SimpleGraph (Fin 6)).neighborFinset 0)↦ g x = c) Finset.univ)
   -- simp at xIns yIns zIns
 
@@ -659,7 +659,7 @@ theorem Ramsey₂StrictIneq : ∀ s t : ℕ, 0 < Ramsey₂ s t.succ + Ramsey₂ 
       | zero =>
         simp [s0, Ramsey₂0, Ramsey₂Symm, Ramsey₂0] at stPos
       | succ t =>
-        simp [s0, Ramsey₂1] at evenN 
+        simp [s0, Ramsey₂1] at evenN
   · rcases (Nat.eq_zero_or_eq_succ_pred (Ramsey₂ s.succ t)) with Rs1t | Rs1tsucc
     · have Ramsey0 := Nat.sInf_mem (Ramsey₂Finite s.succ t)
       unfold Ramsey₂ at Rs1t
@@ -692,8 +692,12 @@ theorem Ramsey₂StrictIneq : ∀ s t : ℕ, 0 < Ramsey₂ s t.succ + Ramsey₂ 
     rw [Rs1tsucc] at RamseyN
     have temp := Ramsey₂PropStrictIneq evenM evenN RamseyM RamseyN
     rw [← Nat.succ_add, ← Rst1succ] at temp
-    -- FIXME We just need to match the terms in temp and the goal
-    admit
+    have Rst1Pos := Nat.succ_pos (Nat.pred (Ramsey₂ s (Nat.succ t)))
+    have Rs1tPos := Nat.succ_pos (Nat.pred (Ramsey₂ (Nat.succ s) t))
+    rw [← Rst1succ] at Rst1Pos; rw [← Rs1tsucc] at Rs1tPos
+    change 1 ≤ (Ramsey₂ s (Nat.succ t)) at Rst1Pos
+    rw [Nat.pred_eq_sub_one, Rst1succ, ← Nat.add_sub_assoc (Rs1tPos) (Nat.succ (Nat.pred (Ramsey₂ s (Nat.succ t)))), Nat.succ_add_sub_one] at temp
+    simp [temp]
 
 theorem friendship_upper_bound_alt : Ramsey₂ 3 3 ≤ 6 := by
   have R33 := Ramsey₂Ineq 2 2
@@ -847,6 +851,15 @@ theorem Ramsey₂_binomial_coefficient_ineq : ∀ s t : ℕ, Ramsey₂ s.succ t.
   transitivity Ramsey₂ s'.succ t'.succ.succ + Ramsey₂ s'.succ.succ t'.succ
   apply Ramsey₂Ineq s'.succ t'.succ
 
+  by_contra h
+  simp [not_or] at h
+  have RamseyMem := Nat.sInf_mem (Ramsey₂Finite (Nat.succ s') (Nat.succ (Nat.succ t')))
+  unfold Ramsey₂ at h
+  rw [h.left] at RamseyMem
+  simp [Ramsey₂Prop] at RamseyMem
+  rcases RamseyProp0 RamseyMem with ⟨i, i0⟩
+  fin_cases i <;> simp [Vector.get, List.nthLe] at i0
+
   have temp₁: Ramsey₂ s'.succ t'.succ.succ + Ramsey₂ s'.succ.succ t'.succ
   ≤ (s'.succ + t'.succ.succ - 2).choose s' + (s'.succ.succ + t'.succ - 2).choose s'.succ
   apply add_le_add
@@ -856,7 +869,7 @@ theorem Ramsey₂_binomial_coefficient_ineq : ∀ s t : ℕ, Ramsey₂ s.succ t.
   have temp₂ :(s'.succ.succ + t'.succ.succ - 2).choose (s'.succ.succ - 1) =
   (s'.succ + t'.succ.succ - 2).choose s' + (s'.succ.succ + t'.succ - 2).choose s'.succ
   := by simp [Nat.succ_add, Nat.add_succ,Nat.choose_succ_succ]
-  admit
-  -- rw [temp₂]
-  -- exact temp₁
-  -- done
+
+  rw [temp₂]
+  exact temp₁
+  done
