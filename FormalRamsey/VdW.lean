@@ -248,6 +248,35 @@ lemma vdW325 : vdWProp 325 3 1 := by
 
 noncomputable def vdW (k : ℕ) (r : ℕ) : ℕ := sInf { n : ℕ | vdWProp n k r.pred }
 
+theorem vdw1 :∀ {k : ℕ}, vdW k.succ 1 = k.succ := by
+  intro k
+  simp [vdW]
+  rw [Nat.sInf_upward_closed_eq_succ_iff]
+  apply And.intro
+  · simp [vdWProp]
+    use { start := 0, diff := 1}
+    simp
+    intros e eins
+    rcases eins with ⟨i, rfl⟩
+    simp
+  · simp
+    intro vdWk
+    simp [vdWProp] at vdWk
+    rcases vdWk with ⟨s, sdiff, eProp⟩
+    change 1 ≤ s.diff at sdiff
+    have estart := eProp s.start ⟨0, by simp⟩
+    have eend := eProp (s.start + k * s.diff) ⟨k, by simp [Nat.mod_eq_of_lt]⟩
+    have contra : k ≤ s.start + k * s.diff := by cases k with
+      |zero => simp
+      |succ k' => trans (k'.succ * s.diff); simp [Nat.mul_le_mul_left, sdiff]; simp
+    rw [lt_iff_not_ge] at eend
+    simp [eend] at contra
+  intros k₁ k₂ k₁leqk₂ k₁elem
+  simp at k₁elem ⊢
+  intro f
+  apply vdWMonotone k₁ <;> assumption
+  done
+
 theorem vdW2 : ∀ {r : ℕ}, vdW 2 r.succ = r.succ.succ := by
   intro r
   simp [vdW]
@@ -265,7 +294,7 @@ theorem vdW2 : ∀ {r : ℕ}, vdW 2 r.succ = r.succ.succ := by
     simp [vdWProp] at vdWr
     rcases (vdWr (λ n ↦ Fin.ofNat n)) with ⟨s, sdiff, ⟨c, eProp⟩⟩
     have estart := eProp s.start ⟨0, by simp⟩
-    have eend := eProp (s.start + s.diff) ⟨1, by simp⟩
+    have eend := eProp (s.start + s.diff)  ⟨1, by simp⟩
     rw[Fin.ofNat, ← eend.right] at estart eend
     simp [Nat.mod_eq_of_lt estart.left, Nat.mod_eq_of_lt eend.left] at estart
     simp [estart.right] at sdiff
