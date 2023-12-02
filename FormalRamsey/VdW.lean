@@ -99,7 +99,7 @@ lemma vdW325 : vdWProp 325 3 1 := by
   let targetfinset: Finset ℕ := {5 * block₁.val, 5 * block₁.val + 1, 5 * block₁.val + 2}
   have fin25 : Fintype.card (Fin 2) * 1 <  Fintype.card { x // x ∈ targetfinset } := by simp
   -- Define f': takes one of the elemnet in finset ∅, return its color
-  let f' : targetfinset → Fin 2 := λ k => f k 
+  let f' : targetfinset → Fin 2 := λ k => f k
   -- There exists more than 1 elements that have the same color
   have fh' := Fintype.exists_lt_card_fiber_of_mul_lt_card f' fin25
   rcases fh' with ⟨c, chyp⟩
@@ -112,7 +112,7 @@ lemma vdW325 : vdWProp 325 3 1 := by
   simp [a₁Lta₂, a₁Nea₂] at a₂Lta₁
   have tmp₁ := this f fin533 y₅ block₁ block₂ block₁Neblock₂ block₁Ins block₂Ins block₁Ltblock₂ blockeq fin25 c a₂ a₁ a₁Nea₂.symm a₂Ins a₁Ins a₂Lta₁
   rcases tmp₁ with ⟨s, c, sdiff, sc⟩
-  use s, c  
+  use s, c
   clear fin25 -- chyp
   -- express a2 as 5b2+i and prove
   have out₂ : ∃ i, (↑a₂ = 5 * block₁.val + i) ∧ (i < 3):= by
@@ -179,7 +179,7 @@ lemma vdW325 : vdWProp 325 3 1 := by
               simp (config := { zeta := false }) at beqiII
               rw [temp₁, ← beqiII, ← Nat.add_assoc]
               simp [a₁eq]
-            · simp (config := { zeta := false }) [ehyp]              
+            · simp (config := { zeta := false }) [ehyp]
               have temp : a₃ + 5 * B + 5 * B = ↑a₁ + (I + 5 * B + (I + 5 * B)) := by simp_arith
               have temp₁: f a₃ = f (↑a₁ + (I + 5 * B + (I + 5 * B))) := notc fa₃a₁ fblock₂
               rw [temp, temp₁]
@@ -266,7 +266,10 @@ theorem vdW2 : ∀ {r : ℕ}, vdW 2 r.succ = r.succ.succ := by
     rcases (vdWr (λ n ↦ Fin.ofNat n)) with ⟨s, sdiff, ⟨c, eProp⟩⟩
     have estart := eProp s.start ⟨0, by simp⟩
     have eend := eProp (s.start + s.diff) ⟨1, by simp⟩
-    admit
+    rw[Fin.ofNat, ← eend.right] at estart eend
+    simp [Nat.mod_eq_of_lt estart.left, Nat.mod_eq_of_lt eend.left] at estart
+    simp [estart.right] at sdiff
+    done
 
 def isArithProg {N : ℕ} (l : List (Fin N)) (d : Fin N) := List.Chain' (λ m n => m < n ∧ m + d = n) l
 
@@ -422,7 +425,7 @@ theorem vdWByList (N : ℕ) (k : ℕ) (r : ℕ) : vdWProp N.succ k r ↔ ∀ (f 
       intros a₁ a₂
       simp
       intro conditions
-      cases conditions with 
+      cases conditions with
       | inl p => exact Fin.ext p
       | inr p => rw [p] at sdiff; simp at sdiff
     have idxOrdered : ∀ {a₁ a₂ : Fin (List.ofFn f'').length}, idxMap a₁ ≤ idxMap a₂ ↔ a₁ ≤ a₂ := by
