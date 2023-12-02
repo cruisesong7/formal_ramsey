@@ -248,6 +248,10 @@ lemma vdW325 : vdWProp 325 3 1 := by
 
 noncomputable def vdW (k : ℕ) (r : ℕ) : ℕ := sInf { n : ℕ | vdWProp n k r.pred }
 
+syntax "monotone" : tactic
+macro_rules
+  | `(tactic| monotone) => `(tactic|intros k₁ k₂ k₁leqk₂ k₁elem; simp at k₁elem ⊢; intro f; apply vdWMonotone k₁ <;> assumption)
+
 theorem vdw1 :∀ {k : ℕ}, vdW k.succ 1 = k.succ := by
   intro k
   simp [vdW]
@@ -271,21 +275,13 @@ theorem vdw1 :∀ {k : ℕ}, vdW k.succ 1 = k.succ := by
       |succ k' => trans (k'.succ * s.diff); simp [Nat.mul_le_mul_left, sdiff]; simp
     rw [lt_iff_not_ge] at eend
     simp [eend] at contra
-  intros k₁ k₂ k₁leqk₂ k₁elem
-  simp at k₁elem ⊢
-  intro f
-  apply vdWMonotone k₁ <;> assumption
+  monotone
   done
 
 theorem vdW2 : ∀ {r : ℕ}, vdW 2 r.succ = r.succ.succ := by
   intro r
   simp [vdW]
-  have hs : ∀ (k₁ k₂ : ℕ), k₁ ≤ k₂ → k₁ ∈ {n : ℕ | vdWProp n 2 r} → k₂ ∈ {n : ℕ | vdWProp n 2 r} := by
-    intros k₁ k₂ k₁leqk₂ k₁elem
-    simp at k₁elem ⊢
-    intro f
-    apply vdWMonotone k₁ <;> assumption
-  rw [Nat.sInf_upward_closed_eq_succ_iff hs r.succ]
+  rw [Nat.sInf_upward_closed_eq_succ_iff]
   apply And.intro
   · simp
     apply vdWProp2
@@ -298,7 +294,8 @@ theorem vdW2 : ∀ {r : ℕ}, vdW 2 r.succ = r.succ.succ := by
     rw[Fin.ofNat, ← eend.right] at estart eend
     simp [Nat.mod_eq_of_lt estart.left, Nat.mod_eq_of_lt eend.left] at estart
     simp [estart.right] at sdiff
-    done
+  monotone
+  done
 
 def isArithProg {N : ℕ} (l : List (Fin N)) (d : Fin N) := List.Chain' (λ m n => m < n ∧ m + d = n) l
 
