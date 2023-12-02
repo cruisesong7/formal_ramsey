@@ -260,15 +260,14 @@ theorem vdw1 :∀ {k : ℕ}, vdW k.succ 1 = k.succ := by
   · simp [vdWProp]
     use { start := 0, diff := 1}
     simp
-    intros e eins
-    rcases eins with ⟨i, rfl⟩
+    intros _ eins
+    rcases eins with ⟨_, rfl⟩
     simp
   · simp
     intro vdWk
     simp [vdWProp] at vdWk
     rcases vdWk with ⟨s, sdiff, eProp⟩
     change 1 ≤ s.diff at sdiff
-    have estart := eProp s.start ⟨0, by simp⟩
     have eend := eProp (s.start + k * s.diff) ⟨k, by simp [Nat.mod_eq_of_lt]⟩
     have contra : k ≤ s.start + k * s.diff := by cases k with
       |zero => simp
@@ -288,7 +287,7 @@ theorem vdW2 : ∀ {r : ℕ}, vdW 2 r.succ = r.succ.succ := by
   · simp
     intro vdWr
     simp [vdWProp] at vdWr
-    rcases (vdWr (λ n ↦ Fin.ofNat n)) with ⟨s, sdiff, ⟨c, eProp⟩⟩
+    rcases (vdWr (λ n ↦ Fin.ofNat n)) with ⟨s, sdiff, ⟨_, eProp⟩⟩
     have estart := eProp s.start ⟨0, by simp⟩
     have eend := eProp (s.start + s.diff)  ⟨1, by simp⟩
     rw[Fin.ofNat, ← eend.right] at estart eend
