@@ -602,12 +602,7 @@ example : (∃ (d : Fin 8), isArithProg ([3, 4, 7]:List (Fin 8)) d) → 1 = 2 :=
 
 theorem vdW3 : vdW 3 2 = 9 := by
   simp [vdW]
-  have hs : ∀ (k₁ k₂ : ℕ), k₁ ≤ k₂ → k₁ ∈ {n : ℕ | vdWProp n 3 1} → k₂ ∈ {n : ℕ | vdWProp n 3 1} := by
-    intros k₁ k₂ k₁leqk₂ k₁elem
-    simp at k₁elem ⊢
-    intro f
-    apply vdWMonotone k₁ <;> assumption
-  rw [Nat.sInf_upward_closed_eq_succ_iff hs 8]
+  rw [Nat.sInf_upward_closed_eq_succ_iff]
   simp
   apply And.intro <;> rw [vdWByList]
   intro f
@@ -644,3 +639,5 @@ theorem vdW3 : vdW 3 2 = 9 := by
   have myReplace : ((List.finRange (Nat.succ 7)).sublistsLen 3).filter (λ l' => ∃ d, isArithProg l' d) = [[(5:Fin (Nat.succ 7)), 6, 7], [4, 5, 6], [3, 5, 7], [3, 4, 5], [2, 4, 6], [2, 3, 4], [1, 4, 7], [1, 3, 5], [1, 2, 3], [0, 3, 6], [0, 2, 4], [0, 1, 2]] := by native_decide
   rw [myReplace] at lFiltered
   fin_cases c <;> fin_cases lFiltered <;> simp
+  monotone
+  done
