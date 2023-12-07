@@ -1,4 +1,5 @@
 import Mathlib.Data.Vector.Mem
+import Mathlib.Algebra.BigOperators.Basic
 
 import FormalRamsey.Utils
 import FormalRamsey.Ramsey2Color
@@ -152,20 +153,16 @@ def increaseVectorExcept {k : ℕ} (s : Vector ℕ k) (i : Fin k) : Vector ℕ k
 
 set_option maxHeartbeats 500000
 
-theorem RamseyPropIneq : ∀ {k : ℕ} {M : Vector ℕ k.succ.succ} (_ : 0 < M.toList.sum) (s : Vector ℕ k.succ.succ), (∀ (i : Fin k.succ.succ), RamseyProp (M.get i) (increaseVectorExcept s i)) → RamseyProp M.toList.sum (increaseVector s) := by
-  intros k M MSumPos s RamseyM f
-  haveI MSumNeZero : NeZero M.toList.sum := ⟨Nat.not_eq_zero_of_lt MSumPos⟩
-  rcases (Nat.exists_eq_succ_of_ne_zero MSumNeZero.ne) with ⟨M', M'Prop⟩
-  let g : Fin k.succ.succ → ℚ := λ i ↦ ↑(M.get i) - mkRat 1 k.succ.succ
-  let h : Fin k.succ.succ → ℚ := λ c ↦ (((⊤ : SimpleGraph (Fin M'.succ)).neighborFinset 0).filter (λ v : Fin M'.succ ↦ (λ e : Sym2 (Fin M'.succ) ↦ f (e.map (Fin.cast M'Prop.symm))) ⟦(0, v)⟧ = c)).card
-  have hgsum : Finset.univ.sum h = Finset.univ.sum g := by
-    simp [Rat.add_def]
-    rw [Int.ofNat_add_one_out, Rat.normalize_eq_mkRat Nat.zero_ne_one.symm, Rat.mkRat_one_num, Rat.normalize_eq_mkRat]
-    simp only [Rat.mkRat_one_den ↑(k.succ), Int.ofNat_add_out, ← Nat.succ_eq_add_one, Rat.mkRat_mul_mkRat, Nat.mul_comm, Rat.mkRat_mul_left k.succ.succ_ne_zero]
-    simp [Rat.mkRat_one]
-    trans ↑((⊤ : SimpleGraph (Fin M'.succ)).neighborFinset 0).card
-    · trans ↑(Finset.sum Finset.univ (λ x ↦ (Finset.filter (λ v ↦ f ⟦(0, (Fin.cast M'Prop.symm v))⟧ = x) ((⊤ : SimpleGraph (Fin M'.succ)).neighborFinset 0)).card))
-      · simp
+theorem RamseyPropIneq : ∀ {k : ℕ} (M : Vector ℕ k.succ.succ) (s : Vector ℕ k.succ.succ), (∀ (i : Fin k.succ.succ), RamseyProp (M.get i).succ (increaseVectorExcept s i)) → RamseyProp M.toList.sum.succ.succ (increaseVector s) := by
+  intros k M s RamseyM f
+  let g : Fin k.succ.succ → ℚ := λ i ↦ ↑(M.get i) + mkRat 1 k.succ.succ
+  let h : Fin k.succ.succ → ℚ := λ c ↦ (((⊤ : SimpleGraph (Fin M.toList.sum.succ.succ)).neighborFinset 0).filter (λ v : Fin M.toList.sum.succ.succ ↦ f ⟦(0, v)⟧ = c)).card
+  have ghsum : Finset.univ.sum g = Finset.univ.sum h := by
+    rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul, Rat.coe_nat_eq_divInt, ← Int.natCast_one, Rat.divInt_ofNat, Rat.mkRat_mul_mkRat, Nat.mul_comm, Rat.mkRat_mul_left k.succ.succ_ne_zero, Rat.mkRat_one]
+    simp
+    trans ↑((⊤ : SimpleGraph (Fin M.toList.sum.succ.succ)).neighborFinset 0).card
+    · simp [vector_list_finset_sum]
+    · trans ↑(Finset.sum Finset.univ (λ x ↦ (Finset.filter (λ v ↦ f ⟦(0, v)⟧ = x) ((⊤ : SimpleGraph (Fin M.toList.sum.succ.succ)).neighborFinset 0)).card))
       · rw [Nat.cast_inj]
         have partCard : ∀ {n m : ℕ} (f' : Sym2 (Fin n.succ) → Fin m.succ), Finset.univ.sum (λ x ↦ (((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).filter (λ v ↦ f' ⟦(0, v)⟧ = x)).card) = ((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).card := by
           intro n
@@ -221,28 +218,29 @@ theorem RamseyPropIneq : ∀ {k : ℕ} {M : Vector ℕ k.succ.succ} (_ : 0 < M.t
               rw [filtereq] at uinyFilter
               simp at uinxFilter uinyFilter
               exact Eq.trans uinxFilter.right.symm uinyFilter.right
-        have partRw := partCard (λ e : Sym2 (Fin (M'.succ)) ↦ f (e.map (Fin.cast M'Prop.symm)))
+        have partRw := partCard f
         simp at partRw ⊢
-        exact partRw
-    · simp
-      rw [← M'.succ_sub_one, ← M'Prop, Nat.cast_sub MSumPos]
-      simp
-      apply vector_list_finset_sum
-  -- NOTE: The hgsum lemma is backwards (should be ghsum) so here we need hgsum.symm
-  have mp := missing_pigeonhole (Exists.intro (0 : Fin k.succ.succ) (Finset.mem_univ 0)) (le_of_eq hgsum.symm)
+        -- NOTE: Fixing the ghsum lemma made the reasoning above be reversed so here we need .symm
+        exact partRw.symm
+      · simp
+  have mp := missing_pigeonhole (Exists.intro (0 : Fin k.succ.succ) (Finset.mem_univ 0)) (le_of_eq ghsum)
   rcases mp with ⟨a, _, gha⟩
   simp at gha
-  rw [← Int.cast_ofNat, ← Rat.le_floor] at gha
-  have invLt1 : mkRat 1 k.succ.succ < 1 := by
-    rw [Rat.lt_def, Rat.mkRat_den_one, Rat.mkRat_num_one]
-    simp
-  -- TODO: Make arguments in floormagic implicit
-  have MleqNeighbora := floormagic _ _ (mkRat 1 k.succ.succ) invLt1 gha
-  have cliqueCases := monochromaticVicinity_Ramsey 0 (λ e : Sym2 (Fin M'.succ) ↦ f (e.map (Fin.cast M'Prop.symm))) a (increaseVectorExcept s a) (RamseyMonotone (RamseyM a) MleqNeighbora)
+  rw [Rat.add_comm] at gha
+  have ceilOne : ⌈mkRat 1 k.succ.succ⌉ = 1 := by
+    rw [Int.ceil_eq_iff]
+    apply And.intro
+    · simp [← Rat.num_pos_iff_pos, Rat.mkRat_num_one]
+    · rw [← Rat.mkRat_one, Rat.le_def', Rat.mkRat_den_one, Rat.mkRat_num_one, Rat.mkRat_num_one, Rat.mkRat_den_one, Int.one_mul, Int.one_mul, Nat.cast_le]
+      simp_arith
+  have MleqNeighbora := Int.ceil_mono gha
+  simp [ceilOne] at MleqNeighbora
+  rw [Int.add_comm, Int.ofNat_add_one_out, Nat.cast_le] at MleqNeighbora
+  have cliqueCases := monochromaticVicinity_Ramsey 0 f a (increaseVectorExcept s a) (RamseyMonotone (RamseyM a) MleqNeighbora)
   cases cliqueCases with
   | inl cliqueCase =>
     rcases cliqueCase with ⟨S, Sclique⟩
-    use S.map (Fin.castEmb M'Prop.symm), a
+    use S, a
     rw [SimpleGraph.isNClique_iff] at Sclique
     rcases Sclique with ⟨Sclique, Scard⟩
     constructor
@@ -252,7 +250,7 @@ theorem RamseyPropIneq : ∀ {k : ℕ} {M : Vector ℕ k.succ.succ} (_ : 0 < M.t
       exact Scard
   | inr cliqueCase =>
     rcases cliqueCase with ⟨b, S, bneqa, Sclique⟩
-    use S.map (Fin.castEmb M'Prop.symm), b
+    use S, b
     rw [SimpleGraph.isNClique_iff] at Sclique
     rcases Sclique with ⟨Sclique, Scard⟩
     constructor
@@ -592,7 +590,7 @@ theorem Ramsey2 : ∀ {k : ℕ} (s : Vector ℕ k.succ), Ramsey (2 ::ᵥ s) = Ra
     · apply RamseyProp2False NProp
 
 -- NOTE: Maybe a theorem like Rleq should become the standard theorem
-theorem R333 : Ramsey (Vector.ofFn ![3, 3, 3]) = 18 := by
+theorem R333 : Ramsey (Vector.ofFn ![3, 3, 3]) = 17 := by
   simp [Ramsey]
   have Rleq : ∀ (k₁ k₂ : ℕ), k₁ ≤ k₂ → k₁ ∈ {N | RamseyProp N (Vector.ofFn ![3, 3, 3])} → k₂ ∈ {N | RamseyProp N (Vector.ofFn ![3, 3, 3])} := by
     intros k₁ k₂
@@ -601,10 +599,8 @@ theorem R333 : Ramsey (Vector.ofFn ![3, 3, 3]) = 18 := by
     exact RamseyMonotone kRamsey kleq
   rw [Nat.sInf_upward_closed_eq_succ_iff Rleq]
   apply And.intro
-  · have V3Pos : 1 ≤ (Vector.ofFn ![6, 6, 6]).toList.sum := by simp
-    simp [Vector.ofFn]
-    have wtf := RamseyPropIneq V3Pos (Vector.ofFn ![2, 2 , 2])
-    apply wtf
+  · simp [Vector.ofFn]
+    apply RamseyPropIneq (Vector.ofFn ![5, 5, 5]) (Vector.ofFn ![2, 2 , 2])
     intro i
     have Ramsey233 := RamseyToRamseyProp (Ramsey2 (Vector.ofFn ![3, 3]))
     simp [Vector.ofFn] at Ramsey233
@@ -617,5 +613,5 @@ theorem R333 : Ramsey (Vector.ofFn ![3, 3, 3]) = 18 := by
     · have vecPerm : (Vector.ofFn ![2, 3, 3]).toList ~ (Vector.ofFn ![3, 2, 3]).toList := by simp
       apply RamseyPropSymm Ramsey233 vecPerm
     · have vecPerm : (Vector.ofFn ![2, 3, 3]).toList ~ (Vector.ofFn ![3, 3, 2]).toList := by simp
-      apply RamseyPropSymm Ramsey233 vecPerm      
+      apply RamseyPropSymm Ramsey233 vecPerm
   · admit

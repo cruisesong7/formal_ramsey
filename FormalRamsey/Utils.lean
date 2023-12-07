@@ -498,7 +498,7 @@ def castEmb {n : Nat} {m : Nat} (eq : n = m) : Fin n ↪ Fin m := ⟨Fin.cast eq
 
 end Fin
 
-lemma vector_list_finset_sum : ∀ {n : ℕ} (V : Vector ℕ n), List.sum (List.map Nat.cast V.toList) = Finset.sum Finset.univ (λ x ↦ ↑(V.get x) : (Fin n) → ℚ) := by
+lemma vector_list_finset_sum : ∀ {n : ℕ} (V : Vector ℕ n), Finset.sum Finset.univ (λ x ↦ ↑(V.get x) : (Fin n) → ℚ) = List.sum (List.map Nat.cast V.toList) := by
   intro n
   induction n with
   | zero => simp
