@@ -557,7 +557,7 @@ theorem Ramsey₂Finite : ∀ s t : ℕ, { N : ℕ | Ramsey₂Prop N s t }.Nonem
       intro f
       use {}, 0
       simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, graphAtColor, Vector.get, List.nthLe]
-    | succ M ih =>
+    | succ m' ih =>
       intros s t h
       cases s with
       | zero =>
@@ -576,11 +576,11 @@ theorem Ramsey₂Finite : ∀ s t : ℕ, { N : ℕ | Ramsey₂Prop N s t }.Nonem
           simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, graphAtColor, Vector.get, List.nthLe]
         | succ t =>
           have stsuccpred := congr_arg Nat.pred h
-          have s1t : M = s + t.succ := by
+          have s1t : m' = s + t.succ := by
             simp at stsuccpred
             rw [stsuccpred]
             simp [Nat.succ_add]
-          have st1 : M = s.succ + t := by
+          have st1 : m' = s.succ + t := by
             simp at stsuccpred
             rw [stsuccpred]
             simp [Nat.add_succ]
