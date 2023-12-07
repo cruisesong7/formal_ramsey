@@ -442,24 +442,21 @@ theorem Ramsey₂PropIneq : ∀ {M N s t : ℕ}, 0 < M + N → Ramsey₂Prop M s
 
 theorem Ramsey₂PropStrictIneq : ∀ {M N s t : ℕ}, Odd M → Odd N → Ramsey₂Prop M.succ s t.succ → Ramsey₂Prop N.succ s.succ t → Ramsey₂Prop (M + N).succ s.succ t.succ := by
   intros M N s t oddM oddN RamseyM RamseyN
-  -- TODO: Fix the whole proof by replacing M' and N' with M and N
-  let M' := M
-  let N' := N
   unfold Ramsey₂Prop RamseyProp
   simp
   intro f
-  let g : Fin 2 → ℕ := (λ x ↦ 2 * (Finset.filter (λ e ↦ f e = x) (⊤ : SimpleGraph (Fin (M' + N').succ)).edgeFinset).card)
-  let h : Fin 2 → ℕ := ![(M' + N').succ * M', (M' + N').succ * N']
+  let g : Fin 2 → ℕ := (λ x ↦ 2 * (Finset.filter (λ e ↦ f e = x) (⊤ : SimpleGraph (Fin (M + N).succ)).edgeFinset).card)
+  let h : Fin 2 → ℕ := ![(M + N).succ * M, (M + N).succ * N]
   have hgsum : Finset.univ.sum h = Finset.univ.sum g
   simp [Finset.univ_fin2]
   rw [← Nat.left_distrib, ← Nat.left_distrib]
-  have filterdisj : Disjoint (Finset.filter (λ e ↦ f e = 0) (⊤ : SimpleGraph (Fin (M' + N').succ)).edgeFinset) (Finset.filter (λ e ↦ f e = 1) (⊤ : SimpleGraph (Fin (M' + N').succ)).edgeFinset)
+  have filterdisj : Disjoint (Finset.filter (λ e ↦ f e = 0) (⊤ : SimpleGraph (Fin (M + N).succ)).edgeFinset) (Finset.filter (λ e ↦ f e = 1) (⊤ : SimpleGraph (Fin (M + N).succ)).edgeFinset)
   simp [Finset.disjoint_iff_ne]
   intros a _ fa0 b _ fb1
   by_contra h
   simp [h,fb1] at fa0
   rw [← Finset.card_union_eq filterdisj]
-  have seteq : (Finset.filter (λ (e : Sym2 (Fin (M' + N').succ)) ↦ f e = 0) (⊤ : SimpleGraph (Fin (M' + N').succ)).edgeFinset ∪ Finset.filter (λ (e : Sym2 (Fin (M' + N').succ)) ↦ f e = 1) (⊤ : SimpleGraph (Fin (M' + N').succ)).edgeFinset) = (⊤ : SimpleGraph (Fin (M' + N').succ)).edgeFinset
+  have seteq : (Finset.filter (λ (e : Sym2 (Fin (M + N).succ)) ↦ f e = 0) (⊤ : SimpleGraph (Fin (M + N).succ)).edgeFinset ∪ Finset.filter (λ (e : Sym2 (Fin (M + N).succ)) ↦ f e = 1) (⊤ : SimpleGraph (Fin (M + N).succ)).edgeFinset) = (⊤ : SimpleGraph (Fin (M + N).succ)).edgeFinset
   simp[Finset.Subset.antisymm_iff,Finset.subset_iff]
   apply And.intro
   intros _ xprop ; cases xprop <;> simp_all
@@ -473,12 +470,12 @@ theorem Ramsey₂PropStrictIneq : ∀ {M N s t : ℕ}, Odd M → Odd N → Ramse
   rcases mp with ⟨a, ainuniv, gha⟩
 
   -- NOTEL: Maybe state this as ¬Even since we need to simplify later anyways?
-  have cardodd : Odd (M' + N').succ := by
+  have cardodd : Odd (M + N).succ := by
     simp [Nat.even_add_one]
     simp at oddM oddN
     simp [Nat.even_add, oddM, oddN]
 
-  have xoreven : ∀ {O : ℕ}, Odd O → Xor' (Even ((M' + N').succ * O)) (Even (2 * (Finset.filter (λ (e : Sym2 (Fin (M' + N').succ))↦ f e = a) (⊤ : SimpleGraph (Fin (M' + N').succ)).edgeFinset).card)) := by
+  have xoreven : ∀ {O : ℕ}, Odd O → Xor' (Even ((M + N).succ * O)) (Even (2 * (Finset.filter (λ (e : Sym2 (Fin (M + N).succ))↦ f e = a) (⊤ : SimpleGraph (Fin (M + N).succ)).edgeFinset).card)) := by
     intros O OddO
     right
     simp at OddO ⊢
@@ -489,10 +486,10 @@ theorem Ramsey₂PropStrictIneq : ∀ {M N s t : ℕ}, Odd M → Odd N → Ramse
       contradiction
     · contradiction
 
-  have cardeq : ∀ (v : Fin (M' + N').succ) (i : Fin 2), (Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart)↦ x.toProd.snd = v)
-        (Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart)↦ f ⟦x.toProd⟧ = i) Finset.univ)).card = (monochromaticVicinity (⊤ : SimpleGraph (Fin (M' + N').succ)) v f i).card := by
+  have cardeq : ∀ (v : Fin (M + N).succ) (i : Fin 2), (Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M + N).succ)).Dart)↦ x.toProd.snd = v)
+        (Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M + N).succ)).Dart)↦ f ⟦x.toProd⟧ = i) Finset.univ)).card = (monochromaticVicinity (⊤ : SimpleGraph (Fin (M + N).succ)) v f i).card := by
     intro v i
-    apply Finset.card_congr (λ (a : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart) _ ↦ a.fst)
+    apply Finset.card_congr (λ (a : (⊤ : SimpleGraph (Fin (M + N).succ)).Dart) _ ↦ a.fst)
     · intro a
       simp [monochromaticVicinity]
       intros fi asndv
@@ -509,16 +506,16 @@ theorem Ramsey₂PropStrictIneq : ∀ {M N s t : ℕ}, Odd M → Odd N → Ramse
     · intro b
       simp [monochromaticVicinity]
       intros bnotv fvb0
-      have bvAdj: (⊤ : SimpleGraph (Fin (M' + N').succ)).Adj b v := by simp [Ne.symm, bnotv]
+      have bvAdj: (⊤ : SimpleGraph (Fin (M + N).succ)).Adj b v := by simp [Ne.symm, bnotv]
       use SimpleGraph.Dart.mk (b,v) bvAdj
       simp [Sym2.eq_swap, fvb0]
 
   fin_cases a <;> simp at gha
   · have ghalt := xor_even_le_implies_lt (xoreven oddM) gha
     simp at ghalt
-    rw [dblcnt M' N' f 0] at ghalt
-    have pghineq : (@Finset.univ (Fin (M' + N').succ) _).card • M' < ↑((Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart) ↦ f ⟦x.toProd⟧ = 0) Finset.univ).card) := by simp [ghalt]
-    have pgh := Finset.exists_lt_card_fiber_of_mul_lt_card_of_maps_to (λ (e : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart) _ ↦ Finset.mem_univ e.snd) pghineq
+    rw [dblcnt M N f 0] at ghalt
+    have pghineq : (@Finset.univ (Fin (M + N).succ) _).card • M < ↑((Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M + N).succ)).Dart) ↦ f ⟦x.toProd⟧ = 0) Finset.univ).card) := by simp [ghalt]
+    have pgh := Finset.exists_lt_card_fiber_of_mul_lt_card_of_maps_to (λ (e : (⊤ : SimpleGraph (Fin (M + N).succ)).Dart) _ ↦ Finset.mem_univ e.snd) pghineq
     rcases pgh with ⟨v, _, vprop⟩
     rw [cardeq] at vprop
     have cliquecases := monochromaticVicinity_Ramsey v f 0 ⟨[s, t.succ], by simp⟩ (RamseyMonotone RamseyM vprop)
@@ -531,9 +528,9 @@ theorem Ramsey₂PropStrictIneq : ∀ {M N s t : ℕ}, Odd M → Odd N → Ramse
       exact Sclique
   · have ghalt := xor_even_le_implies_lt (xoreven oddN) gha
     simp at ghalt
-    rw [dblcnt M' N' f 1] at ghalt
-    have pghineq : (@Finset.univ (Fin (M' + N').succ) _).card • N' < ↑((Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart) ↦ f ⟦x.toProd⟧ = 1) Finset.univ).card) := by simp [ghalt]
-    have pgh := Finset.exists_lt_card_fiber_of_mul_lt_card_of_maps_to (λ (e : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart) _ ↦ Finset.mem_univ e.snd) pghineq
+    rw [dblcnt M N f 1] at ghalt
+    have pghineq : (@Finset.univ (Fin (M + N).succ) _).card • N < ↑((Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M + N).succ)).Dart) ↦ f ⟦x.toProd⟧ = 1) Finset.univ).card) := by simp [ghalt]
+    have pgh := Finset.exists_lt_card_fiber_of_mul_lt_card_of_maps_to (λ (e : (⊤ : SimpleGraph (Fin (M + N).succ)).Dart) _ ↦ Finset.mem_univ e.snd) pghineq
     rcases pgh with ⟨v, _, vprop⟩
     rw [cardeq] at vprop
     have cliquecases := monochromaticVicinity_Ramsey v f 1 ⟨[s.succ, t], by simp⟩ (RamseyMonotone RamseyN vprop)
@@ -544,6 +541,7 @@ theorem Ramsey₂PropStrictIneq : ∀ {M N s t : ℕ}, Odd M → Odd N → Ramse
       have ieq1 := notc Tclique.left (Fin.succ_ne_zero 0).symm
       simp [ieq1] at Tclique
       exact Tclique
+  done
 
 theorem Ramsey₂Finite : ∀ s t : ℕ, { N : ℕ | Ramsey₂Prop N s t }.Nonempty := by
   suffices Ramsey₂FiniteAdditive : ∀ m : ℕ, ∀ s t, m = s + t → { N : ℕ | Ramsey₂Prop N s t }.Nonempty
@@ -559,7 +557,7 @@ theorem Ramsey₂Finite : ∀ s t : ℕ, { N : ℕ | Ramsey₂Prop N s t }.Nonem
       intro f
       use {}, 0
       simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, graphAtColor, Vector.get, List.nthLe]
-    | succ m' ih =>
+    | succ M ih =>
       intros s t h
       cases s with
       | zero =>
@@ -578,11 +576,11 @@ theorem Ramsey₂Finite : ∀ s t : ℕ, { N : ℕ | Ramsey₂Prop N s t }.Nonem
           simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, graphAtColor, Vector.get, List.nthLe]
         | succ t =>
           have stsuccpred := congr_arg Nat.pred h
-          have s1t : m' = s + t.succ := by
+          have s1t : M = s + t.succ := by
             simp at stsuccpred
             rw [stsuccpred]
             simp [Nat.succ_add]
-          have st1 : m' = s.succ + t := by
+          have st1 : M = s.succ + t := by
             simp at stsuccpred
             rw [stsuccpred]
             simp [Nat.add_succ]
