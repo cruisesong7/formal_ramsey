@@ -589,6 +589,50 @@ theorem Ramsey2 : ∀ {k : ℕ} (s : Vector ℕ k.succ), Ramsey (2 ::ᵥ s) = Ra
     · apply RamseyProp2True N1Prop
     · apply RamseyProp2False NProp
 
+lemma RamseyPropG6Partition : ∀ {N r : ℕ} {s : Vector ℕ r.succ}, (∃ (V : Vector String r.succ) (VProp : ∀ {s : String}, s ∈ V.toList → N = (readG6Header s).toNat), (∀ (i : Fin r.succ), (readG6 (V.get i)).CliqueFree (s.get i)) ∧ (∀ (u v : Fin N), u ≠ v → ∃ (i : Fin r.succ), (readG6 (V.get i)).Adj (Fin.cast (VProp (V.get_mem i)) u) (Fin.cast (VProp (V.get_mem i)) v))) → ¬(RamseyProp N s) := by
+  intros N r s exProp
+  rcases exProp with ⟨V, Vheader, ⟨VcliqueFree, Vunique⟩⟩
+  simp [RamseyProp]
+  use (λ e ↦ match Fin.find (λ i ↦ e.map (Fin.cast (Vheader (V.get_mem i))) ∈ (readG6 (V.get i)).edgeSet) with
+  | some r => r
+  | none => 0)
+  intros S i SNClique
+  simp [graphAtColor] at SNClique
+  -- NOTE: Don't we have some other mapper from Fin N to Fin M when N = M somewhere?
+  have NotSNClique := VcliqueFree i (S.map (Fin.castIso (Vheader (V.get_mem i))).toOrderEmbedding.toEmbedding)
+  rw [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff] at SNClique NotSNClique
+  rw [not_and] at NotSNClique
+  suffices SMapClique : Set.Pairwise (S.map (Fin.castIso (Vheader (V.get_mem i))).toOrderEmbedding.toEmbedding).toSet (readG6 (V.get i)).Adj
+  · have absurd := NotSNClique SMapClique
+    simp at absurd
+    exact absurd SNClique.right
+  · simp [Set.Pairwise] at SNClique ⊢
+    intros u uinS v vinS uneqv
+    simp [Fin.ext_iff] at uneqv
+    rw [← Fin.ext_iff] at uneqv
+    have uvCases := (SNClique.left uinS vinS uneqv).right
+    split at uvCases
+    next j findSome =>
+      simp [Fin.find_eq_some_iff] at findSome
+      rw [uvCases] at findSome
+      exact findSome.left
+    next findNone =>
+      simp [Fin.find_eq_none_iff] at findNone
+      rcases (Vunique u v uneqv) with ⟨j, jProp⟩
+      cases (findNone j) jProp
+
+def castGraph {M N : ℕ} (MeqN : M = N) (G : SimpleGraph (Fin N)) : SimpleGraph (Fin M) := {
+  Adj := λ u v ↦ G.Adj (Fin.cast MeqN u) (Fin.cast MeqN v)
+  symm := by
+    intros u v uvAdj
+    exact G.symm uvAdj
+  loopless := by
+    intros v vvAdj
+    exact G.loopless _ vvAdj
+}
+
+set_option maxHeartbeats 5000000
+
 -- NOTE: Maybe a theorem like Rleq should become the standard theorem
 theorem R333 : Ramsey (Vector.ofFn ![3, 3, 3]) = 17 := by
   simp [Ramsey]
@@ -600,7 +644,7 @@ theorem R333 : Ramsey (Vector.ofFn ![3, 3, 3]) = 17 := by
   rw [Nat.sInf_upward_closed_eq_succ_iff Rleq]
   apply And.intro
   · simp [Vector.ofFn]
-    apply RamseyPropIneq (Vector.ofFn ![5, 5, 5]) (Vector.ofFn ![2, 2 , 2])
+    apply RamseyPropIneq (Vector.ofFn ![5, 5, 5]) (Vector.ofFn ![2, 2, 2])
     intro i
     have Ramsey233 := RamseyToRamseyProp (Ramsey2 (Vector.ofFn ![3, 3]))
     simp [Vector.ofFn] at Ramsey233
@@ -614,4 +658,42 @@ theorem R333 : Ramsey (Vector.ofFn ![3, 3, 3]) = 17 := by
       apply RamseyPropSymm Ramsey233 vecPerm
     · have vecPerm : (Vector.ofFn ![2, 3, 3]).toList ~ (Vector.ofFn ![3, 3, 2]).toList := by simp
       apply RamseyPropSymm Ramsey233 vecPerm
-  · admit
+  · simp
+    apply RamseyPropG6Partition
+    let V : Vector String 3 := Vector.ofFn !["O_k_ClSCDD`S[_`DkIa[_", "OWBYaAJIaOQJ@SMOOPX`S", "OFODXO_pWiK_aJOiBcCAJ"]
+    have VProp : ∀ {s : String}, s ∈ V.toList → 16 = (readG6Header s).toNat := by simp
+    use V, VProp
+    apply And.intro
+    · intro i
+      fin_cases i
+      · simp [Vector.ofFn, Vector.get, List.nthLe, SimpleGraph.CliqueFree]
+        intros S SNClique
+        rw [← SimpleGraph.mem_cliqueFinset_iff] at SNClique
+        have myReplace : (readG6 "O_k_ClSCDD`S[_`DkIa[_").cliqueFinset 3 = ∅ := by native_decide
+        simp [myReplace] at SNClique
+      · simp [Vector.ofFn, Vector.get, List.nthLe, SimpleGraph.CliqueFree]
+        intros S SNClique
+        rw [← SimpleGraph.mem_cliqueFinset_iff] at SNClique
+        have myReplace : (readG6 "OWBYaAJIaOQJ@SMOOPX`S").cliqueFinset 3 = ∅ := by native_decide
+        simp [myReplace] at SNClique
+      · simp [Vector.ofFn, Vector.get, List.nthLe, SimpleGraph.CliqueFree]
+        intros S SNClique
+        rw [← SimpleGraph.mem_cliqueFinset_iff] at SNClique
+        -- NOTE: The replacement here looks different because the simplifier can only count up to 2
+        have myReplace : (readG6 (Matrix.vecHead (Matrix.vecTail !["OWBYaAJIaOQJ@SMOOPX`S", "OFODXO_pWiK_aJOiBcCAJ"]))).cliqueFinset 3 = ∅ := by native_decide
+        simp [myReplace] at SNClique
+    · intros u v uneqv
+      suffices vecSup : sSup { castGraph (VProp (V.get_mem i)) (readG6 (V.get i)) | i : Fin 3 } = completeGraph (Fin 16)
+      · have uvAdj : (completeGraph (Fin 16)).Adj u v := by simp [uneqv]
+        rw [← vecSup] at uvAdj
+        simp at uvAdj
+        rcases uvAdj with ⟨i, iProp⟩
+        simp [castGraph] at iProp
+        use i
+      · rw [SimpleGraph.ext_iff]
+        simp only [castGraph, readG6, completeGraph]
+        ext x y
+        simp
+        rw [Fin.ext_iff, Fin.exists_fin_succ, Fin.exists_fin_succ, Fin.exists_fin_succ]
+        simp
+        fin_cases x <;> fin_cases y <;> dsimp <;> norm_num <;> native_decide
