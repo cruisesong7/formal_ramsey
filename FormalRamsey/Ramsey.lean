@@ -1,7 +1,5 @@
 import Mathlib.Data.Vector.Mem
-import Mathlib.Algebra.BigOperators.Basic
 
-import FormalRamsey.Utils
 import FormalRamsey.Ramsey2Color
 
 open Ramsey
