@@ -184,9 +184,9 @@ theorem friendshipUpperbound : Ramsey₂Prop 6 3 3 := by
           | rw [@Sym2.eq_swap (Fin 6) ↑x 0, @Sym2.eq_swap (Fin 6) ↑y 0, @Sym2.eq_swap (Fin 6) ↑y ↑x]
     tauto
     rw [Finset.card_eq_three]
-    try{on_goal 1 => use 0, ↑x, ↑z}
-    try{on_goal 1 => use 0, ↑y, ↑z}
-    try{on_goal 1 => use 0, ↑x, ↑y}
+    try{use 0, ↑x, ↑z}
+    try{use 0, ↑y, ↑z}
+    try{use 0, ↑x, ↑y}
   }
   done
 
