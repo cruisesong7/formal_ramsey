@@ -137,11 +137,6 @@ theorem RamseyProp2False : ∀ {k N : ℕ} {s : Vector ℕ k.succ}, ¬RamseyProp
     simp [cProp, graphAtColor] at fProp ⊢
     apply fProp
 
--- TODO Note that these are multicolor theorems already, probably deserve to be in Utils.lean
--- def monochromaticVicinity {α : Type} [Fintype α] {c : ℕ} (g : SimpleGraph α) [DecidableRel g.Adj] (v : α) (f : Sym2 α → Fin c) (i : Fin c) : Finset α := Finset.filter (λ x ↦  f ⟦(v, x)⟧ = i) (g.neighborFinset v)
-
--- lemma monochromaticVicinity_Ramsey {N c : ℕ} : ∀ (v : Fin N) (f : Sym2 (Fin N) → Fin c.succ) (i : Fin c.succ) (s : Vector ℕ c.succ), RamseyProp (monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card s → (∃ S, (graphAtColor (completeGraph (Fin N)) f i).IsNClique (s.get i).succ S) ∨ (∃ i' S, i' ≠ i ∧ (graphAtColor (completeGraph (Fin N)) f i').IsNClique (s.get i') S) := by
-
 def increaseVector {k : ℕ} (s : Vector ℕ k) : Vector ℕ k := Vector.ofFn (λ i ↦ (s.get i).succ)
 
 def increaseVectorExcept {k : ℕ} (s : Vector ℕ k) (i : Fin k) : Vector ℕ k := Vector.ofFn (λ j ↦ if i = j then s.get i else (s.get j).succ)
@@ -231,7 +226,7 @@ theorem RamseyPropIneq : ∀ {k : ℕ} (M : Vector ℕ k.succ.succ) (s : Vector 
   have MleqNeighbora := Int.ceil_mono gha
   simp [ceilOne] at MleqNeighbora
   rw [Int.add_comm, Int.ofNat_add_one_out, Nat.cast_le] at MleqNeighbora
-  have cliqueCases := monochromaticVicinity_Ramsey 0 f a (increaseVectorExcept s a) (RamseyMonotone (RamseyM a) MleqNeighbora)
+  have cliqueCases := monochromaticVicinity_Ramsey (RamseyMonotone (RamseyM a) MleqNeighbora)
   cases cliqueCases with
   | inl cliqueCase =>
     rcases cliqueCase with ⟨S, Sclique⟩

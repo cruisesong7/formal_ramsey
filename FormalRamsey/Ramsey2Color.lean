@@ -6,7 +6,7 @@ import Lean.Parser.Tactic
 import Mathlib.Tactic
 
 -- import FormalRamsey.PickTactic
-import FormalRamsey.Utils
+import FormalRamsey.RamseyBase
 import FormalRamsey.RamseyGraphs
 import FormalRamsey.Fin2
 
@@ -284,89 +284,6 @@ theorem Ramsey₂1 : ∀ k : ℕ, Ramsey₂ 1 k.succ = 1 := by
     fin_cases i <;> simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor, Sempty, Vector.get, List.nthLe]
   · assumption
 
-def monochromaticVicinity {α : Type} [Fintype α] {c : ℕ} (g : SimpleGraph α) [DecidableRel g.Adj] (v : α) (f : Sym2 α → Fin c) (i : Fin c) : Finset α := Finset.filter (λ x ↦  f ⟦(v, x)⟧ = i) (g.neighborFinset v)
-
-lemma monochromaticVicinity_Ramsey {N c : ℕ} : ∀ (v : Fin N) (f : Sym2 (Fin N) → Fin c.succ) (i : Fin c.succ) (s : Vector ℕ c.succ), RamseyProp ((monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card) s → (∃ S, (graphAtColor (completeGraph (Fin N)) f i).IsNClique (s.get i).succ S) ∨ (∃ i' S, i' ≠ i ∧ (graphAtColor (completeGraph (Fin N)) f i').IsNClique (s.get i') S) := by
-  intros v f i s vicinityProp
-  have cardeq : (Finset.card (@Finset.univ (Fin (monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card) _)) = (monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card := by simp
-  have ftrans := bijection_of_eq_card cardeq
-  simp at ftrans
-  rcases ftrans with ftrans | ftrans
-  · simp [ftrans.right] at vicinityProp
-    unfold RamseyProp at vicinityProp
-    rcases (vicinityProp (λ _ ↦ 0)) with ⟨S, j, SNClique⟩
-    simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at SNClique
-    have Sempty : S = ∅ := by simp
-    simp [Sempty] at SNClique
-    rcases (instDecidableEqFin c.succ j i) with h | h
-    · right
-      use j, ∅
-      simp [← SNClique, h, SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor]
-    · left
-      use {v}
-      simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor]
-      rw [← h, SNClique]
-  rcases ftrans with ⟨ftrans, ftransbij⟩
-  have ftransembinj : Function.Injective ((λ x ↦ ↑(ftrans ⟨x, Finset.mem_univ x⟩)):(Fin (monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card → Fin N))
-  intros _ _ fa₁a₂
-  simp at fa₁a₂
-  have a₁a₂eq := ftransbij.left (Subtype.ext fa₁a₂)
-  simp at a₁a₂eq
-  exact a₁a₂eq
-  let ftransemb : Function.Embedding (Fin (monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card) (Fin N) := ⟨λ x ↦ ↑(ftrans ⟨x, Finset.mem_univ x⟩), ftransembinj⟩
-  rcases vicinityProp (λ e ↦ f (e.map ((λ x ↦ ↑(ftrans ⟨x, Finset.mem_univ x⟩)):(Fin (monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card → Fin N)))) with ⟨S, ⟨i', Sclique⟩⟩
-  rcases (instDecidableEqFin c.succ i' i) with h|h
-
-  right
-  use i'
-  simp [h]
-  use S.map ftransemb
-  constructor
-  · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor]
-    intros a ainS b binS ftransneq
-    simp [ftransneq]
-    simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at Sclique
-    rcases (instDecidableEqFin _ a b) with aneqb | aeqb
-    have abedge := Sclique.clique ainS binS aneqb
-    simp at abedge
-    exact abedge.right
-    simp [aeqb] at ftransneq
-  · simp
-    exact Sclique.card_eq
-
-  left
-  use (insert v (S.map ftransemb))
-  constructor
-  simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor]
-  apply And.intro
-  · intros a _ _
-    have ftransaprop := (ftrans ⟨a, Finset.mem_univ a⟩).prop
-    simp [monochromaticVicinity] at ftransaprop
-    exact ftransaprop
-  · intros a ainS
-    have ftransaprop := (ftrans ⟨a, Finset.mem_univ a⟩).prop
-    simp [monochromaticVicinity] at ftransaprop
-    apply And.intro
-    · rw [Sym2.eq_swap]
-      intros ftransa
-      simp [ftransa, ftransaprop.right]
-    · intros b binS ftransneq
-      simp [ftransneq]
-      simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at Sclique
-      rcases (instDecidableEqFin _ a b) with aneqb | aeqb
-      have abedge := Sclique.clique ainS binS aneqb
-      simp at abedge
-      simp [← h, abedge.right]
-      simp [aeqb] at ftransneq
-  · have vnotinSmap : v ∉ (S.map ftransemb) := by
-      simp_all
-      intros a _ ftransa
-      have ftransat := (ftrans ⟨a, Finset.mem_univ a⟩).prop
-      simp [ftransa, monochromaticVicinity] at ftransat
-    rw [Finset.card_insert_of_not_mem vnotinSmap]
-    simp [Sclique.card_eq, h]
-  done
-
 theorem Ramsey₂PropIneq : ∀ {M N s t : ℕ}, 0 < M + N → Ramsey₂Prop M s t.succ → Ramsey₂Prop N s.succ t → Ramsey₂Prop (M + N) s.succ t.succ := by
   intros M N s t MNpos RamseyM RamseyN
   unfold Ramsey₂Prop RamseyProp
@@ -419,7 +336,7 @@ theorem Ramsey₂PropIneq : ∀ {M N s t : ℕ}, 0 < M + N → Ramsey₂Prop M s
 
   fin_cases a <;> simp at gha <;> rw [← Int.cast_ofNat, ← Rat.le_floor] at gha
   · have MleqNeighbor0 := floormagic M (monochromaticVicinity (⊤:SimpleGraph (Fin (M + N))) 0 f 0).card (mkRat 1 2) (by simp) gha
-    have cliquecases := monochromaticVicinity_Ramsey 0 f 0 ⟨[s, t.succ], by simp⟩ (RamseyMonotone RamseyM MleqNeighbor0)
+    have cliquecases := monochromaticVicinity_Ramsey (RamseyMonotone RamseyM MleqNeighbor0)
     rcases cliquecases with ⟨S, Sclique⟩ |cliquecases
     use S, 0
     exact Sclique
@@ -429,7 +346,7 @@ theorem Ramsey₂PropIneq : ∀ {M N s t : ℕ}, 0 < M + N → Ramsey₂Prop M s
     simp [ieq1] at Sclique
     exact Sclique
   · have NleqNeighbor1 := floormagic N (monochromaticVicinity (⊤:SimpleGraph (Fin (M + N))) 0 f 1).card (mkRat 1 2) (by simp) gha
-    have cliquecases := monochromaticVicinity_Ramsey 0 f 1 ⟨[s.succ, t], by simp⟩ (RamseyMonotone RamseyN NleqNeighbor1)
+    have cliquecases := monochromaticVicinity_Ramsey (RamseyMonotone RamseyN NleqNeighbor1)
     rcases cliquecases with ⟨T, Tclique⟩ |cliquecases
     use T, 1
     exact Tclique
@@ -518,7 +435,7 @@ theorem Ramsey₂PropStrictIneq : ∀ {M N s t : ℕ}, Odd M → Odd N → Ramse
     have pgh := Finset.exists_lt_card_fiber_of_mul_lt_card_of_maps_to (λ (e : (⊤ : SimpleGraph (Fin (M + N).succ)).Dart) _ ↦ Finset.mem_univ e.snd) pghineq
     rcases pgh with ⟨v, _, vprop⟩
     rw [cardeq] at vprop
-    have cliquecases := monochromaticVicinity_Ramsey v f 0 ⟨[s, t.succ], by simp⟩ (RamseyMonotone RamseyM vprop)
+    have cliquecases := monochromaticVicinity_Ramsey (RamseyMonotone RamseyM vprop)
     rcases cliquecases with ⟨S, Sclique⟩ | ⟨i, ⟨S, Sclique⟩⟩
     · use S, 0
       exact Sclique
@@ -533,7 +450,7 @@ theorem Ramsey₂PropStrictIneq : ∀ {M N s t : ℕ}, Odd M → Odd N → Ramse
     have pgh := Finset.exists_lt_card_fiber_of_mul_lt_card_of_maps_to (λ (e : (⊤ : SimpleGraph (Fin (M + N).succ)).Dart) _ ↦ Finset.mem_univ e.snd) pghineq
     rcases pgh with ⟨v, _, vprop⟩
     rw [cardeq] at vprop
-    have cliquecases := monochromaticVicinity_Ramsey v f 1 ⟨[s.succ, t], by simp⟩ (RamseyMonotone RamseyN vprop)
+    have cliquecases := monochromaticVicinity_Ramsey (RamseyMonotone RamseyN vprop)
     rcases cliquecases with ⟨T, Tclique⟩ | ⟨i, ⟨T, Tclique⟩⟩
     · use T, 1
       exact Tclique

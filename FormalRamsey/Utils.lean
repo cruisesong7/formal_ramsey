@@ -1,60 +1,8 @@
-import Mathlib.Combinatorics.SimpleGraph.Clique
 import Mathlib.Combinatorics.SimpleGraph.DegreeSum
 import Mathlib.Combinatorics.DoubleCounting
 import Mathlib.Data.Rat.Floor
 import Mathlib.Algebra.Parity
 import Mathlib.LinearAlgebra.AffineSpace.Combination
-
-namespace Ramsey
-
-def graphAtColor {N k : ℕ} (G : SimpleGraph (Fin N)) (ϕ : Sym2 (Fin N) → Fin k)
- (i : Fin k): SimpleGraph (Fin N) := {
-  Adj := λ u v ↦ (G.Adj u v) ∧ (ϕ ⟦(u, v)⟧ = i),
-  symm := by
-    unfold Symmetric
-    intros _ _ h
-    rcases h with ⟨Gxy,ϕxy⟩
-    apply And.intro
-    apply G.symm Gxy
-    rw [Sym2.eq_swap]
-    exact ϕxy,
-  loopless :=  by
-    unfold Irreflexive
-    intros _ h
-    simp at h
- }
-
-def RamseyProp {k : ℕ} (N : ℕ) (s : Vector ℕ k.succ) : Prop :=
-∀ f : Sym2 (Fin N) → Fin k.succ,
-(∃ S i, (graphAtColor (completeGraph (Fin N)) f i).IsNClique (s.get i) S)
-
-lemma RamseyProp0 : ∀ {k : ℕ} {s : Vector ℕ k.succ}, RamseyProp 0 s → ∃ (i : Fin k.succ), s.get i = 0 := by
-  intros k s R
-  simp [RamseyProp] at R
-  rcases (R (λ _ ↦ 0)) with ⟨S, c, SNclique⟩
-  simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at SNclique
-  have Sempty : S = ∅ := by simp
-  simp [Sempty] at SNclique
-  use c
-  rw [SNclique]
-
-lemma RamseyMonotone : ∀ {N k : ℕ} {s : Vector ℕ k.succ}, RamseyProp N s → ∀ {M}, N ≤ M → RamseyProp M s := by
-  unfold RamseyProp
-  intros N k s R M NleqM
-  intros f
-  let f' : Sym2 (Fin N) → Fin k.succ := λ e ↦ f (Sym2.map (Fin.castLE NleqM) e)
-  rcases (R f') with ⟨S,⟨i, Sclique, Scard⟩⟩
-  use Finset.map (Fin.castLEEmb NleqM).toEmbedding S, i
-  constructor
-  simp [graphAtColor, SimpleGraph.isClique_iff, Set.Pairwise] at Sclique ⊢
-  intros a ainS b binS aneqb_cast
-  have aneqb : ¬ a = b := by intro h; simp[h] at aneqb_cast
-  have ScliqueMap := Sclique ainS binS aneqb
-  simp_all
-  simp [Scard]
-  done
-
-end Ramsey
 
 lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : ∀ {s : Finset α} {t : Finset β}, s.card = t.card → ((s = ∅ ∧ t = ∅) ∨ ∃ f : ↥s → ↥t, Function.Bijective f) := by
 
