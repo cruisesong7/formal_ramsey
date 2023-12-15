@@ -333,10 +333,10 @@ theorem Ramsey₂PropIneq : ∀ {M N s t : ℕ}, 0 < M + N → Ramsey₂Prop M s
 
   have mp := missing_pigeonhole (Exists.intro (0 : Fin 2) (Finset.mem_univ (0 : Fin 2))) (le_of_eq hgsum)
   rcases mp with ⟨a, _, gha⟩
-
-  fin_cases a <;> simp at gha <;> rw [← Int.cast_ofNat, ← Rat.le_floor] at gha
-  · have MleqNeighbor0 := floormagic M (monochromaticVicinity (⊤:SimpleGraph (Fin (M + N))) 0 f 0).card (mkRat 1 2) (by simp) gha
-    have cliquecases := monochromaticVicinity_Ramsey (RamseyMonotone RamseyM MleqNeighbor0)
+  have floor0 :  ⌊mkRat 1 2⌋ = 0 := by simp
+  fin_cases a <;> simp at gha <;> rw [Rat.add_comm] at gha <;>
+  have leqNeighbor := Int.floor_mono gha <;> simp [floor0] at leqNeighbor
+  · have cliquecases := monochromaticVicinity_Ramsey (RamseyMonotone RamseyM leqNeighbor)
     rcases cliquecases with ⟨S, Sclique⟩ |cliquecases
     use S, 0
     exact Sclique
@@ -345,8 +345,7 @@ theorem Ramsey₂PropIneq : ∀ {M N s t : ℕ}, 0 < M + N → Ramsey₂Prop M s
     have ieq1 := notc Sclique.left (Fin.succ_ne_zero 0)
     simp [ieq1] at Sclique
     exact Sclique
-  · have NleqNeighbor1 := floormagic N (monochromaticVicinity (⊤:SimpleGraph (Fin (M + N))) 0 f 1).card (mkRat 1 2) (by simp) gha
-    have cliquecases := monochromaticVicinity_Ramsey (RamseyMonotone RamseyN NleqNeighbor1)
+  · have cliquecases := monochromaticVicinity_Ramsey (RamseyMonotone RamseyN leqNeighbor)
     rcases cliquecases with ⟨T, Tclique⟩ |cliquecases
     use T, 1
     exact Tclique

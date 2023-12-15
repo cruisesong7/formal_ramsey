@@ -253,19 +253,6 @@ lemma bijection_of_List_perm {α : Type} : ∀ {l₁ l₂ : List α}, l₁ ~ l�
       · exact f₁Prop.right i
       · exact f₂Prop.right (f₁ i)
 
-lemma floormagic : ∀ (n m : ℕ) (q : ℚ), q < 1 → ↑n ≤ ⌊(↑m + q)⌋  → n ≤ m := by
-  intros n m q smallqat nlemfloor
-  rw  [Int.floor_nat_add] at nlemfloor
-  have qflrle0 : ⌊q⌋ ≤ 0
-  by_contra qflrpos
-  simp at qflrpos
-  rw [Int.floor_pos] at qflrpos
-  cases (lt_irrefl 1 (lt_of_le_of_lt qflrpos smallqat))
-  have mqlem := Int.add_le_add_left qflrle0 ↑m
-  have nleqm := Int.le_trans nlemfloor mqlem
-  simp at nleqm
-  exact nleqm
-
  lemma xor_even_le_implies_lt : ∀ {m n : ℕ}, Xor' (Even m) (Even n) → m ≤ n → m < n := by
   intros m n xoreven mlen
   cases' xoreven with hp hq
@@ -294,13 +281,6 @@ lemma missing_pigeonhole {α β : Type} [DecidableEq α] [LinearOrderedSemiring 
     cases (le_or_lt (t.sum f) (t.sum g)) with
     |inl tfleg => simp_all
     |inr tgltf => cases (not_le_of_lt (add_lt_add gltf tgltf) fgsum)
-
-
-
--- NOTE: Proof by simp
-/- lemma halflt1 : mkRat 1 2 < 1 := by
-  simp -/
-
 
 lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 2, 2 * (Finset.filter (λ (e : Sym2 (Fin (M' + N').succ)) ↦ f e = c) (⊤ : SimpleGraph (Fin (M' + N').succ)).edgeFinset).card = (Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart) ↦ f ⟦x.toProd⟧ = c) Finset.univ).card := by
 
