@@ -52,7 +52,7 @@ noncomputable def Ramsey {k : ℕ} (s : Vector ℕ k.succ) : ℕ := sInf { N : �
 def nonzero_mapper {N k : ℕ} {f : Sym2 (Fin N) → Fin k.succ.succ} (fPos : ∀ {e}, ¬e.IsDiag → f e ≠ 0) : Sym2 (Fin N) → Fin k.succ := λ e ↦ match Sym2.IsDiag.decidablePred (Fin N) e with
   | isTrue _ => 0
   | isFalse p => (f e).pred (λ fe0 ↦ fPos p fe0)
-  
+
 theorem Ramsey1Prop : ∀ {k : ℕ} (N : ℕ) (s : Vector ℕ k.succ), RamseyProp N.succ (1 ::ᵥ s) := by
   simp [RamseyProp]
   intros
@@ -450,6 +450,7 @@ def castGraph {M N : ℕ} (MeqN : M = N) (G : SimpleGraph (Fin N)) : SimpleGraph
 }
 
 set_option maxHeartbeats 5000000
+open ProofWidgets
 
 -- NOTE: Maybe a theorem like Rleq should become the standard theorem
 theorem R333 : Ramsey (Vector.ofFn ![3, 3, 3]) = 17 := by
@@ -479,6 +480,7 @@ theorem R333 : Ramsey (Vector.ofFn ![3, 3, 3]) = 17 := by
   · simp
     apply RamseyPropG6Partition
     let V : Vector String 3 := Vector.ofFn !["O_k_ClSCDD`S[_`DkIa[_", "OWBYaAJIaOQJ@SMOOPX`S", "OFODXO_pWiK_aJOiBcCAJ"]
+    with_panel_widgets [SelectionPanel] --visualization HERE
     have VProp : ∀ {s : String}, s ∈ V.toList → 16 = (readG6Header s).toNat := by simp
     use V, VProp
     apply And.intro
