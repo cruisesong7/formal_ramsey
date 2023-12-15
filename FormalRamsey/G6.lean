@@ -6,13 +6,9 @@ match s.toList with
 | [] => 0
 | h :: _ => h.val - (UInt32.ofNatCore 63 (by simp))
 
--- #eval readG6Header "DUW"
-
 def addIdx {α : Type} : List α → ℕ → ℕ → List (α × ℕ × ℕ)
 | [], _, _ => []
 | h :: t, i, j => if i = j then (h, 0, j + 1) :: (addIdx t 1 (j + 1))  else (h, i, j) :: (addIdx t (i + 1) j)
-
--- #eval addIdx (List.foldl (λ l (x : Char) ↦ l ++ (Bitvec.ofNat 6 (x.val.toNat - 63)).toList) [] "UW".toList) 0 0
 
 lemma addIdxLt {α : Type} : ∀ (l : List α) n m, n ≤ m → ∀ {x i j}, (x, i, j) ∈ addIdx l n m → i < j := by
   intro l
