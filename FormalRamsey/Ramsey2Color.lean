@@ -753,7 +753,7 @@ theorem R44 : Ramsey₂ 4 4 = 18 := by
     exact RamseyMonotone Ramsey₂M MleN
 
 theorem Ramsey₂_binomial_coefficient_ineq : ∀ s t : ℕ, Ramsey₂ s.succ t.succ
-≤ Nat.choose (s.succ + t.succ - 2) (s.succ - 1) := by
+≤ Nat.choose (s + t) s := by
   intros s t
 
   induction' s with s' ihp₁ generalizing t
@@ -775,13 +775,13 @@ theorem Ramsey₂_binomial_coefficient_ineq : ∀ s t : ℕ, Ramsey₂ s.succ t.
   fin_cases i <;> simp [Vector.get, List.nthLe] at i0
 
   have temp₁: Ramsey₂ s'.succ t'.succ.succ + Ramsey₂ s'.succ.succ t'.succ
-  ≤ (s'.succ + t'.succ.succ - 2).choose s' + (s'.succ.succ + t'.succ - 2).choose s'.succ
+  ≤ (s' + t'.succ).choose s' + (s'.succ + t').choose s'.succ
   apply add_le_add
   exact ihp₁ t'.succ
   exact ihp₂
 
-  have temp₂ :(s'.succ.succ + t'.succ.succ - 2).choose (s'.succ.succ - 1) =
-  (s'.succ + t'.succ.succ - 2).choose s' + (s'.succ.succ + t'.succ - 2).choose s'.succ
+  have temp₂ :(s'.succ + t'.succ).choose s'.succ =
+  (s' + t'.succ).choose s' + (s'.succ + t').choose s'.succ
   := by simp [Nat.succ_add, Nat.add_succ,Nat.choose_succ_succ]
 
   rw [temp₂]
