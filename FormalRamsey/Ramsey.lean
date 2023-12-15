@@ -27,14 +27,13 @@ theorem RamseyPropSymm : ∀ {N k : ℕ} {s s' : Vector ℕ k.succ}, RamseyProp 
           apply And.intro
           · exact uneqv
           · have fuv := (Sclique uIns vIns uneqv).right
-            have fuvcast := congr_arg (Fin.cast sLength.symm) fuv
-            simp at fuvcast
-            have fuvμ := congr_arg (Function.invFun μ) fuvcast
-            have fuvcomp := congr_fun (Function.invFun_comp μBij.left) (Fin.cast s'Length.symm (f (Quotient.mk (Sym2.Rel.setoid (Fin N)) (u, v))))
+            apply_fun (Fin.cast sLength.symm) at fuv
+            apply_fun (Function.invFun μ) at fuv
+            simp at fuv
+            have fuvcomp := congr_fun (Function.invFun_comp μBij.left) (Fin.cast s'Length.symm (f ⟦(u, v)⟧))
             simp [Function.comp] at fuvcomp
-            rw [fuvcomp] at fuvμ
-            rw [← fuvμ]
-            simp
+            rw [fuvcomp] at fuv
+            simp [← fuv]
         · rw [Scard]
           have si := μProp (Function.invFun μ (Fin.cast sLength.symm i))
           have μinv := Function.rightInverse_invFun μBij.right
@@ -42,9 +41,7 @@ theorem RamseyPropSymm : ∀ {N k : ℕ} {s s' : Vector ℕ k.succ}, RamseyProp 
           have μinvi := congr_fun μinv (Fin.cast sLength.symm i)
           unfold Function.comp at μinvi
           simp [μinvi] at si
-          rw [si]
-          simp [Fin.cast]
-  done
+          simp_rw [si, Fin.cast]
 
 noncomputable def Ramsey {k : ℕ} (s : Vector ℕ k.succ) : ℕ := sInf { N : ℕ | RamseyProp N s }
 

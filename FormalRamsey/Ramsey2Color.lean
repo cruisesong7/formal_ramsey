@@ -491,15 +491,10 @@ theorem Ramsey₂Finite : ∀ s t : ℕ, { N : ℕ | Ramsey₂Prop N s t }.Nonem
           use {}, 1
           simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, graphAtColor, Vector.get, List.nthLe]
         | succ t =>
-          have stsuccpred := congr_arg Nat.pred h
-          have s1t : m' = s + t.succ := by
-            simp at stsuccpred
-            rw [stsuccpred]
-            simp [Nat.succ_add]
-          have st1 : m' = s.succ + t := by
-            simp at stsuccpred
-            rw [stsuccpred]
-            simp [Nat.add_succ]
+          apply_fun Nat.pred at h
+          simp at h
+          have s1t : m' = s + t.succ := by simp [h, Nat.succ_add]
+          have st1 : m' = s.succ + t := by simp [h, Nat.add_succ]
           rcases (ih s t.succ s1t) with ⟨S, Sprop⟩
           rcases (ih s.succ t st1) with ⟨T, Tprop⟩
           simp at Sprop Tprop
