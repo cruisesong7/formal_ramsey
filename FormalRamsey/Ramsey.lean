@@ -430,15 +430,12 @@ lemma RamseyPropG6Partition : ∀ {N r : ℕ} {s : Vector ℕ r.succ}, (∃ (V :
 
 def castGraph {M N : ℕ} (MeqN : M = N) (G : SimpleGraph (Fin N)) : SimpleGraph (Fin M) := {
   Adj := λ u v ↦ G.Adj (Fin.cast MeqN u) (Fin.cast MeqN v)
-  symm := by
-    intros u v uvAdj
-    exact G.symm uvAdj
-  loopless := by
-    intros v vvAdj
-    exact G.loopless _ vvAdj
+  symm := λ _ _ uvAdj ↦  G.symm uvAdj
+  loopless := λ _ vvAdj ↦  G.loopless _ vvAdj
 }
 
 set_option maxHeartbeats 5000000
+
 open ProofWidgets
 
 -- NOTE: Maybe a theorem like Rleq should become the standard theorem
