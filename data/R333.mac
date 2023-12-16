@@ -1,0 +1,12 @@
+load("gf");
+
+load("graphs");
+
+gf_set_data(2, 4);
+
+vertices : makelist(gf_exp(x, i), i, 0, 14);
+
+push(0, vertices);
+
+allgs : makelist(graph6_encode(make_graph(vertices, lambda([i, j], is(mod(gf_log(gf_sub(i, j)), 3) = k)))), k, 0, 2);
+
