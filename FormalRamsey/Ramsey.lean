@@ -58,20 +58,12 @@ theorem Ramsey1Prop : ∀ {k : ℕ} (N : ℕ) (s : Vector ℕ k.succ), RamseyPro
   · simp [SimpleGraph.isClique_iff, Set.Pairwise]
   · simp [Vector.get_zero]
 
--- theorem Ramsey1 : ∀ {k : ℕ} (s : Vector ℕ k.succ), Ramsey (1 ::ᵥ s) ≤ 1 := by
---   intro k s
---   simp [Ramsey]
---   have Ramsey1Monotone : ∀ M₁ M₂, M₁ ≤ M₂ → M₁ ∈ { N : ℕ | RamseyProp N (1 ::ᵥ s)} → M₂ ∈ { N : ℕ | RamseyProp N (1 ::ᵥ s) }
---   · intros M₁ M₂ M₁leM₂
---     simp
---     intro M₁Ramsey
---     apply RamseyMonotone M₁Ramsey M₁leM₂
---   · rw [Nat.sInf_upward_closed_eq_succ_iff]
---     · simp
---       apply And.intro
---       · apply Ramsey1Prop
---       · simp [RamseyProp]
---     · assumption
+theorem Ramsey1 : ∀ {k : ℕ} (s : Vector ℕ k.succ), Ramsey (1 ::ᵥ s) ≤ 1 := by
+  intro _ s
+  simp [Ramsey]
+  have oneIns : 1 ∈ {N | RamseyProp N (1 ::ᵥ s)} := by simp [Ramsey1Prop]
+  simp [Nat.sInf_le oneIns]
+
 
 theorem RamseyProp2True : ∀ {k N : ℕ} {s : Vector ℕ k.succ}, RamseyProp N s → RamseyProp N (2 ::ᵥ s) := by
   intro k N s RamseyN
