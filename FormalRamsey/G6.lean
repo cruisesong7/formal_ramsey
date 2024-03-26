@@ -1,10 +1,12 @@
 import Mathlib.Combinatorics.SimpleGraph.Basic
-import Mathlib.Data.Bitvec.Defs
+import Mathlib.Data.BitVec.Defs
+
+open Std
 
 def readG6Header (s : String) : UInt32 :=
 match s.toList with
 | [] => 0
-| h :: _ => h.val - (UInt32.ofNatCore 63 (by simp))
+| h :: _ => h.val - (UInt32.ofNatCore 63 (by simp_arith [UInt32.size]))
 
 def addIdx {α : Type} : List α → ℕ → ℕ → List (α × ℕ × ℕ)
 | [], _, _ => []
@@ -63,7 +65,7 @@ lemma collectInFinsetMem {α : Type} [DecidableEq α] : ∀ x (l : List (Bool ×
       next b y =>
         cases b <;> simp [← ih] at xin <;>  simp [collectInFinset, xin]
 
-def readG6AdjAux (l : List Char) : Finset (Sym2 (ℕ)) := collectInFinset ((addIdx (List.foldl (λ l (x : Char) ↦ l ++ (Bitvec.ofNat 6 (x.val.toNat - 63)).toList) [] l) 0 0).map (λ p ↦ (p.fst, ⟦(p.snd.fst, p.snd.snd)⟧)))
+def readG6AdjAux (l : List Char) : Finset (Sym2 (ℕ)) := collectInFinset ((addIdx (List.foldl (λ l (x : Char) ↦ l ++ (BitVec.ofNat 6 (x.val.toNat - 63)).toBEList) [] l) 0 0).map (λ p ↦ (p.fst, Sym2.mk p.snd)))
 
 def readG6Adj (s : String) : Finset (Sym2 (ℕ)) :=
 match s.toList with
@@ -71,7 +73,7 @@ match s.toList with
 | _ :: t => readG6AdjAux t
 
 def readG6 (s : String) : SimpleGraph (Fin (readG6Header s).toNat) := {
-  Adj := λ u v ↦ ⟦(u.val, v.val)⟧ ∈ readG6Adj s,
+  Adj := λ u v ↦ s(u.val, v.val) ∈ readG6Adj s,
   symm := by
     unfold Symmetric
     intros _ _ xyIn
