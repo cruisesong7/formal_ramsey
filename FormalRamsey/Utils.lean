@@ -83,15 +83,15 @@ lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : �
   rcases ains : (Finset.decidableMem a s) with h|h
   simp [← b'prop]
   contradiction
-  have boysc := fbij.right ⟨↑b', b'prop⟩
-  rcases boysc with ⟨a', fa'⟩
-  have a'ins : ↑a' ∈ insert a s
-  simp
-  use ⟨a',a'ins⟩
-  rcases (Finset.decidableMem ↑a' s) with h|_
-  cases h a'.prop
-  simp_all
-  split <;> simp_all;simp_all
+  rcases (fbij.right ⟨↑b', b'prop⟩) with ⟨a', fa'⟩
+  use ⟨a', by simp⟩
+  rcases (Finset.decidableMem ↑a' s) with h | _
+  · cases h a'.prop
+  · simp
+    split
+    · simp [fa']
+    · next _ anotins _ =>
+        simp [Subtype.coe_mk] at anotins
 
 lemma bijection_of_List_perm {α : Type} : ∀ {l₁ l₂ : List α}, l₁ ~ l₂ → ∃ (f : Fin l₁.length → Fin l₂.length), Function.Bijective f ∧ ∀ (i : Fin l₁.length), l₁.get i = l₂.get (f i) := by
   intro l₁ l₂ permProp
