@@ -4,9 +4,9 @@ open Lake DSL
 package «formal_ramsey» {
   -- add any package configuration options here
 }
-require mathlib from git "https://github.com/leanprover-community/mathlib4.git"@"v4.2.0"
+require mathlib from git "https://github.com/leanprover-community/mathlib4"@"v4.5.0"
 
-require proofwidgets from git "https://github.com/EdAyers/ProofWidgets4"@"v0.0.22"
+require proofwidgets from git "https://github.com/EdAyers/ProofWidgets4"@"v0.0.25"
 
 @[default_target]
 lean_lib «FormalRamsey» {
@@ -44,7 +44,7 @@ script vdW (args) do
       proc.wait
     return runResult
 
-  script ramsey (args) do
+script ramsey (args) do
   if List.length args != 3
   then IO.println "Usage: lake script run ramsey <N> <S> <T>" return 1
   else
@@ -61,7 +61,7 @@ script vdW (args) do
       proc.wait
     return runResult
 
-  script folkman (args) do
+script folkman (args) do
   if List.length args != 4
   then IO.println "Usage: lake script run folkman <N> <S> <T> <k>" return 1
   else
