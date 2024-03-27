@@ -282,16 +282,17 @@ lemma missing_pigeonhole {α β : Type} [DecidableEq α] [LinearOrderedSemiring 
     |inl tfleg => simp_all
     |inr tgltf => cases (not_le_of_lt (add_lt_add gltf tgltf) fgsum)
 
-lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 2, 2 * (Finset.filter (λ (e : Sym2 (Fin (M' + N').succ)) ↦ f e = c) (⊤ : SimpleGraph (Fin (M' + N').succ)).edgeFinset).card = (Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart) ↦ f ⟦x.toProd⟧ = c) Finset.univ).card := by
+lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 2, 2 * (Finset.filter (λ (e : Sym2 (Fin (M' + N').succ)) ↦ f e = c) (⊤ : SimpleGraph (Fin (M' + N').succ)).edgeFinset).card = (Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart) ↦ f (Sym2.mk x.toProd) = c) Finset.univ).card := by
 
-  let r: Sym2 (Fin (M' + N').succ) → (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart → Prop := λ x y ↦ x = ⟦y.toProd⟧ ∨ x = ⟦y.toProd.swap⟧
+  let r: Sym2 (Fin (M' + N').succ) → (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart → Prop := λ x y ↦ x = Sym2.mk y.toProd ∨ x = Sym2.mk y.toProd.swap
   intro c
   let s := Finset.filter (λ (e : Sym2 (Fin (M' + N').succ)) ↦ f e = c) (⊤ : SimpleGraph (Fin (M' + N').succ)).edgeFinset
-  let t := Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart) ↦ f ⟦x.toProd⟧ = c) Finset.univ
+  let t := Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart) ↦ f (Sym2.mk x.toProd) = c) Finset.univ
   have hm : ∀ (a : Sym2 (Fin (M' + N').succ)), a ∈ s → (Finset.bipartiteAbove r t a).card = 2
   intros a ains
-  rcases (Quotient.exists_rep a) with ⟨⟨fst,snd⟩, aprop⟩
-  simp [SimpleGraph.mem_edgeSet, ← SimpleGraph.completeGraph_eq_top,completeGraph] at ains --NOTE: can be replace by simp_all
+  rcases (Quot.exists_rep a) with ⟨⟨fst,snd⟩, aprop⟩
+  simp[SimpleGraph.mem_edgeSet] at ains
+  --simp [SimpleGraph.mem_edgeSet, ← SimpleGraph.completeGraph_eq_top,completeGraph] at ains --NOTE: can be replace by simp_all
   simp [Finset.bipartiteAbove,Finset.card_eq_two]
   rcases ains with ⟨ains_left, ains_right⟩
 
@@ -322,22 +323,26 @@ lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 
   simp [aeqx, SimpleGraph.Dart.edge,aprop]
 
   simp_all
-  have aeqswap : a = Quotient.mk (Sym2.Rel.setoid (Fin (Nat.succ (M' + N')))) (snd, fst) := by simp[← aprop]
+  have aeqswap : a = Quot.mk (Sym2.Rel (Fin (Nat.succ (M' + N')))) (snd, fst) := by simp[← aprop] --used to be Quotient.mk (Sym2.Rel.setoid (Fin (Nat.succ (M' + N')))) (snd, fst)
+
   simp[aeqswap]
   simp[← aeqswap, ains_right]
 
   have hn : ∀ (b : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart), b ∈ t → (Finset.bipartiteBelow r s b).card = 1
   intros b bint
   simp [Finset.bipartiteBelow, Finset.card_eq_one]
-  simp[← SimpleGraph.completeGraph_eq_top, completeGraph] at bint
+  simp[SimpleGraph.mem_edgeSet] at bint
+  -- simp[← SimpleGraph.completeGraph_eq_top, completeGraph] at bint
   use b.edge
-  simp[Finset.Subset.antisymm_iff, Finset.subset_iff, SimpleGraph.mem_edgeSet,←  SimpleGraph.completeGraph_eq_top, completeGraph]
-  have toEdge : b.edge = ⟦b.toProd⟧ := by simp [SimpleGraph.dart_edge_eq_mk'_iff]
+  simp[Finset.Subset.antisymm_iff, Finset.subset_iff, SimpleGraph.mem_edgeSet]
+  have toEdge : b.edge = Sym2.mk b.toProd := by simp [SimpleGraph.dart_edge_eq_mk'_iff]
   apply And.intro
   intros x _ _ xeqb
   simp_all
   --simp[Finset.filter] at bint
-  simp[toEdge, bint]
+  have btop := b.is_adj
+  simp at btop
+  simp[toEdge, bint, btop]
   --NOTE: try avoid temp
   have temp := Finset.card_mul_eq_card_mul r hm hn
   simp[mul_one (t.card)] at temp
@@ -391,14 +396,14 @@ theorem sum_image_vanishing {β : Type u} {α : Type v} {γ : Type w} {f : α �
     next a s' =>
       intro aProp
       simp [Finset.sum_insert anotins]
-      by_cases (g a) ∈ s'.image g
+      by_cases h:(g a) ∈ s'.image g
       · rw [Finset.insert_eq_of_mem h]
         simp at h
         rcases h with ⟨b, bins', gaeqgb⟩
         have bProp := aProp b
         simp [bins'] at bProp
         rcases bProp with ⟨gbProp, _⟩
-        by_cases f (g b) = 0
+        by_cases h:f (g b) = 0
         · rw [gaeqgb] at h
           simp [h]
           apply ih
