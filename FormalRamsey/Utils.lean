@@ -4,6 +4,8 @@ import Mathlib.Data.Rat.Floor
 import Mathlib.Algebra.Parity
 import Mathlib.LinearAlgebra.AffineSpace.Combination
 
+open List
+
 lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : ∀ {s : Finset α} {t : Finset β}, s.card = t.card → ((s = ∅ ∧ t = ∅) ∨ ∃ f : ↥s → ↥t, Function.Bijective f) := by
 
   intro s
@@ -98,8 +100,6 @@ lemma bijection_of_List_perm {α : Type} : ∀ {l₁ l₂ : List α}, l₁ ~ l�
   induction permProp
   case nil =>
     simp
-    intro i
-    apply Fin.elim0' i
   case cons h l₁ l₂ _ ih =>
     rcases ih with ⟨f, fProp⟩
     haveI : NeZero (h :: l₁).length := by simp; infer_instance
@@ -431,7 +431,7 @@ def castEmb {n : Nat} {m : Nat} (eq : n = m) : Fin n ↪ Fin m := ⟨Fin.cast eq
 
 end Fin
 
-lemma vector_list_finset_sum : ∀ {n : ℕ} (V : Vector ℕ n), Finset.sum Finset.univ (λ x ↦ ↑(V.get x) : (Fin n) → ℚ) = List.sum (List.map Nat.cast V.toList) := by
+lemma vector_list_finset_sum : ∀ {n : ℕ} (V : Vector ℕ n), Finset.sum Finset.univ (λ x ↦ ↑(V.get x) : (Fin n) → ℚ) = sum (map Nat.cast V.toList) := by
   intro n
   induction n with
   | zero => simp
