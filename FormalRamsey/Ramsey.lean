@@ -3,6 +3,7 @@ import Mathlib.Data.Vector.Mem
 import FormalRamsey.Ramsey2Color
 
 open Ramsey
+open List
 
 theorem RamseyPropSymm : ∀ {N k : ℕ} {s s' : Vector ℕ k.succ}, RamseyProp N s → s.toList ~ s'.toList → RamseyProp N s' := by
   intros N k s s' RamseyN sPerm
@@ -30,7 +31,7 @@ theorem RamseyPropSymm : ∀ {N k : ℕ} {s s' : Vector ℕ k.succ}, RamseyProp 
             apply_fun (Fin.cast sLength.symm) at fuv
             apply_fun (Function.invFun μ) at fuv
             simp at fuv
-            have fuvcomp := congr_fun (Function.invFun_comp μBij.left) (Fin.cast s'Length.symm (f ⟦(u, v)⟧))
+            have fuvcomp := congr_fun (Function.invFun_comp μBij.left) (Fin.cast s'Length.symm (f s(u, v)))
             simp [Function.comp] at fuvcomp
             rw [fuvcomp] at fuv
             simp [← fuv]
@@ -69,7 +70,7 @@ theorem RamseyProp2True : ∀ {k N : ℕ} {s : Vector ℕ k.succ}, RamseyProp N 
   intro k N s RamseyN
   simp [RamseyProp] at RamseyN ⊢
   intro f
-  by_cases (∃ u v, u ≠ v ∧ f ⟦(u, v)⟧ = 0)
+  by_cases h: (∃ u v, u ≠ v ∧ f s(u, v) = 0)
   · rcases h with ⟨u, v, fuv0⟩
     use {u, v}, 0
     constructor
@@ -80,7 +81,7 @@ theorem RamseyProp2True : ∀ {k N : ℕ} {s : Vector ℕ k.succ}, RamseyProp N 
   · simp at h
     have fProp : ∀ {e}, ¬e.IsDiag → f e ≠ 0 := by
       intros e eNotDiag
-      rcases (Quotient.exists_rep e) with ⟨⟨u, v⟩, euv⟩
+      rcases (Quot.exists_rep e) with ⟨⟨u, v⟩, euv⟩
       rw [← euv] at eNotDiag ⊢
       simp at eNotDiag
       exact (h u v eNotDiag)
@@ -128,29 +129,28 @@ def increaseVector {k : ℕ} (s : Vector ℕ k) : Vector ℕ k := Vector.ofFn (�
 
 def increaseVectorExcept {k : ℕ} (s : Vector ℕ k) (i : Fin k) : Vector ℕ k := Vector.ofFn (λ j ↦ if i = j then s.get i else (s.get j).succ)
 
-set_option maxHeartbeats 500000
 
 theorem RamseyPropIneq : ∀ {k : ℕ} (M : Vector ℕ k.succ.succ) (s : Vector ℕ k.succ.succ), (∀ (i : Fin k.succ.succ), RamseyProp (M.get i).succ (increaseVectorExcept s i)) → RamseyProp M.toList.sum.succ.succ (increaseVector s) := by
   intros k M s RamseyM f
   let g : Fin k.succ.succ → ℚ := λ i ↦ ↑(M.get i) + mkRat 1 k.succ.succ
-  let h : Fin k.succ.succ → ℚ := λ c ↦ (((⊤ : SimpleGraph (Fin M.toList.sum.succ.succ)).neighborFinset 0).filter (λ v : Fin M.toList.sum.succ.succ ↦ f ⟦(0, v)⟧ = c)).card
+  let h : Fin k.succ.succ → ℚ := λ c ↦ (((⊤ : SimpleGraph (Fin M.toList.sum.succ.succ)).neighborFinset 0).filter (λ v : Fin M.toList.sum.succ.succ ↦ f s(0, v) = c)).card
   have ghsum : Finset.univ.sum g = Finset.univ.sum h := by
     rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul, Rat.coe_nat_eq_divInt, ← Int.natCast_one, Rat.divInt_ofNat, Rat.mkRat_mul_mkRat, Nat.mul_comm, Rat.mkRat_mul_left k.succ.succ_ne_zero, Rat.mkRat_one]
     simp
     trans ↑((⊤ : SimpleGraph (Fin M.toList.sum.succ.succ)).neighborFinset 0).card
     · simp [vector_list_finset_sum]
-    · trans ↑(Finset.sum Finset.univ (λ x ↦ (Finset.filter (λ v ↦ f ⟦(0, v)⟧ = x) ((⊤ : SimpleGraph (Fin M.toList.sum.succ.succ)).neighborFinset 0)).card))
+    · trans ↑(Finset.sum Finset.univ (λ x ↦ (Finset.filter (λ v ↦ f s(0, v) = x) ((⊤ : SimpleGraph (Fin M.toList.sum.succ.succ)).neighborFinset 0)).card))
       · rw [Nat.cast_inj]
-        have partCard : ∀ {n m : ℕ} (f' : Sym2 (Fin n.succ) → Fin m.succ), Finset.univ.sum (λ x ↦ (((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).filter (λ v ↦ f' ⟦(0, v)⟧ = x)).card) = ((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).card := by
+        have partCard : ∀ {n m : ℕ} (f' : Sym2 (Fin n.succ) → Fin m.succ), Finset.univ.sum (λ x ↦ (((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).filter (λ v ↦ f' s(0, v) = x)).card) = ((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).card := by
           intro n
           cases n with
-          | zero => simp
+          | zero => simp [Finset.eq_empty_iff_forall_not_mem]; simp_arith
           | succ n' =>
             simp
             intro m f'
-            let partition : Finset (Finset (Fin n'.succ.succ)) := Finset.univ.image (λ x ↦ ((⊤ : SimpleGraph (Fin n'.succ.succ)).neighborFinset 0).filter (λ v ↦ f' ⟦(0, v)⟧ = x))
+            let partition : Finset (Finset (Fin n'.succ.succ)) := Finset.univ.image (λ x ↦ ((⊤ : SimpleGraph (Fin n'.succ.succ)).neighborFinset 0).filter (λ v ↦ f' s(0, v) = x))
             have partitionPwDisj : Set.PairwiseDisjoint ↑partition (@id (Finset (Fin n'.succ.succ))) := by
-              unfold Set.PairwiseDisjoint Set.Pairwise Disjoint id
+              unfold Set.PairwiseDisjoint Set.Pairwise _root_.Disjoint id
               intros x xinPart y yinPart xneqy
               simp only [List.coe_toFinset, List.mem_ofFn] at xinPart yinPart
               simp [Function.onFun_apply] at xinPart yinPart ⊢
@@ -179,7 +179,7 @@ theorem RamseyPropIneq : ∀ {k : ℕ} (M : Vector ℕ k.succ.succ) (s : Vector 
                 exact vina.left
               · intros v vneq0
                 simp only [Finset.mem_sup, id]
-                use ((⊤ : SimpleGraph (Fin n'.succ.succ)).neighborFinset 0).filter (λ u ↦ f' ⟦(0, u)⟧ = f' ⟦(0, v)⟧)
+                use ((⊤ : SimpleGraph (Fin n'.succ.succ)).neighborFinset 0).filter (λ u ↦ f' s(0, u) = f' s(0, v))
                 simp at vneq0 ⊢
                 exact vneq0
             let parted : Finset.FinpartitionWithEmpty ((⊤ : SimpleGraph (Fin n'.succ.succ)).neighborFinset 0) := ⟨partition, partitionPwDisj, partitionSupParts⟩
@@ -246,6 +246,7 @@ theorem RamseyFinite : ∀ {k : ℕ} (s : Vector ℕ k.succ), { N : ℕ | Ramsey
     intro f
     use (Finset.univ.map Fin.castSuccEmb.toEmbedding), 0
     constructor <;>  simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor]
+    done
   | succ k =>
     induction k with
     | zero =>
@@ -280,7 +281,6 @@ theorem RamseyFinite : ∀ {k : ℕ} (s : Vector ℕ k.succ), { N : ℕ | Ramsey
             cases (R''Clique xinR yinR xneqy)
             next _ notnot =>
               simp [xneqy]
-              rw [← @Decidable.not_not (f (Quotient.mk (Sym2.Rel.setoid (Fin R')) (x, y)) = 0)]
               exact notnot
           · exact R''Card
       · simp at R''Prop
@@ -315,7 +315,7 @@ theorem RamseyFinite : ∀ {k : ℕ} (s : Vector ℕ k.succ), { N : ℕ | Ramsey
           rcases vertexMapEx with ⟨vmap, vmapBij⟩
           have fneq0 : ∀ {e : Sym2 (Fin R)}, ¬e.IsDiag → f (e.map (λ v ↦ (vmap (Subtype.mk v (Finset.mem_univ v ))).val)) ≠ 0 := by
             intros e eNotDiag feq0
-            rcases (Quotient.exists_rep e) with ⟨⟨u, v⟩, uvProp⟩
+            rcases (Quot.exists_rep e) with ⟨⟨u, v⟩, uvProp⟩
             simp [← uvProp] at eNotDiag
             simp [SimpleGraph.isClique_iff, Set.Pairwise] at R''Clique
             have vmapneq : ¬(vmap (Subtype.mk u (Finset.mem_univ u))).val = (vmap (Subtype.mk v (Finset.mem_univ v))).val := by
@@ -434,7 +434,7 @@ def castGraph {M N : ℕ} (MeqN : M = N) (G : SimpleGraph (Fin N)) : SimpleGraph
   loopless := λ _ vvAdj ↦  G.loopless _ vvAdj
 }
 
-set_option maxHeartbeats 5000000
+set_option maxHeartbeats 4000000
 
 open ProofWidgets
 
@@ -459,15 +459,15 @@ theorem R333 : Ramsey (Vector.ofFn ![3, 3, 3]) = 17 := by
     rw [R33] at Ramsey233
     fin_cases i <;> simp [increaseVectorExcept, Vector.ofFn, Vector.get, List.nthLe]
     · exact Ramsey233
-    · have vecPerm : (Vector.ofFn ![2, 3, 3]).toList ~ (Vector.ofFn ![3, 2, 3]).toList := by simp
+    · have vecPerm : (Vector.ofFn ![2, 3, 3]).toList ~ (Vector.ofFn ![3, 2, 3]).toList := by simp_arith
       apply RamseyPropSymm Ramsey233 vecPerm
-    · have vecPerm : (Vector.ofFn ![2, 3, 3]).toList ~ (Vector.ofFn ![3, 3, 2]).toList := by simp
+    · have vecPerm : (Vector.ofFn ![2, 3, 3]).toList ~ (Vector.ofFn ![3, 3, 2]).toList := by simp_arith
       apply RamseyPropSymm Ramsey233 vecPerm
   · simp
     apply RamseyPropG6Partition
     let V : Vector String 3 := Vector.ofFn !["O_k_ClSCDD`S[_`DkIa[_", "OWBYaAJIaOQJ@SMOOPX`S", "OFODXO_pWiK_aJOiBcCAJ"]
     with_panel_widgets [SelectionPanel] --visualization HERE
-    have VProp : ∀ {s : String}, s ∈ V.toList → 16 = (readG6Header s).toNat := by simp
+    have VProp : ∀ {s : String}, s ∈ V.toList → 16 = (readG6Header s).toNat := by simp_arith
     use V, VProp
     apply And.intro
     · intro i

@@ -353,7 +353,6 @@ theorem Ramsey₂PropIneq : ∀ {M N s t : ℕ}, 0 < M + N → Ramsey₂Prop M s
     exact Tclique
   done
 
-set_option maxHeartbeats 500000
 theorem Ramsey₂PropStrictIneq : ∀ {M N s t : ℕ}, Odd M → Odd N → Ramsey₂Prop M.succ s t.succ → Ramsey₂Prop N.succ s.succ t → Ramsey₂Prop (M + N).succ s.succ t.succ := by
   intros M N s t oddM oddN RamseyM RamseyN
   unfold Ramsey₂Prop RamseyProp
