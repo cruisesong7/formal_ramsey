@@ -6,7 +6,7 @@ namespace Ramsey
 
 def graphAtColor {N k : ℕ} (G : SimpleGraph (Fin N)) (ϕ : Sym2 (Fin N) → Fin k)
  (i : Fin k): SimpleGraph (Fin N) := {
-  Adj := λ u v ↦ (G.Adj u v) ∧ (ϕ ⟦(u, v)⟧ = i),
+  Adj := λ u v ↦ (G.Adj u v) ∧ (ϕ s(u, v) = i),
   symm := by
     unfold Symmetric
     intros _ _ h
@@ -30,7 +30,7 @@ lemma RamseyProp0 : ∀ {k : ℕ} {s : Vector ℕ k.succ}, RamseyProp 0 s → �
   simp [RamseyProp] at R
   rcases (R (λ _ ↦ 0)) with ⟨S, c, SNclique⟩
   simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at SNclique
-  have Sempty : S = ∅ := by simp
+  have Sempty : S = ∅ := by simp [Finset.eq_empty_iff_forall_not_mem]
   simp [Sempty] at SNclique
   use c
   rw [SNclique]
@@ -51,7 +51,7 @@ lemma RamseyMonotone : ∀ {N k : ℕ} {s : Vector ℕ k.succ}, RamseyProp N s �
   simp [Scard]
   done
 
-def monochromaticVicinity {α : Type} [Fintype α] {c : ℕ} (g : SimpleGraph α) [DecidableRel g.Adj] (v : α) (f : Sym2 α → Fin c) (i : Fin c) : Finset α := Finset.filter (λ x ↦  f ⟦(v, x)⟧ = i) (g.neighborFinset v)
+def monochromaticVicinity {α : Type} [Fintype α] {c : ℕ} (g : SimpleGraph α) [DecidableRel g.Adj] (v : α) (f : Sym2 α → Fin c) (i : Fin c) : Finset α := Finset.filter (λ x ↦  f s(v, x) = i) (g.neighborFinset v)
 
 lemma monochromaticVicinity_Ramsey {N c : ℕ} {v : Fin N} {f : Sym2 (Fin N) → Fin c.succ} {i : Fin c.succ} {s : Vector ℕ c.succ} : RamseyProp ((monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card) s → (∃ S, (graphAtColor (completeGraph (Fin N)) f i).IsNClique (s.get i).succ S) ∨ (∃ i' S, i' ≠ i ∧ (graphAtColor (completeGraph (Fin N)) f i').IsNClique (s.get i') S) := by
   intro vicinityProp
@@ -62,7 +62,7 @@ lemma monochromaticVicinity_Ramsey {N c : ℕ} {v : Fin N} {f : Sym2 (Fin N) →
     unfold RamseyProp at vicinityProp
     rcases (vicinityProp (λ _ ↦ 0)) with ⟨S, j, SNClique⟩
     simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at SNClique
-    have Sempty : S = ∅ := by simp
+    have Sempty : S = ∅ := by simp [Finset.eq_empty_iff_forall_not_mem]
     simp [Sempty] at SNClique
     rcases (instDecidableEqFin c.succ j i) with h | h
     · right
