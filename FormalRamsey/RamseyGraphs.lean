@@ -74,7 +74,7 @@ theorem GraphRamsey2 : ∀ k : ℕ, GraphRamsey 2 k.succ = k.succ := by
     use Finset.univ
     simp_all
     intros x y _
-    let e: Sym2 (Fin (k + 1)) := ⟦(x, y)⟧
+    let e: Sym2 (Fin (k + 1)) := s(x, y)
     have tmp := GEmp e
     simp_all
 
@@ -82,9 +82,6 @@ theorem GraphRamsey2 : ∀ k : ℕ, GraphRamsey 2 k.succ = k.succ := by
     use {x,y}
     simp[Finset.card_eq_two]
     simp at xyInG
-    have tmp := @SimpleGraph.mem_edgeSet (Fin k.succ) G x y
-    change Quot.mk Setoid.r (x, y) ∈ SimpleGraph.edgeSet G ↔ SimpleGraph.Adj G x y at tmp
-    rw [tmp] at xyInG
     apply And.intro
     swap
     · use x, y
@@ -132,7 +129,7 @@ theorem RamseyGraph1 : ∀ k : ℕ, GraphRamsey 1 k.succ = 1 := by
   use (⊥ : SimpleGraph (Fin 0))
   simp
   intro x
-  have xempty : x = ∅ := by simp
+  have xempty : x = ∅ := by simp[Finset.eq_empty_iff_forall_not_mem]
   simp [xempty, SimpleGraph.isNClique_iff]
   assumption
   done
