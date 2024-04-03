@@ -1,8 +1,8 @@
 import Mathlib.Data.Vector
 import Mathlib.Combinatorics.Pigeonhole
 import Mathlib.Data.Nat.Lattice
-import Mathlib.Data.Bitvec.Defs
 import Mathlib.Data.Fin.VecNotation
+import Mathlib.Data.Fintype.BigOperators
 
 import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.Sat.FromLRAT
@@ -67,9 +67,8 @@ set_option maxHeartbeats 500000
 lemma vdW325 : vdWProp 325 3 1 := by
   unfold vdWProp
   intros f
-  let g : Fin 33 → Bitvec 5 := λ k => Vector.ofFn (λ i=> f (5 * k + i) = 0)
-  have fin533 : Fintype.card (Bitvec 5) • 1 < Fintype.card (Fin 33)
-  simp
+  let g : Fin 33 → Vector Bool 5 := λ k => Vector.ofFn (λ i=> f (5 * k + i) = 0)
+  have fin533 : Fintype.card (Vector Bool 5) • 1 < Fintype.card (Fin 33) := by simp_arith
   have ghyp := Fintype.exists_lt_card_fiber_of_mul_lt_card g fin533
   rcases ghyp with ⟨y₅, y₅hyp⟩
   -- pick block₁ block₂ from (Finset.filter (λ (x : Fin 33) => g x = y₅) Finset.univ)
@@ -79,7 +78,7 @@ lemma vdW325 : vdWProp 325 3 1 := by
   wlog block₁Ltblock₂ : block₁ < block₂
   have tmp₁ := this f
   simp at tmp₁
-  have tmp₂ := tmp₁ y₅ block₂ block₁ block₁Neblock₂.symm block₂Ins block₁Ins
+  have tmp₂ := tmp₁ fin533 y₅ block₂ block₁ block₁Neblock₂.symm block₂Ins block₁Ins
   have block₂Ltblock₁ := lt_trichotomy block₁ block₂
   simp [block₁Ltblock₂, block₁Neblock₂] at block₂Ltblock₁
   rcases (tmp₂ block₂Ltblock₁) with ⟨s, sdiff, c, sc⟩
@@ -153,7 +152,8 @@ lemma vdW325 : vdWProp 325 3 1 := by
       use {start := a₃, diff := 5 * B}, f a₃
       simp (config := { zeta := false })
       apply And.intro
-      · assumption
+      · simp
+        assumption
       · intros e H
         cases H with
         | intro i ehyp =>
@@ -185,7 +185,7 @@ lemma vdW325 : vdWProp 325 3 1 := by
               rw [temp, temp₁]
     | isTrue fblock₂ =>
       use {start := a₁, diff := I + 5 * B}, f a₁
-      simp (config := { zeta := false }) [i₁ineq]
+      simp [i₁ineq]
       intros e H
       cases H with
       | intro i ehyp =>
@@ -205,7 +205,7 @@ lemma vdW325 : vdWProp 325 3 1 := by
             simp (config := { zeta := false }) [ehyp]
             rw [← Nat.add_assoc, a₁plusI, a₂eq]
             simp [Nat.mul_sub_left_distrib 5, ← Nat.add_sub_assoc tmp₁, Nat.add_assoc (5 * ↑block₁), Nat.add_comm i₂]
-            have i₂lt5 : i₂ < 5 := by trans 3 <;> simp [i₂ineq]
+            have i₂lt5 : i₂ < 5 := by trans 3 <;> simp_arith [i₂ineq]
             have beqi₂ := blockeq (Fin.mk i₂ i₂lt5)
             simp at beqi₂
             rw [← beqi₂, ← a₂eq]
@@ -220,7 +220,8 @@ lemma vdW325 : vdWProp 325 3 1 := by
     use {start := a₁, diff := I}
     simp (config := { zeta := false })
     apply And.intro
-    · assumption
+    · simp
+      assumption
     · use c
       intros e H
       cases H with
@@ -252,12 +253,12 @@ syntax "monotone" : tactic
 macro_rules
   | `(tactic| monotone) => `(tactic|intros k₁ k₂ k₁leqk₂ k₁elem; simp at k₁elem ⊢; intro f; apply vdWMonotone k₁ <;> assumption)
 
-theorem vdw1 :∀ {k : ℕ}, vdW k.succ 1 = k.succ := by
+theorem vdW1 :∀ {k : ℕ}, vdW k.succ 1 = k.succ := by
   intro k
   simp [vdW]
   rw [Nat.sInf_upward_closed_eq_succ_iff]
   apply And.intro
-  · simp [vdWProp]
+  · simp [vdWProp, eq_iff_true_of_subsingleton]
     use { start := 0, diff := 1}
     simp
     intros _ eins
@@ -265,7 +266,7 @@ theorem vdw1 :∀ {k : ℕ}, vdW k.succ 1 = k.succ := by
     simp
   · simp
     intro vdWk
-    simp [vdWProp] at vdWk
+    simp [vdWProp, eq_iff_true_of_subsingleton] at vdWk
     rcases vdWk with ⟨s, sdiff, eProp⟩
     change 1 ≤ s.diff at sdiff
     have eend := eProp (s.start + k * s.diff) ⟨k, by simp [Nat.mod_eq_of_lt]⟩
@@ -627,7 +628,7 @@ theorem vdW3 : vdW 3 2 = 9 := by
   have h0 := h' 0
   have v := vdW9 (f 0 = 0) (f 1 = 0) (f 2 = 0) (f 3 = 0) (f 4 = 0) (f 5 = 0) (f 6 = 0) (f 7 = 0) (f 8 = 0)
   explode_assignments v <;> simp [ass] at h0 h1
-  simp only [List.find?, Function.comp.left_id, Function.comp_apply, Fin.mk_one, Fin.mk_zero, exists_and_left, exists_prop, not_forall, not_exists, not_and, and_imp, forall_exists_index]
+  simp only [List.find?, Function.id_comp, Function.comp_apply, Fin.mk_one, Fin.mk_zero, exists_and_left, exists_prop, not_forall, not_exists, not_and, and_imp, forall_exists_index]
   use ![0, 1, 1, 0, 0, 1, 1, 0]
   intros c l d isAP lsubl
   have lFiltered : l ∈ ((List.finRange (Nat.succ 7)).sublistsLen 3).filter (λ l' => (∃ (d : Fin (Nat.succ 7)), isArithProg l' d)) := by
@@ -638,6 +639,6 @@ theorem vdW3 : vdW 3 2 = 9 := by
     exact ⟨d, isAP⟩
   have myReplace : ((List.finRange (Nat.succ 7)).sublistsLen 3).filter (λ l' => ∃ d, isArithProg l' d) = [[(5:Fin (Nat.succ 7)), 6, 7], [4, 5, 6], [3, 5, 7], [3, 4, 5], [2, 4, 6], [2, 3, 4], [1, 4, 7], [1, 3, 5], [1, 2, 3], [0, 3, 6], [0, 2, 4], [0, 1, 2]] := by native_decide
   rw [myReplace] at lFiltered
-  fin_cases c <;> fin_cases lFiltered <;> simp
+  fin_cases c <;> fin_cases lFiltered <;> simp_arith
   monotone
   done
