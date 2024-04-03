@@ -246,7 +246,8 @@ theorem RamseyFinite : ∀ {k : ℕ} (s : Vector ℕ k.succ), { N : ℕ | Ramsey
     intro f
     use (Finset.univ.map Fin.castSuccEmb.toEmbedding), 0
     constructor <;>  simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor]
-    done
+    intros
+    simpa [eq_iff_true_of_subsingleton]
   | succ k =>
     induction k with
     | zero =>
