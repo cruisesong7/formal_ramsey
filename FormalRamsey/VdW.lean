@@ -170,7 +170,7 @@ lemma vdW325 : vdWProp 325 3 1 := by
                 rw [Nat.mul_sub_left_distrib 5 block₂.val block₁.val]
                 have h₀ : block₁.val < block₂.val := by simp [block₁Ltblock₂]
                 have h₁ : 5 * block₁.val ≤ 5 * block₂.val := by linarith only [h₀]
-                have h₂ : 5 * block₁.val ≤ a₃ := by  simp_arith [a₁eq] -- NOTE: simp alone does not close this goal!
+                have h₂ : 5 * block₁.val ≤ a₃ := by  simp_arith [a₁eq]
                 rw [← Nat.add_sub_assoc h₁, Nat.sub_add_comm h₂, Nat.add_comm (5 * block₂.val)]
                 simp_arith (config := { zeta := false })
                 simp_arith [a₁eq, Nat.add_assoc (5 * block₁.val) i₁]
@@ -191,12 +191,8 @@ lemma vdW325 : vdWProp 325 3 1 := by
       | intro i ehyp =>
         simp (config := { zeta := false }) at ehyp
         apply And.intro
-        · -- NOTE: For some reason one cannot combine all of these
-          fin_cases i <;> simp (config := { zeta := false }) [ehyp, a₁eq] -- <;> linarith only [i₁ineq, i₂ineq, Bbound, Ibound]
-          · linarith only [i₁ineq, i₂ineq, Bbound]
-          · linarith only [i₁ineq, i₂ineq, Bbound, Ibound]
-          · linarith only [i₁ineq, i₂ineq, Bbound, Ibound]
-        · fin_cases i -- <;> simp (config := { zeta := false }) [ehyp] -- <;> sorry
+        · fin_cases i <;> simp (config := { zeta := false }) [ehyp, a₁eq] <;> linarith only [i₁ineq, i₂ineq, Bbound, Ibound]
+        · fin_cases i
           · simp [ehyp]
           · have a₁plusI: a₁.val + I = a₂.val := by simp [a₁eq, a₂eq, Nat.add_assoc (5 * block₁.val) i₁ (i₂ - i₁), Nat.add_sub_of_le (le_of_lt i₁ineq)]
             -- NOTE: Should we rw block₁Ltblock₂ earlier?
