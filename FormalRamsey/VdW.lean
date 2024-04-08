@@ -62,7 +62,7 @@ lemma vdWProp2 : ∀ r : ℕ, vdWProp r.succ.succ 2 r := by
     · exact aProp
     · simpa [← Nat.add_sub_assoc (Nat.le_of_lt aLtb)]
 
-set_option maxHeartbeats 500000
+set_option maxHeartbeats 350000
 
 lemma vdW325 : vdWProp 325 3 1 := by
   unfold vdWProp
