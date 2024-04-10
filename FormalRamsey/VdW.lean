@@ -527,7 +527,7 @@ theorem vdWByList (N : ℕ) (k : ℕ) (r : ℕ) : vdWProp N.succ k r ↔ ∀ (f 
     use { start := 0, diff := 1 }, c
     simp
     intros e ein
-    simp [Membership.mem, instMembershipArithprog] at ein
+    simp [Membership.mem] at ein
   | succ k' =>
     cases l with
     | nil => simp at llength
@@ -538,7 +538,7 @@ theorem vdWByList (N : ℕ) (k : ℕ) (r : ℕ) : vdWProp N.succ k r ↔ ∀ (f 
         use { start := h.val, diff := 1 }, c
         simp
         intros e ein
-        simp [Membership.mem, instMembershipArithprog] at ein
+        simp [Membership.mem] at ein
         simp [ein, h.prop]
         apply lcolor
         simp
@@ -553,7 +553,7 @@ theorem vdWByList (N : ℕ) (k : ℕ) (r : ℕ) : vdWProp N.succ k r ↔ ∀ (f 
             simp [Fin.lt_def] at dpos
             simp [dpos]
             intros e ein
-            simp [Membership.mem, instMembershipArithprog] at ein
+            simp [Membership.mem] at ein
             rcases ein with ⟨i, eprop⟩
             simp at llength
             have gi := iprop (Fin.cast (congrArg Nat.succ (congrArg Nat.succ llength.symm)) i)
