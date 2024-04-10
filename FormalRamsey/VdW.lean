@@ -426,8 +426,6 @@ lrat_proof vdW9
   "p cnf 9 32 7 8 9 0 6 7 8 0 5 7 9 0 5 6 7 0 4 6 8 0 4 5 6 0 3 6 9 0 3 5 7 0 3 4 5 0 2 5 8 0 2 4 6 0 2 3 4 0 1 5 9 0 1 4 7 0 1 3 5 0 1 2 3 0 -7 -8 -9 0 -6 -7 -8 0 -5 -7 -9 0 -5 -6 -7 0 -4 -6 -8 0 -4 -5 -6 0 -3 -6 -9 0 -3 -5 -7 0 -3 -4 -5 0 -2 -5 -8 0 -2 -4 -6 0 -2 -3 -4 0 -1 -5 -9 0 -1 -4 -7 0 -1 -3 -5 0 -1 -2 -3 0"
   "33 -6 -8 -9 0 17 21 23 9 14 29 0 34 -8 -9 0 17 33 4 29 26 14 16 25 0 34 d 17 0 35 -8 -9 0 34 0 35 d 33 0 36 7 -9 0 35 2 23 8 22 29 14 0 37 -6 -9 0 36 19 35 10 23 27 9 0 38 -9 0 35 36 19 10 37 6 30 28 15 0 39 5 6 0 38 3 13 6 30 0 40 -5 -3 0 24 31 25 14 0 40 d 24 0 41 6 0 38 7 39 40 0 42 -5 0 41 38 20 22 40 1 12 26 0 43 7 0 42 38 3 0 44 1 0 42 38 13 0 45 -8 0 43 41 18 0 46 -4 0 44 43 30 0 47 2 0 45 42 10 0 48 3 0 46 42 9 0 49 0 47 48 44 32 0"
 
--- set_option tactic.simp.trace true
-
 theorem vdWByList (N : ℕ) (k : ℕ) (r : ℕ) : vdWProp N.succ k r ↔ ∀ (f : Fin N.succ → Fin r.succ), ∃ (c : Fin r.succ) (l : List (Fin N.succ)) (_ : l ∈ List.sublistsLen k (List.finRange N.succ)) (_ : ∃ (d : Fin N.succ), isArithProg l d), ∀ n, n ∈ l → f n = c := by
   apply Iff.intro
   intros vdW f
@@ -591,11 +589,6 @@ syntax (name := explode_assignments) "explode_assignments " (ppSpace ident) : ta
 
 @[tactic explode_assignments] elab_rules : tactic
   | `(tactic| explode_assignments $name) => do let mg ← getMainGoal; let newGoals ← explodeAss mg (getNameOfIdent' name); replaceMainGoal newGoals;
-
-example : (∃ (d : Fin 8), isArithProg ([3, 4, 7]:List (Fin 8)) d) → 1 = 2 := by
-  intro isAP
-  have isNotAP : ¬(∃ (d : Fin 8), isArithProg ([3, 4, 7]:List (Fin 8)) d) := by native_decide
-  contradiction
 
 theorem vdW3 : vdW 3 2 = 9 := by
   simp [vdW]
