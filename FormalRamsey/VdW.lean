@@ -588,7 +588,7 @@ syntax (name := explode_assignments) "explode_assignments " (ppSpace ident) : ta
 @[tactic explode_assignments] elab_rules : tactic
   | `(tactic| explode_assignments $name) => do let mg ← getMainGoal; let newGoals ← explodeAss mg (getNameOfIdent' name); replaceMainGoal newGoals;
 
-theorem vdW3 : vdW 3 2 = 9 := by
+theorem vdW32 : vdW 3 2 = 9 := by
   simp [vdW]
   rw [Nat.sInf_upward_closed_eq_succ_iff]
   simp
