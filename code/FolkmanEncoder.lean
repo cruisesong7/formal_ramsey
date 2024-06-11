@@ -1,5 +1,4 @@
 import Std.Data.List.Basic
---import Mathlib.Data.List.Sublists
 import Std.Data.HashMap
 
 open Std List String
@@ -58,5 +57,3 @@ def main (argv : List String) : IO UInt32 := do
 
   IO.print ( result ++ intercalate " 0\n" (perm₁ ++ perm₂ ++ perm₃ ++ clauses₁ ++ clauses₂ ++ clauses₃++ clauses₄) ++ " 0\n")
   return 0
-
--- #eval (do main ["7", "3", "3", "6"])

@@ -1,5 +1,4 @@
 import Std.Data.List.Basic
---import Mathlib.Data.List.Sublists
 import Std.Data.HashMap
 
 open Std List
@@ -26,5 +25,3 @@ def main (argv : List String) : IO UInt32 := do
     ((sublistsLen 2 clique).map λx => "-" ++ toString (keyToValue x.getLast! x.head!)))
   IO.print ( result ++ String.intercalate " 0\n" (clauses ++ clauses') ++ " 0\n")
   return 0
-
---#eval (do main ["6", "3", "3"])
