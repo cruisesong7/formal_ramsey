@@ -1,7 +1,6 @@
 import Mathlib.Combinatorics.Pigeonhole
 import Mathlib.Data.Rat.NNRat
 
---import Mathlib.Tactic.PermuteGoals
 import Lean.Parser.Tactic
 import Mathlib.Tactic
 
@@ -170,19 +169,16 @@ theorem friendshipUpperbound : Ramsey₂Prop 6 3 3 := by
 
   rcases eVal with eVal | ⟨eVal | eVal⟩ <;>  rw [eVal] at eColor
 
-  use ↑x, ↑y; rotate_left; use ↑y, ↑z; rotate_left; use ↑x, ↑z
+  set i := ↑x; set j := ↑y; rotate_left; set i := ↑y; set j := ↑z; rotate_left; set i := ↑x; set j := ↑z
   all_goals{
+    use i, j
     simp [graphAtColor, completeGraph]
     constructor
     simp [SimpleGraph.isClique_iff, Set.Pairwise]
-    first | rw [@Sym2.eq_swap (Fin 6) ↑x 0, @Sym2.eq_swap (Fin 6) ↑z 0, @Sym2.eq_swap (Fin 6) ↑z ↑x]
-          | rw [@Sym2.eq_swap (Fin 6) ↑y 0, @Sym2.eq_swap (Fin 6) ↑z 0, @Sym2.eq_swap (Fin 6) ↑z ↑y]
-          | rw [@Sym2.eq_swap (Fin 6) ↑x 0, @Sym2.eq_swap (Fin 6) ↑y 0, @Sym2.eq_swap (Fin 6) ↑y ↑x]
+    rw [@Sym2.eq_swap (Fin 6) i 0, @Sym2.eq_swap (Fin 6) j 0, @Sym2.eq_swap (Fin 6) j i]
     tauto
     rw [Finset.card_eq_three]
-    try{use 0, ↑x, ↑z}
-    try{use 0, ↑y, ↑z}
-    try{use 0, ↑x, ↑y}
+    use 0, i, j
   }
   done
 
