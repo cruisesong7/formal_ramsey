@@ -65,65 +65,66 @@ theorem Ramsey1 : ∀ {k : ℕ} (s : Vector ℕ k.succ), Ramsey (1 ::ᵥ s) ≤ 
   have oneIns : 1 ∈ {N | RamseyProp N (1 ::ᵥ s)} := by simp [Ramsey1Prop]
   simp [Nat.sInf_le oneIns]
 
-
-theorem RamseyProp2True : ∀ {k N : ℕ} {s : Vector ℕ k.succ}, RamseyProp N s → RamseyProp N (2 ::ᵥ s) := by
-  intro k N s RamseyN
-  simp [RamseyProp] at RamseyN ⊢
-  intro f
-  by_cases h: (∃ u v, u ≠ v ∧ f s(u, v) = 0)
-  · rcases h with ⟨u, v, fuv0⟩
-    use {u, v}, 0
-    constructor
-    · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor, fuv0.left, fuv0.left.symm, Sym2.eq_swap, fuv0.right]
-    · simp [Finset.card_eq_two]
-      use u, v
-      simp [fuv0.left]
-  · simp at h
-    have fProp : ∀ {e}, ¬e.IsDiag → f e ≠ 0 := by
-      intros e eNotDiag
-      rcases (Quot.exists_rep e) with ⟨⟨u, v⟩, euv⟩
-      rw [← euv] at eNotDiag ⊢
-      simp at eNotDiag
-      exact (h u v eNotDiag)
-    let f' := nonzero_mapper fProp
-    rcases (RamseyN f') with ⟨S, i, Sclique⟩
-    use S, i.succ
-    rw [SimpleGraph.isNClique_iff] at Sclique
-    rcases Sclique with ⟨Sclique, Scard⟩
-    constructor
-    · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor, nonzero_mapper] at Sclique ⊢
-      intros u uinS v vinS uneqv
-      apply And.intro
-      · exact uneqv
-      · have fmapped := (Sclique uinS vinS uneqv).right
-        split at fmapped
-        next _ h _ =>
-          simp at h
-          contradiction
-        next =>
-          simp [← fmapped]
-    · simp [Scard]
-
-theorem RamseyProp2False : ∀ {k N : ℕ} {s : Vector ℕ k.succ}, ¬RamseyProp N s → ¬RamseyProp N (2 ::ᵥ s) := by
-  intros k N s NotRamseyN
-  simp [RamseyProp] at NotRamseyN ⊢
-  rcases NotRamseyN with ⟨f, fProp⟩
-  use (λ e ↦ (f e).succ)
-  intros S c
-  cases c.eq_zero_or_eq_succ with
-  | inl c0 =>
-    intro Sclique
-    rw [SimpleGraph.isNClique_iff] at Sclique
-    rcases Sclique with ⟨Sclique, Scard⟩
-    simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at Sclique fProp
-    simp [c0] at Sclique Scard
-    rw [Finset.card_eq_two] at Scard
-    rcases Scard with ⟨u, v, uneqv, Suv⟩
-    simp [uneqv, Suv, Fin.succ_ne_zero] at Sclique
-  | inr csucc =>
-    rcases csucc with ⟨c', cProp⟩
-    simp [cProp, graphAtColor] at fProp ⊢
-    apply fProp
+theorem RamseyProp2 : ∀ {k N : ℕ} {s : Vector ℕ k.succ}, RamseyProp N s ↔ RamseyProp N (2 ::ᵥ s) := by
+  intros k N s
+  apply Iff.intro
+  · intro RamseyN
+    simp [RamseyProp] at RamseyN ⊢
+    intro f
+    by_cases h: (∃ u v, u ≠ v ∧ f s(u, v) = 0)
+    · rcases h with ⟨u, v, fuv0⟩
+      use {u, v}, 0
+      constructor
+      · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor, fuv0.left, fuv0.left.symm, Sym2.eq_swap, fuv0.right]
+      · simp [Finset.card_eq_two]
+        use u, v
+        simp [fuv0.left]
+    · simp at h
+      have fProp : ∀ {e}, ¬e.IsDiag → f e ≠ 0 := by
+        intros e eNotDiag
+        rcases (Quot.exists_rep e) with ⟨⟨u, v⟩, euv⟩
+        rw [← euv] at eNotDiag ⊢
+        simp at eNotDiag
+        exact (h u v eNotDiag)
+      let f' := nonzero_mapper fProp
+      rcases (RamseyN f') with ⟨S, i, Sclique⟩
+      use S, i.succ
+      rw [SimpleGraph.isNClique_iff] at Sclique
+      rcases Sclique with ⟨Sclique, Scard⟩
+      constructor
+      · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor, nonzero_mapper] at Sclique ⊢
+        intros u uinS v vinS uneqv
+        apply And.intro
+        · exact uneqv
+        · have fmapped := (Sclique uinS vinS uneqv).right
+          split at fmapped
+          next _ h _ =>
+            simp at h
+            contradiction
+          next =>
+            simp [← fmapped]
+      · simp [Scard]
+  · unfold RamseyProp
+    intro Ramsey2s
+    intro f
+    rcases (Ramsey2s (λ i ↦ (f i).succ)) with ⟨S, Sprop⟩
+    rw [Fin.exists_fin_succ] at Sprop
+    cases Sprop with
+    | inl Sprop =>
+      simp at Sprop
+      rcases Sprop with ⟨Sclique, Scard⟩
+      simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at Sclique
+      simp [Finset.card_eq_two] at Scard
+      rcases Scard with ⟨u, v, uneqv, Suv⟩
+      simp [uneqv, Suv, Fin.succ_ne_zero] at Sclique
+    | inr Sprop =>
+      simp at Sprop
+      rcases Sprop with ⟨i, Sclique, Scard⟩
+      use S, i
+      constructor
+      · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at Sclique ⊢
+        assumption
+      · assumption
 
 def increaseVector {k : ℕ} (s : Vector ℕ k) : Vector ℕ k := Vector.ofFn (λ i ↦ (s.get i).succ)
 
@@ -394,8 +395,11 @@ theorem Ramsey2 : ∀ {k : ℕ} (s : Vector ℕ k.succ), Ramsey (2 ::ᵥ s) = Ra
     simp at NProp ⊢
     rcases NProp with ⟨N1Prop, NProp⟩
     apply And.intro
-    · apply RamseyProp2True N1Prop
-    · apply RamseyProp2False NProp
+    · rw [RamseyProp2] at N1Prop
+      exact N1Prop
+    · intro RamseyN
+      rw [← RamseyProp2] at RamseyN
+      contradiction
 
 lemma RamseyPropG6Partition : ∀ {N r : ℕ} {s : Vector ℕ r.succ}, (∃ (V : Vector String r.succ) (VProp : ∀ {s : String}, s ∈ V.toList → N = (readG6Header s).toNat), (∀ (i : Fin r.succ), (readG6 (V.get i)).CliqueFree (s.get i)) ∧ (∀ (u v : Fin N), u ≠ v → ∃ (i : Fin r.succ), (readG6 (V.get i)).Adj (Fin.cast (VProp (V.get_mem i)) u) (Fin.cast (VProp (V.get_mem i)) v))) → ¬(RamseyProp N s) := by
   intros N r s exProp
