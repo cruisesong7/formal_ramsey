@@ -83,14 +83,12 @@ def decodeG6Adjacency (s : String) (n : Nat) : Array (Array (Fin 2)) :=
   let emptyMatrix := Array.mkArray n (Array.mkArray n 0)
   emptyMatrix.mapIdx (λ i row =>
     row.mapIdx (λ j _ =>
-      let iNat := Fin.val i
-      let jNat := Fin.val j
-      if iNat < jNat then
-        if bitIdx jNat iNat < bits.size then bits.get! (bitIdx jNat iNat) else 0
-      else if iNat = jNat then
+      if i < j then
+        if bitIdx j i < bits.size then bits.get! (bitIdx j i) else 0
+      else if i = j then
         0
       else
-        if bitIdx iNat jNat < bits.size then bits.get! (bitIdx iNat jNat) else 0))
+        if bitIdx i j < bits.size then bits.get! (bitIdx i j) else 0))
 
 def decodeG6 (s : String) : Array (Array (Fin 2)) :=
   let n := charToValue s.front
@@ -130,7 +128,7 @@ def g6PolygonSvgPresenter : ExprPresenter where
 example : "GhdGKC".length > 0 := by
   with_panel_widgets [SelectionPanel]
     -- Users can select a G6 string literal in the goal panel.
-  sorry
+  decide
 
 -- [html verision]
 -- def createCircleAtCoord (coord : Float × Float) : Element frame :=
