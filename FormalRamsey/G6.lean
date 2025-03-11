@@ -1,5 +1,4 @@
 import Mathlib.Combinatorics.SimpleGraph.Basic
-import Mathlib.Data.BitVec.Defs
 
 open Std
 
@@ -65,7 +64,7 @@ lemma collectInFinsetMem {α : Type} [DecidableEq α] : ∀ x (l : List (Bool ×
       next b y =>
         cases b <;> simp [← ih] at xin <;>  simp [collectInFinset, xin]
 
-def readG6AdjAux (l : List Char) : Finset (Sym2 (ℕ)) := collectInFinset ((addIdx (List.foldl (λ l (x : Char) ↦ l ++ (BitVec.ofNat 6 (x.val.toNat - 63)).toBEList) [] l) 0 0).map (λ p ↦ (p.fst, Sym2.mk p.snd)))
+def readG6AdjAux (l : List Char) : Finset (Sym2 (ℕ)) := collectInFinset ((addIdx (List.foldl (λ l (x : Char) ↦ l ++ (List.ofFn (BitVec.ofNat 6 (x.val.toNat - 63)).getMsb')) [] l) 0 0).map (λ p ↦ (p.fst, Sym2.mk p.snd)))
 
 def readG6Adj (s : String) : Finset (Sym2 (ℕ)) :=
 match s.toList with
@@ -86,7 +85,7 @@ def readG6 (s : String) : SimpleGraph (Fin (readG6Header s).toNat) := {
     split at loop
     next snil =>
       simp at snil
-      simp [snil, readG6Header, UInt32.toNat, OfNat.ofNat, UInt32.ofNat, Fin.ofNat] at v  
+      simp [snil, readG6Header] at v
       exact Fin.elim0 v
     next h t _ =>
       simp [readG6AdjAux, collectInFinsetMem] at loop
