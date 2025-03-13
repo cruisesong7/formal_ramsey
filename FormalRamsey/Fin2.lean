@@ -1,5 +1,7 @@
 import Mathlib.Tactic.FinCases
 
+-- NOTE: This is in Mathlib.LinearAlgebra.AffineSpace.Combination
+-- but we would like to use this fact without invoking 50 Gb of math
 theorem univ_fin2 : (Finset.univ : Finset (Fin 2)) = {0, 1} := by
   ext x
   fin_cases x <;> simp

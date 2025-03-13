@@ -1,8 +1,5 @@
 import Mathlib.Combinatorics.Pigeonhole
 
--- import Lean.Parser.Tactic
--- import Mathlib.Tactic
-
 -- import FormalRamsey.PickTactic
 import FormalRamsey.RamseyBase
 import FormalRamsey.RamseyGraphs
@@ -177,7 +174,7 @@ theorem Ramsey₂PropSymm : ∀ {N s t}, Ramsey₂Prop N s t ↔ Ramsey₂Prop N
 --   }
 --   done
 
--- noncomputable def Ramsey₂ (s t : ℕ) : ℕ := sInf { N : ℕ | Ramsey₂Prop N s t }
+noncomputable def Ramsey₂ (s t : ℕ) : ℕ := sInf { N : ℕ | Ramsey₂Prop N s t }
 
 -- theorem Ramsey₂2 : ∀ k : ℕ, Ramsey₂ 2 k.succ = k.succ := by
 --   intros k
@@ -240,109 +237,100 @@ theorem Ramsey₂PropSymm : ∀ {N s t}, Ramsey₂Prop N s t ↔ Ramsey₂Prop N
 --   assumption
 --   done
 
--- -- TODO Rename to Prop1
--- theorem Ramsey₂1Prop : ∀ N k : ℕ, Ramsey₂Prop N.succ 1 k := by
---   intros
---   simp [Ramsey₂Prop, RamseyProp]
---   intros
---   use {0}, 0
---   constructor
---   simp [SimpleGraph.isClique_iff, Set.Pairwise]
---   simp [Vector.get]
---   simp [List.nthLe]
---   done
+theorem Ramsey₂Prop1 : ∀ N k : ℕ, Ramsey₂Prop N.succ 1 k := by
+  intros
+  simp [Ramsey₂Prop, RamseyProp]
+  intros
+  use {0}, 0
+  constructor
+  simp [SimpleGraph.isClique_iff, Set.Pairwise]
+  simp [List.Vector.get]
 
--- theorem Ramsey₂1 : ∀ k : ℕ, Ramsey₂ 1 k.succ = 1 := by
---   intro k
---   simp [Ramsey₂]
---   have Ramsey1Monotone : ∀ M₁ M₂, M₁ ≤ M₂ → M₁ ∈ { N : ℕ | Ramsey₂Prop N 1 k.succ } → M₂ ∈ { N : ℕ | Ramsey₂Prop N 1 k.succ } := by
---     intros M₁ M₂ M₁leM₂
---     simp
---     intro M₁Ramsey
---     apply RamseyMonotone M₁Ramsey M₁leM₂
---   rw [Nat.sInf_upward_closed_eq_succ_iff]
---   · simp
---     apply And.intro
---     apply Ramsey₂1Prop 0 k.succ
---     simp [Ramsey₂Prop, RamseyProp]
---     use (λ _ ↦ 0)
---     intros S i
---     have Sempty : S = ∅ := by simp[Finset.eq_empty_iff_forall_not_mem]
---     fin_cases i <;> simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor, Sempty, Vector.get, List.nthLe]
---   · assumption
+theorem Ramsey₂1 : ∀ k : ℕ, Ramsey₂ 1 k.succ = 1 := by
+  intro k
+  simp [Ramsey₂]
+  have Ramsey1Monotone : ∀ M₁ M₂, M₁ ≤ M₂ → M₁ ∈ { N : ℕ | Ramsey₂Prop N 1 k.succ } → M₂ ∈ { N : ℕ | Ramsey₂Prop N 1 k.succ } := by
+    intros M₁ M₂ M₁leM₂
+    simp
+    intro M₁Ramsey
+    apply RamseyMonotone M₁Ramsey M₁leM₂
+  rw [Nat.sInf_upward_closed_eq_succ_iff]
+  · simp
+    apply And.intro
+    apply Ramsey₂Prop1 0 k.succ
+    simp [Ramsey₂Prop, RamseyProp]
+    use (λ _ ↦ 0)
+    intros S i
+    have Sempty : S = ∅ := by simp[Finset.eq_empty_iff_forall_not_mem]
+    fin_cases i <;> simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor, Sempty, List.Vector.get]
+  · assumption
 
--- theorem Ramsey₂PropIneq : ∀ {M N s t : ℕ}, 0 < M + N → Ramsey₂Prop M s t.succ → Ramsey₂Prop N s.succ t → Ramsey₂Prop (M + N) s.succ t.succ := by
---   intros M N s t MNpos RamseyM RamseyN
---   unfold Ramsey₂Prop RamseyProp
---   intro f
---   haveI : NeZero (M + N) := by
---     constructor
---     intro h
---     simp [h] at MNpos
---   let g : Fin 2 → ℚ := λ x ↦ (monochromaticVicinity (⊤:SimpleGraph (Fin (M + N))) 0 f x).card
---   let h : Fin 2 → ℚ := ![↑M - mkRat 1 2, ↑N - mkRat 1 2]
---   have hgsum : Finset.univ.sum h = Finset.univ.sum g := by
---     simp [Finset.univ_fin2]
---     have lhs :  ↑M - mkRat 1 2 + (↑N - mkRat 1 2) = ↑M + ↑N - 1 := by
---       abel_nf
---       cancel_denoms
---       simp [add_comm]
+theorem Ramsey₂PropIneq : ∀ {M N s t : ℕ}, 0 < M + N → Ramsey₂Prop M s t.succ → Ramsey₂Prop N s.succ t → Ramsey₂Prop (M + N) s.succ t.succ := by
+  intros M N s t MNpos RamseyM RamseyN
+  unfold Ramsey₂Prop RamseyProp
+  intro f
+  haveI : NeZero (M + N) := by
+    constructor
+    intro h
+    simp [h] at MNpos
+  let g : Fin 2 → ℚ := λ x ↦ (monochromaticVicinity (⊤:SimpleGraph (Fin (M + N))) 0 f x).card
+  let h : Fin 2 → ℚ := ![↑M - mkRat 1 2, ↑N - mkRat 1 2]
+  have hgsum : Finset.univ.sum h = Finset.univ.sum g := by
+    simp [Finset.univ_fin2]
+    have lhs :  ↑M - mkRat 1 2 + (↑N - mkRat 1 2) = ↑M + ↑N - 1 := by
+      abel_nf
+      cancel_denoms
+      simp [add_comm]
 
---     simp [lhs]
---     have filterdisj : Disjoint (monochromaticVicinity (⊤:SimpleGraph (Fin (M + N))) 0 f 0) (monochromaticVicinity (⊤:SimpleGraph (Fin (M + N))) 0 f 1) := by
---       rw [Finset.disjoint_iff_ne]
---       intros _ ainS _ binT
---       simp [monochromaticVicinity] at ainS binT
---       intro aeqb
---       rw [aeqb] at ainS
---       cases Eq.trans (Eq.symm binT.right) ainS.right
---   -- NOTE One should be able to get away with a few rewrites and then letting simp deal with the rest,
---   --       but that approach causes whnf time out in my computer.
---     rw [Rat.add_def' ↑(Finset.card (monochromaticVicinity ⊤ 0 f 0)) ↑(Finset.card (monochromaticVicinity ⊤ 0 f 1)), Rat.coe_nat_den (Finset.card (monochromaticVicinity ⊤ 0 f 0)), Rat.coe_nat_num (Finset.card (monochromaticVicinity ⊤ 0 f 0)), Rat.coe_nat_den (Finset.card (monochromaticVicinity ⊤ 0 f 1)), Rat.coe_nat_num (Finset.card (monochromaticVicinity ⊤ 0 f 1)), Int.ofNat_one, ← Distrib.right_distrib, Int.mul_one, ← Int.ofNat_add]
-
---     have seteq : (monochromaticVicinity ⊤ 0 f 0) ∪ (monochromaticVicinity ⊤ 0 f 1) = ((⊤:SimpleGraph (Fin (M + N))).neighborFinset 0) := by
---       apply subset_antisymm <;> unfold HasSubset.Subset
---       intros _ ainset
---       simp [monochromaticVicinity] at ainset ⊢
---       rcases ainset with aprop| aprop <;> exact aprop.left
---       intros a ainset
---       simp at ainset ⊢
-
---       by_contra h
---       simp[not_or] at h
---       simp[monochromaticVicinity, ainset, not0_eq1] at h
-
---     rw [← Finset.card_union_eq filterdisj, seteq, SimpleGraph.neighborFinset_eq_filter]
---     simp [← SimpleGraph.completeGraph_eq_top, completeGraph, Finset.filter_ne]
---     rw [Int.ofNat_sub MNpos]
---   -- NOTE Again, these lines should all be part of a single simp call but we get whnf timeout
---     rw [Rat.add_def', Rat.coe_nat_num M, Rat.coe_nat_den M, Rat.coe_nat_num N, Rat.coe_nat_den N, Int.ofNat_one, ← Distrib.right_distrib, Int.mul_one, ← Int.ofNat_add, Nat.mul_one]
---     rw [Rat.sub_def', Rat.one_den, Rat.one_num, Int.ofNat_one, Int.mul_one, Int.one_mul, Nat.mul_one, Rat.mkRat_one_num, Rat.mkRat_one_den, Int.ofNat_one]
-
---   have mp := missing_pigeonhole (Exists.intro (0 : Fin 2) (Finset.mem_univ (0 : Fin 2))) (le_of_eq hgsum)
---   rcases mp with ⟨a, _, gha⟩
---   have floor0 :  ⌊mkRat 1 2⌋ = 0 := by simp; tauto
---   fin_cases a <;> simp at gha <;> rw [Rat.add_comm] at gha <;>
---   have leqNeighbor := Int.floor_mono gha <;> simp [floor0] at leqNeighbor
---   · have cliquecases := monochromaticVicinity_Ramsey (RamseyMonotone RamseyM leqNeighbor)
---     rcases cliquecases with ⟨S, Sclique⟩ |cliquecases
---     use S, 0
---     exact Sclique
---     rcases cliquecases with ⟨i, ⟨S, Sclique⟩⟩
---     use S, 1
---     have ieq1 := notc Sclique.left (Fin.succ_ne_zero 0)
---     simp [ieq1] at Sclique
---     exact Sclique
---   · have cliquecases := monochromaticVicinity_Ramsey (RamseyMonotone RamseyN leqNeighbor)
---     rcases cliquecases with ⟨T, Tclique⟩ |cliquecases
---     use T, 1
---     exact Tclique
---     rcases cliquecases with ⟨i, ⟨T, Tclique⟩⟩
---     use T, 0
---     have ineq1 := notc Tclique.left Fin.zero_ne_one
---     simp [ineq1] at Tclique
---     exact Tclique
---   done
+    simp [h, g, lhs]
+    have filterdisj : Disjoint (monochromaticVicinity (⊤:SimpleGraph (Fin (M + N))) 0 f 0) (monochromaticVicinity (⊤:SimpleGraph (Fin (M + N))) 0 f 1) := by
+      rw [Finset.disjoint_iff_ne]
+      intros _ ainS _ binT
+      simp [monochromaticVicinity] at ainS binT
+      intro aeqb
+      rw [aeqb] at ainS
+      cases Eq.trans (Eq.symm binT.right) ainS.right
+    rw [Rat.add_def' ↑(Finset.card (monochromaticVicinity ⊤ 0 f 0)) ↑(Finset.card (monochromaticVicinity ⊤ 0 f 1)), Rat.den_natCast, Rat.num_natCast, Rat.den_natCast, Rat.num_natCast, Int.ofNat_one]
+    simp only [Nat.mul_one, Int.mul_one, ← Int.ofNat_add]
+    have seteq : (monochromaticVicinity ⊤ 0 f 0) ∪ (monochromaticVicinity ⊤ 0 f 1) = ((⊤:SimpleGraph (Fin (M + N))).neighborFinset 0) := by
+      apply subset_antisymm <;> rw [Finset.subset_iff]
+      · intros _ ainset
+        simp [monochromaticVicinity] at ainset ⊢
+        rcases ainset with aprop| aprop <;> exact aprop.left
+      · simp [monochromaticVicinity]
+        intros a ainset
+        simp [ainset]
+        have funiv := Finset.mem_univ (f s(0, a))
+        simp [univ_fin2] at funiv
+        assumption
+    rw [← Finset.card_union_of_disjoint filterdisj, seteq, SimpleGraph.neighborFinset_eq_filter]
+    simp [← SimpleGraph.completeGraph_eq_top, completeGraph, Finset.filter_ne]
+    have rep := congr_arg (@Int.cast Rat _) (Int.ofNat_sub MNpos)
+    simp at rep
+    rw [rep]
+  have mp := Finset.exists_le_of_sum_le (Exists.intro (0 : Fin 2) (Finset.mem_univ (0 : Fin 2))) (le_of_eq hgsum)
+  rcases mp with ⟨a, _, gha⟩
+  have floor0 :  ⌊mkRat 1 2⌋ = 0 := by simp; tauto
+  fin_cases a <;> simp at gha <;> rw [Rat.add_comm] at gha <;>
+  have leqNeighbor := Int.floor_mono gha <;> simp [floor0] at leqNeighbor
+  · have cliquecases := monochromaticVicinity_Ramsey (RamseyMonotone RamseyM leqNeighbor)
+    rcases cliquecases with ⟨S, Sclique⟩ |cliquecases
+    use S, 0
+    exact Sclique
+    rcases cliquecases with ⟨i, ⟨S, Sclique⟩⟩
+    use S, 1
+    have ieq1 := notc Sclique.left (Fin.succ_ne_zero 0)
+    simp [ieq1] at Sclique
+    exact Sclique
+  · have cliquecases := monochromaticVicinity_Ramsey (RamseyMonotone RamseyN leqNeighbor)
+    rcases cliquecases with ⟨T, Tclique⟩ |cliquecases
+    use T, 1
+    exact Tclique
+    rcases cliquecases with ⟨i, ⟨T, Tclique⟩⟩
+    use T, 0
+    have ineq1 := notc Tclique.left Fin.zero_ne_one
+    simp [ineq1] at Tclique
+    exact Tclique
 
 -- theorem Ramsey₂PropStrictIneq : ∀ {M N s t : ℕ}, Odd M → Odd N → Ramsey₂Prop M.succ s t.succ → Ramsey₂Prop N.succ s.succ t → Ramsey₂Prop (M + N).succ s.succ t.succ := by
 --   intros M N s t oddM oddN RamseyM RamseyN
@@ -450,57 +438,57 @@ theorem Ramsey₂PropSymm : ∀ {N s t}, Ramsey₂Prop N s t ↔ Ramsey₂Prop N
 --       exact Tclique
 --   done
 
--- theorem Ramsey₂Finite : ∀ s t : ℕ, { N : ℕ | Ramsey₂Prop N s t }.Nonempty := by
---   suffices Ramsey₂FiniteAdditive : ∀ m : ℕ, ∀ s t, m = s + t → { N : ℕ | Ramsey₂Prop N s t }.Nonempty
---   · intros s t
---     simp [Ramsey₂FiniteAdditive (s + t) s t]
---   · intro m
---     induction m with
---     | zero =>
---       intros s t st
---       rcases (Nat.eq_zero_of_add_eq_zero st.symm) with ⟨rfl, rfl⟩
---       use 0
---       simp [Ramsey₂Prop, RamseyProp]
---       intro f
---       use {}, 0
---       simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, graphAtColor, Vector.get, List.nthLe]
---     | succ m' ih =>
---       intros s t h
---       cases s with
---       | zero =>
---         use 0
---         simp [Ramsey₂Prop, RamseyProp]
---         intro f
---         use {}, 0
---         simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, graphAtColor, Vector.get, List.nthLe]
---       | succ s =>
---         cases t with
---         | zero =>
---           use 0
---           simp [Ramsey₂Prop, RamseyProp]
---           intro f
---           use {}, 1
---           simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, graphAtColor, Vector.get, List.nthLe]
---         | succ t =>
---           apply_fun Nat.pred at h
---           simp at h
---           have s1t : m' = s + t.succ := by simp [h, Nat.succ_add]
---           have st1 : m' = s.succ + t := by simp [h, Nat.add_succ]
---           rcases (ih s t.succ s1t) with ⟨S, Sprop⟩
---           rcases (ih s.succ t st1) with ⟨T, Tprop⟩
---           simp at Sprop Tprop
---           cases Nat.eq_zero_or_eq_succ_pred (S + T) with
---           | inl ST0 =>
---             rcases (Nat.eq_zero_of_add_eq_zero ST0) with ⟨rfl, rfl⟩
---             unfold Ramsey₂Prop at Sprop Tprop
---             rcases (RamseyProp0 Sprop) with ⟨i, i0⟩
---             fin_cases i <;> simp [Vector.get, List.nthLe] at i0
---             · use 1
---               simp [i0]
---               apply Ramsey₂1Prop
---           | inr STPos =>
---             use S + T
---             apply Ramsey₂PropIneq (by rw [STPos]; simp) <;> assumption
+theorem Ramsey₂Finite : ∀ s t : ℕ, { N : ℕ | Ramsey₂Prop N s t }.Nonempty := by
+  suffices Ramsey₂FiniteAdditive : ∀ m : ℕ, ∀ s t, m = s + t → { N : ℕ | Ramsey₂Prop N s t }.Nonempty by
+    intros s t
+    simp [Ramsey₂FiniteAdditive (s + t) s t]
+  · intro m
+    induction m with
+    | zero =>
+      intros s t st
+      rcases (Nat.eq_zero_of_add_eq_zero st.symm) with ⟨rfl, rfl⟩
+      use 0
+      simp [Ramsey₂Prop, RamseyProp]
+      intro f
+      use {}, 0
+      simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, graphAtColor, List.Vector.get]
+    | succ m' ih =>
+      intros s t h
+      cases s with
+      | zero =>
+        use 0
+        simp [Ramsey₂Prop, RamseyProp]
+        intro f
+        use {}, 0
+        simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, graphAtColor, List.Vector.get]
+      | succ s =>
+        cases t with
+        | zero =>
+          use 0
+          simp [Ramsey₂Prop, RamseyProp]
+          intro f
+          use {}, 1
+          simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, graphAtColor, List.Vector.get]
+        | succ t =>
+          apply_fun Nat.pred at h
+          simp at h
+          have s1t : m' = s + t.succ := by simp_arith [h, Nat.succ_add]
+          have st1 : m' = s.succ + t := by simp_arith [s1t]
+          rcases (ih s t.succ s1t) with ⟨S, Sprop⟩
+          rcases (ih s.succ t st1) with ⟨T, Tprop⟩
+          simp at Sprop Tprop
+          cases Nat.eq_zero_or_eq_succ_pred (S + T) with
+          | inl ST0 =>
+            rcases (Nat.eq_zero_of_add_eq_zero ST0) with ⟨rfl, rfl⟩
+            unfold Ramsey₂Prop at Sprop Tprop
+            rcases (RamseyProp0 Sprop) with ⟨i, i0⟩
+            fin_cases i <;> simp [List.Vector.get] at i0
+            · use 1
+              simp [i0]
+              apply Ramsey₂Prop1
+          | inr STPos =>
+            use S + T
+            apply Ramsey₂PropIneq (by rw [STPos]; simp) <;> assumption
 
 -- theorem Ramsey₂ToRamsey₂Prop : ∀ {N s t : ℕ}, Ramsey₂ s t = N → Ramsey₂Prop N s t := by
 --   intros N s t Ramsey

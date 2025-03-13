@@ -5,93 +5,94 @@ import Mathlib.LinearAlgebra.AffineSpace.Combination
 
 open List
 
--- lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : ∀ {s : Finset α} {t : Finset β}, s.card = t.card → ((s = ∅ ∧ t = ∅) ∨ ∃ f : ↥s → ↥t, Function.Bijective f) := by
-
---   intro s
---   induction' s using Finset.induction with a s anotins ih
---   simp
---   intros t h
---   left
---   rw [← Finset.card_eq_zero]
---   symm
---   exact h
-
---   intros t tcard
---   right
---   rw [(Finset.card_insert_of_not_mem anotins)] at tcard
---   have tinsert := Eq.symm tcard
---   rw [Finset.card_eq_succ] at tinsert
---   rcases tinsert with ⟨b, t', bnotint', bins, tcards⟩
---   rcases (ih (Eq.symm tcards)) with stempt | fbij
---   simp [stempt.right] at bins
---   rw [stempt.left, ← bins]
---   have bobv : b ∈ t := by
---     rw [← bins]
---     exact Finset.mem_singleton_self b
---   lift b to t using bobv
---   rw [bins]
---   use (λ _ : {y // y ∈ insert a ∅} ↦ b)
---   apply And.intro
---   · intros a₁ a₂ eq
---     apply Subtype.ext
---     have a₁prop := a₁.prop
---     have a₂prop := a₂.prop
---     simp only [Finset.mem_insert, Finset.not_mem_empty, or_false] at a₁prop a₂prop
---     simp [a₁prop, a₂prop]
---   · intros b'
---     use ⟨a, Finset.mem_insert_self a ∅⟩
---     have b'prop := b'.prop
---     simp [← bins] at b'prop ⊢
---     apply Subtype.ext
---     simp [b'prop]
---   have bint : b ∈ t := by rw [← bins] ; simp
---   rcases fbij with ⟨f, fbij⟩
---   have fhelper : ∀ x, ↑(f x) ∈ t := by
---     intros
---     simp [← bins]
---   use (λ x ↦ match Finset.decidableMem ↑x s with
---   | isTrue p => ⟨f ⟨↑x, p⟩, fhelper ⟨↑x, p⟩⟩
---   | isFalse _ => ⟨b, bint⟩)
---   apply And.intro
---   · intros a₁ a₂ fa₁a₂
---     split at fa₁a₂ <;> split at fa₁a₂ <;> simp at fa₁a₂
---   next a₁ins _ _ a₂ins _ =>
---     have a₁eqa₂ := fbij.left (Subtype.ext fa₁a₂)
---     simp at a₁eqa₂
---     exact Subtype.ext a₁eqa₂
---   next a₁ins _ _ a₂notins _ =>
---     have fa₁prop := (f ⟨↑a₁, a₁ins⟩).prop
---     rw [fa₁a₂] at fa₁prop
---     contradiction
---   next a₁notins _ _ a₂ins _ =>
---     have bint' := (f { val := ↑a₂, property := a₂ins }).prop
---     rw [← fa₁a₂] at bint'
---     contradiction
---   next a₁notins _ _ a₂notins _ =>
---     have a₁a := a₁.prop
---     have a₂a := a₂.prop
---     simp [a₁notins, a₂notins] at a₁a a₂a
---     apply Subtype.ext
---     simp [a₁a, a₂a]
-
---   intros b'
---   have b'prop := b'.prop
---   simp [← bins] at b'prop
---   rcases b'prop with b'prop|b'prop
---   use ⟨a, Finset.mem_insert_self a s⟩
---   simp
---   rcases ains : (Finset.decidableMem a s) with h|h
---   simp [← b'prop]
---   contradiction
---   rcases (fbij.right ⟨↑b', b'prop⟩) with ⟨a', fa'⟩
---   use ⟨a', by simp⟩
---   rcases (Finset.decidableMem ↑a' s) with h | _
---   · cases h a'.prop
---   · simp
---     split
---     · simp [fa']
---     · next _ anotins _ =>
---         simp [Subtype.coe_mk] at anotins
+lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : ∀ {s : Finset α} {t : Finset β}, s.card = t.card → ((s = ∅ ∧ t = ∅) ∨ ∃ f : ↥s → ↥t, Function.Bijective f) := by
+  intro s
+  induction s using Finset.induction_on with
+  | empty =>
+    simp
+    intros t h
+    left
+    rw [← Finset.card_eq_zero]
+    symm
+    exact h
+  -- NOTE: One requires the @ to refer to a and s which seems dumb, possibly a bug
+  | @insert a s anotins ih =>
+    intros t tcard
+    right
+    rw [(Finset.card_insert_of_not_mem anotins)] at tcard
+    have tinsert := Eq.symm tcard
+    rw [Finset.card_eq_succ] at tinsert
+    rcases tinsert with ⟨b, t', bnotint', bins, tcards⟩
+    rcases (ih (Eq.symm tcards)) with stempt | fbij
+    simp [stempt.right] at bins
+    rw [stempt.left, ← bins]
+    have bobv : b ∈ t := by
+      rw [← bins]
+      exact Finset.mem_singleton_self b
+    lift b to t using bobv
+    rw [bins]
+    use (λ _ : {y // y ∈ insert a ∅} ↦ b)
+    apply And.intro
+    · intros a₁ a₂ eq
+      apply Subtype.ext
+      have a₁prop := a₁.prop
+      have a₂prop := a₂.prop
+      simp only [Finset.mem_insert, Finset.not_mem_empty, or_false] at a₁prop a₂prop
+      simp [a₁prop, a₂prop]
+    · intros b'
+      use ⟨a, Finset.mem_insert_self a ∅⟩
+      have b'prop := b'.prop
+      simp [← bins] at b'prop ⊢
+      apply Subtype.ext
+      simp [b'prop]
+    have bint : b ∈ t := by rw [← bins] ; simp
+    rcases fbij with ⟨f, fbij⟩
+    have fhelper : ∀ x, ↑(f x) ∈ t := by
+      intros
+      simp [← bins]
+    use (λ x ↦ match Finset.decidableMem ↑x s with
+    | isTrue p => ⟨f ⟨↑x, p⟩, fhelper ⟨↑x, p⟩⟩
+    | isFalse _ => ⟨b, bint⟩)
+    apply And.intro
+    · intros a₁ a₂ fa₁a₂
+      simp at fa₁a₂
+      split at fa₁a₂ <;> split at fa₁a₂ <;> simp at fa₁a₂
+      next a₁ins _ _ a₂ins _ =>
+        have a₁eqa₂ := fbij.left (Subtype.ext fa₁a₂)
+        simp at a₁eqa₂
+        exact Subtype.ext a₁eqa₂
+      next a₁ins _ _ a₂notins _ =>
+        have fa₁prop := (f ⟨↑a₁, a₁ins⟩).prop
+        rw [fa₁a₂] at fa₁prop
+        contradiction
+      next a₁notins _ _ a₂ins _ =>
+        have bint' := (f { val := ↑a₂, property := a₂ins }).prop
+        rw [← fa₁a₂] at bint'
+        contradiction
+      next a₁notins _ _ a₂notins _ =>
+        have a₁a := a₁.prop
+        have a₂a := a₂.prop
+        simp only [Finset.mem_insert, a₁notins, a₂notins, or_false] at a₁a a₂a
+        apply Subtype.ext
+        simp [a₁a, a₂a]
+    · intros b'
+      have b'prop := b'.prop
+      simp [← bins] at b'prop
+      rcases b'prop with b'prop|b'prop
+      use ⟨a, Finset.mem_insert_self a s⟩
+      simp
+      rcases ains : (Finset.decidableMem a s) with h|h
+      simp [← b'prop]
+      contradiction
+      rcases (fbij.right ⟨↑b', b'prop⟩) with ⟨a', fa'⟩
+      use ⟨a', by simp⟩
+      rcases (Finset.decidableMem ↑a' s) with h | _
+      · cases h a'.prop
+      · simp
+        split
+        · simp [fa']
+        · next _ anotins _ =>
+            simp [Subtype.coe_mk] at anotins
 
 lemma bijection_of_List_perm {α : Type} : ∀ {l₁ l₂ : List α}, l₁ ~ l₂ → ∃ (f : Fin l₁.length → Fin l₂.length), Function.Bijective f ∧ ∀ (i : Fin l₁.length), l₁.get i = l₂.get (f i) := by
   intro l₁ l₂ permProp
