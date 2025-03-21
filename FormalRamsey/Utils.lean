@@ -1,99 +1,98 @@
 import Mathlib.Combinatorics.SimpleGraph.DegreeSum
-import Mathlib.Combinatorics.DoubleCounting
+import Mathlib.Combinatorics.Enumerative.DoubleCounting
 import Mathlib.Data.Rat.Floor
-import Mathlib.Algebra.Parity
 import Mathlib.LinearAlgebra.AffineSpace.Combination
 
 open List
 
 lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : ∀ {s : Finset α} {t : Finset β}, s.card = t.card → ((s = ∅ ∧ t = ∅) ∨ ∃ f : ↥s → ↥t, Function.Bijective f) := by
-
   intro s
-  induction' s using Finset.induction with a s anotins ih
-  simp
-  intros t h
-  left
-  rw [← Finset.card_eq_zero]
-  symm
-  exact h
-
-  intros t tcard
-  right
-  rw [(Finset.card_insert_of_not_mem anotins)] at tcard
-  have tinsert := Eq.symm tcard
-  rw [Finset.card_eq_succ] at tinsert
-  rcases tinsert with ⟨b, t', bnotint', bins, tcards⟩
-  rcases (ih (Eq.symm tcards)) with stempt | fbij
-  simp [stempt.right] at bins
-  rw [stempt.left, ← bins]
-  have bobv : b ∈ t
-  rw [← bins]
-  exact Finset.mem_singleton_self b
-  lift b to t using bobv
-  rw [bins]
-  use (λ _ : {y // y ∈ insert a ∅} ↦ b)
-  apply And.intro
-  intros a₁ a₂ _
-  apply Subtype.ext
-  have a₁prop := a₁.prop
-  have a₂prop := a₂.prop
-  simp at a₁prop a₂prop
-  simp [a₁prop, a₂prop]
-  intros b'
-  use ⟨a, Finset.mem_insert_self a ∅⟩
-  have b'prop := b'.prop
-  simp [← bins] at b'prop
-  apply Subtype.ext
-  simp [b'prop]
-  have bint : b ∈ t := by rw [← bins] ; simp
-  rcases fbij with ⟨f, fbij⟩
-  have fhelper : ∀ x, ↑(f x) ∈ t
-  intros
-  simp [← bins]
-  use (λ x ↦ match Finset.decidableMem ↑x s with
-  | isTrue p => ⟨f ⟨↑x, p⟩, fhelper ⟨↑x, p⟩⟩
-  | isFalse _ => ⟨b, bint⟩)
-  apply And.intro
-  intros a₁ a₂ fa₁a₂
-  simp at fa₁a₂
-  split at fa₁a₂ <;> split at fa₁a₂ <;> simp at fa₁a₂
-  next a₁ins _ _ a₂ins _ =>
-    have a₁eqa₂ := fbij.left (Subtype.ext fa₁a₂)
-    simp at a₁eqa₂
-    exact Subtype.ext a₁eqa₂
-  next a₁ins _ _ a₂notins _ =>
-    have fa₁prop := (f ⟨↑a₁, a₁ins⟩).prop
-    rw [fa₁a₂] at fa₁prop
-    contradiction
-  next a₁notins _ _ a₂ins _ =>
-    have bint' := (f { val := ↑a₂, property := a₂ins }).prop
-    rw [← fa₁a₂] at bint'
-    contradiction
-  next a₁notins _ _ a₂notins _ =>
-    have a₁a := a₁.prop
-    have a₂a := a₂.prop
-    simp [a₁notins, a₂notins] at a₁a a₂a
-    apply Subtype.ext
-    simp [a₁a, a₂a]
-
-  intros b'
-  have b'prop := b'.prop
-  simp [← bins] at b'prop
-  rcases b'prop with b'prop|b'prop
-  use ⟨a, Finset.mem_insert_self a s⟩
-  simp
-  rcases ains : (Finset.decidableMem a s) with h|h
-  simp [← b'prop]
-  contradiction
-  rcases (fbij.right ⟨↑b', b'prop⟩) with ⟨a', fa'⟩
-  use ⟨a', by simp⟩
-  rcases (Finset.decidableMem ↑a' s) with h | _
-  · cases h a'.prop
-  · simp
-    split
-    · simp [fa']
-    · next _ anotins _ =>
-        simp [Subtype.coe_mk] at anotins
+  induction s using Finset.induction_on with
+  | empty =>
+    simp
+    intros t h
+    left
+    rw [← Finset.card_eq_zero]
+    symm
+    exact h
+  -- NOTE: One requires the @ to refer to a and s which seems dumb, possibly a bug
+  | @insert a s anotins ih =>
+    intros t tcard
+    right
+    rw [(Finset.card_insert_of_not_mem anotins)] at tcard
+    have tinsert := Eq.symm tcard
+    rw [Finset.card_eq_succ] at tinsert
+    rcases tinsert with ⟨b, t', bnotint', bins, tcards⟩
+    rcases (ih (Eq.symm tcards)) with stempt | fbij
+    simp [stempt.right] at bins
+    rw [stempt.left, ← bins]
+    have bobv : b ∈ t := by
+      rw [← bins]
+      exact Finset.mem_singleton_self b
+    lift b to t using bobv
+    rw [bins]
+    use (λ _ : {y // y ∈ insert a ∅} ↦ b)
+    apply And.intro
+    · intros a₁ a₂ eq
+      apply Subtype.ext
+      have a₁prop := a₁.prop
+      have a₂prop := a₂.prop
+      simp only [Finset.mem_insert, Finset.not_mem_empty, or_false] at a₁prop a₂prop
+      simp [a₁prop, a₂prop]
+    · intros b'
+      use ⟨a, Finset.mem_insert_self a ∅⟩
+      have b'prop := b'.prop
+      simp [← bins] at b'prop ⊢
+      apply Subtype.ext
+      simp [b'prop]
+    have bint : b ∈ t := by rw [← bins] ; simp
+    rcases fbij with ⟨f, fbij⟩
+    have fhelper : ∀ x, ↑(f x) ∈ t := by
+      intros
+      simp [← bins]
+    use (λ x ↦ match Finset.decidableMem ↑x s with
+    | isTrue p => ⟨f ⟨↑x, p⟩, fhelper ⟨↑x, p⟩⟩
+    | isFalse _ => ⟨b, bint⟩)
+    apply And.intro
+    · intros a₁ a₂ fa₁a₂
+      simp at fa₁a₂
+      split at fa₁a₂ <;> split at fa₁a₂ <;> simp at fa₁a₂
+      next a₁ins _ _ a₂ins _ =>
+        have a₁eqa₂ := fbij.left (Subtype.ext fa₁a₂)
+        simp at a₁eqa₂
+        exact Subtype.ext a₁eqa₂
+      next a₁ins _ _ a₂notins _ =>
+        have fa₁prop := (f ⟨↑a₁, a₁ins⟩).prop
+        rw [fa₁a₂] at fa₁prop
+        contradiction
+      next a₁notins _ _ a₂ins _ =>
+        have bint' := (f { val := ↑a₂, property := a₂ins }).prop
+        rw [← fa₁a₂] at bint'
+        contradiction
+      next a₁notins _ _ a₂notins _ =>
+        have a₁a := a₁.prop
+        have a₂a := a₂.prop
+        simp only [Finset.mem_insert, a₁notins, a₂notins, or_false] at a₁a a₂a
+        apply Subtype.ext
+        simp [a₁a, a₂a]
+    · intros b'
+      have b'prop := b'.prop
+      simp [← bins] at b'prop
+      rcases b'prop with b'prop|b'prop
+      use ⟨a, Finset.mem_insert_self a s⟩
+      simp
+      rcases ains : (Finset.decidableMem a s) with h|h
+      simp [← b'prop]
+      contradiction
+      rcases (fbij.right ⟨↑b', b'prop⟩) with ⟨a', fa'⟩
+      use ⟨a', by simp⟩
+      rcases (Finset.decidableMem ↑a' s) with h | _
+      · cases h a'.prop
+      · simp
+        split
+        · simp [fa']
+        · next _ anotins _ =>
+            simp [Subtype.coe_mk] at anotins
 
 lemma bijection_of_List_perm {α : Type} : ∀ {l₁ l₂ : List α}, l₁ ~ l₂ → ∃ (f : Fin l₁.length → Fin l₂.length), Function.Bijective f ∧ ∀ (i : Fin l₁.length), l₁.get i = l₂.get (f i) := by
   intro l₁ l₂ permProp
@@ -253,34 +252,13 @@ lemma bijection_of_List_perm {α : Type} : ∀ {l₁ l₂ : List α}, l₁ ~ l�
       · exact f₁Prop.right i
       · exact f₂Prop.right (f₁ i)
 
- lemma xor_even_le_implies_lt : ∀ {m n : ℕ}, Xor' (Even m) (Even n) → m ≤ n → m < n := by
+lemma xor_even_le_implies_lt : ∀ {m n : ℕ}, Xor' (Even m) (Even n) → m ≤ n → m < n := by
   intros m n xoreven mlen
-  cases' xoreven with hp hq
   rw [le_iff_lt_or_eq] at mlen
-  cases' mlen with mltn meqn
-  exact mltn
-  simp [meqn] at hp
-  rw [le_iff_lt_or_eq] at mlen
-  cases' mlen with mltn meqn
-  exact mltn
-  simp [meqn] at hq
-
-lemma missing_pigeonhole {α β : Type} [DecidableEq α] [LinearOrderedSemiring β] : ∀ {s : Finset α}, Finset.Nonempty s → ∀ {f g : α → β}, s.sum f ≤ s.sum g → ∃ a : α, a ∈ s ∧ f a ≤ g a := by
-
-  intros s sne f g fgsum
-  induction' s using Finset.induction with a t anotint ih
-  rcases sne with ⟨sne_w, sne_h⟩
-  cases sne_h
-  rcases Finset.eq_empty_or_nonempty t with h|h
-  simp [h] at fgsum ⊢
-  assumption
-  simp_all
-  cases (le_or_lt (f a) (g a)) with
-  |inl fleg => simp [fleg]
-  |inr gltf =>
-    cases (le_or_lt (t.sum f) (t.sum g)) with
-    |inl tfleg => simp_all
-    |inr tgltf => cases (not_le_of_lt (add_lt_add gltf tgltf) fgsum)
+  · cases mlen with
+    | inl mltn => exact mltn
+    | inr meqn=>
+      simp [meqn] at xoreven
 
 lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 2, 2 * (Finset.filter (λ (e : Sym2 (Fin (M' + N').succ)) ↦ f e = c) (⊤ : SimpleGraph (Fin (M' + N').succ)).edgeFinset).card = (Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart) ↦ f (Sym2.mk x.toProd) = c) Finset.univ).card := by
 
@@ -288,65 +266,60 @@ lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 
   intro c
   let s := Finset.filter (λ (e : Sym2 (Fin (M' + N').succ)) ↦ f e = c) (⊤ : SimpleGraph (Fin (M' + N').succ)).edgeFinset
   let t := Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart) ↦ f (Sym2.mk x.toProd) = c) Finset.univ
-  have hm : ∀ (a : Sym2 (Fin (M' + N').succ)), a ∈ s → (Finset.bipartiteAbove r t a).card = 2
-  intros a ains
-  rcases (Quot.exists_rep a) with ⟨⟨fst,snd⟩, aprop⟩
-  simp[SimpleGraph.mem_edgeSet] at ains
-  --simp [SimpleGraph.mem_edgeSet, ← SimpleGraph.completeGraph_eq_top,completeGraph] at ains --NOTE: can be replace by simp_all
-  simp [Finset.bipartiteAbove,Finset.card_eq_two]
-  rcases ains with ⟨ains_left, ains_right⟩
-
-  have aOutAdj : (⊤ : SimpleGraph (Fin (M' + N').succ)).Adj fst snd := by
-    simp [← aprop] at ains_left
-    simp [ains_left]
-  use SimpleGraph.Dart.mk (fst,snd) aOutAdj
-
-  have aOutSwapAdj : (⊤ : SimpleGraph (Fin (M' + N').succ)).Adj snd fst := by
-    simp[aOutAdj]
-    simp [Sym2.eq_swap, ←aprop] at ains_left
-    intro ; simp_all
-  use SimpleGraph.Dart.mk (snd,fst) aOutSwapAdj
-  simp
-
-  apply And.intro
-  by_contra h
-  simp[Prod.ext_iff] at h
-  rcases h with ⟨h_left, _⟩
-  simp[← aprop,h_left] at ains_left
-
-  simp[Finset.Subset.antisymm_iff, Finset.subset_iff]
-  apply And.intro
-  intros x _ aeqx
-  have swap : (snd, fst) = Prod.swap (fst, snd) := by simp
-  simp [SimpleGraph.Dart.ext_iff]
-  rw [swap, ← SimpleGraph.dart_edge_eq_mk'_iff]
-  simp [aeqx, SimpleGraph.Dart.edge,aprop]
-
-  simp_all
-  have aeqswap : a = Quot.mk (Sym2.Rel (Fin (Nat.succ (M' + N')))) (snd, fst) := by simp[← aprop] --used to be Quotient.mk (Sym2.Rel.setoid (Fin (Nat.succ (M' + N')))) (snd, fst)
-
-  simp[aeqswap]
-  simp[← aeqswap, ains_right]
-
-  have hn : ∀ (b : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart), b ∈ t → (Finset.bipartiteBelow r s b).card = 1
-  intros b bint
-  simp [Finset.bipartiteBelow, Finset.card_eq_one]
-  simp[SimpleGraph.mem_edgeSet] at bint
-  -- simp[← SimpleGraph.completeGraph_eq_top, completeGraph] at bint
-  use b.edge
-  simp[Finset.Subset.antisymm_iff, Finset.subset_iff, SimpleGraph.mem_edgeSet]
-  have toEdge : b.edge = Sym2.mk b.toProd := by simp [SimpleGraph.dart_edge_eq_mk'_iff]
-  apply And.intro
-  intros x _ _ xeqb
-  simp_all
-  --simp[Finset.filter] at bint
-  have btop := b.is_adj
-  simp at btop
-  simp[toEdge, bint, btop]
-  --NOTE: try avoid temp
+  have hm : ∀ (a : Sym2 (Fin (M' + N').succ)), a ∈ s → (Finset.bipartiteAbove r t a).card = 2 := by
+    intros a ains
+    rcases (Quot.exists_rep a) with ⟨⟨fst,snd⟩, aprop⟩
+    simp[SimpleGraph.mem_edgeSet] at ains
+    --simp [SimpleGraph.mem_edgeSet, ← SimpleGraph.completeGraph_eq_top,completeGraph] at ains --NOTE: can be replace by simp_all
+    simp [Finset.bipartiteAbove, Finset.card_eq_two]
+    simp [s] at ains
+    rcases ains with ⟨ains_left, ains_right⟩
+    have aOutAdj : (⊤ : SimpleGraph (Fin (M' + N').succ)).Adj fst snd := by
+      simp [← aprop] at ains_left
+      simp [ains_left]
+    use SimpleGraph.Dart.mk (fst,snd) aOutAdj
+    have aOutSwapAdj : (⊤ : SimpleGraph (Fin (M' + N').succ)).Adj snd fst := by
+      simp[aOutAdj]
+      simp [Sym2.eq_swap, ←aprop] at ains_left
+      intro
+      simp_all
+    use SimpleGraph.Dart.mk (snd,fst) aOutSwapAdj
+    simp
+    apply And.intro
+    · intro fseq
+      simp at aOutAdj
+      contradiction
+    · simp[Finset.Subset.antisymm_iff, Finset.subset_iff]
+      apply And.intro
+      · intros x _ aeqx
+        have swap : (snd, fst) = Prod.swap (fst, snd) := by simp
+        simp [SimpleGraph.Dart.ext_iff]
+        rw [swap, ← SimpleGraph.dart_edge_eq_mk'_iff]
+        simp [r] at aeqx
+        simp [aeqx, SimpleGraph.Dart.edge,aprop]
+      · simp [r, t]
+        have aeqswap : a = s(snd, fst) := by simp[← aprop] --used to be Quotient.mk (Sym2.Rel.setoid (Fin (Nat.succ (M' + N')))) (snd, fst)
+        change s(fst, snd) = a at aprop
+        simp [← aeqswap, aprop]
+        assumption
+  have hn : ∀ (b : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart), b ∈ t → (Finset.bipartiteBelow r s b).card = 1 := by
+    intros b bint
+    simp [Finset.bipartiteBelow, Finset.card_eq_one]
+    simp[SimpleGraph.mem_edgeSet] at bint
+    -- simp[← SimpleGraph.completeGraph_eq_top, completeGraph] at bint
+    use b.edge
+    simp[Finset.Subset.antisymm_iff, Finset.subset_iff, SimpleGraph.mem_edgeSet]
+    have toEdge : b.edge = Sym2.mk b.toProd := by simp [SimpleGraph.dart_edge_eq_mk'_iff]
+    apply And.intro
+    · intros
+      simp_all [r]
+    · have btop := b.adj
+      simp [t] at bint
+      simp [s, r, toEdge, bint, btop]
+   --NOTE: try avoid temp
   have temp := Finset.card_mul_eq_card_mul r hm hn
-  simp[mul_one (t.card)] at temp
-  simp[← temp,mul_comm]
+  simp [s, r, t, mul_one (t.card)] at temp
+  simp [← temp, SimpleGraph.edgeFinset, mul_comm]
 
 namespace Rat
 
@@ -421,7 +394,7 @@ end Finset
 
 namespace Fin
 
-lemma univ_disjUnion_zero_succ : ∀ n, (Finset.univ : Finset (Fin n.succ)) = Finset.disjUnion {0} (Finset.univ.map (Fin.succEmbedding n).toEmbedding) (by simp) := by
+lemma univ_disjUnion_zero_succ : ∀ (n : ℕ), (Finset.univ : Finset (Fin n.succ)) = Finset.disjUnion {0} (Finset.univ.map (Fin.succEmb n)) (by simp) := by
   simp [Finset.ext_iff]
   intro n
   apply Fin.cases <;> simp [Fin.succ_ne_zero]
@@ -431,7 +404,7 @@ def castEmb {n : Nat} {m : Nat} (eq : n = m) : Fin n ↪ Fin m := ⟨Fin.cast eq
 
 end Fin
 
-lemma vector_list_finset_sum : ∀ {n : ℕ} (V : Vector ℕ n), Finset.sum Finset.univ (λ x ↦ ↑(V.get x) : (Fin n) → ℚ) = sum (map Nat.cast V.toList) := by
+lemma vector_list_finset_sum : ∀ {n : ℕ} (V : List.Vector ℕ n), Finset.sum Finset.univ (λ x ↦ ↑(V.get x) : (Fin n) → ℚ) = sum (map Nat.cast V.toList) := by
   intro n
   induction n with
   | zero => simp
