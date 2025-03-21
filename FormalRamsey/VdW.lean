@@ -3,9 +3,7 @@ import Mathlib.Data.Nat.Lattice
 import Mathlib.Data.Fin.VecNotation
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.Algebra.Group.Fin.Basic
--- NOTE: In the future this should change to the next import in comments (see mathlib4:eb486ff)
-import Mathlib.Algebra.GroupPower.IterateHom
--- import Mathlib.Algebra.Group.Basic
+import Mathlib.Algebra.Group.Basic
 
 import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.Sat.FromLRAT
@@ -71,7 +69,7 @@ lemma vdW325 : vdWProp 325 3 1 := by
   intros f
   -- let fsucc := λ x => (f x).succ
   let g : Fin 33 → List.Vector Bool 5 := λ k => List.Vector.ofFn (λ i=> f (5 * k + i) = 0)
-  have fin533 : Fintype.card (List.Vector Bool 5) • 1 < Fintype.card (Fin 33) := by simp_arith
+  have fin533 : Fintype.card (List.Vector Bool 5) • 1 < Fintype.card (Fin 33) := by simp +arith
   have ghyp := Fintype.exists_lt_card_fiber_of_mul_lt_card g fin533
   rcases ghyp with ⟨y₅, y₅hyp⟩
   -- pick block₁ block₂ from (Finset.filter (λ (x : Fin 33) => g x = y₅) Finset.univ)
@@ -171,15 +169,15 @@ lemma vdW325 : vdWProp 325 3 1 := by
                 change a₃ + 5 * (block₂.val - block₁.val)  = 5 * block₂.val + (i₁ + (I + I))
                 rw [Nat.mul_sub_left_distrib 5 block₂.val block₁.val]
                 rw [Fin.lt_def, ← Nat.mul_lt_mul_left (by trivial : 0 < 5)] at block₁Ltblock₂
-                have h₂ : 5 * block₁.val ≤ a₃ := by  simp_arith [a₁eq, a₃]
+                have h₂ : 5 * block₁.val ≤ a₃ := by  simp +arith [a₁eq, a₃]
                 rw [← Nat.add_sub_assoc (Nat.le_of_lt block₁Ltblock₂), Nat.sub_add_comm h₂, Nat.add_comm (5 * block₂.val)]
-                simp_arith (config := { zeta := false }) [a₁eq, a₃, Nat.add_assoc (5 * block₁.val) i₁]
+                simp +arith (config := { zeta := false }) [a₁eq, a₃, Nat.add_assoc (5 * block₁.val) i₁]
               have beqiII := blockeq ⟨i₁ + (I + I), by linarith⟩
               simp at beqiII
               rw [temp₁, ← beqiII, ← Nat.add_assoc]
               simp [a₁eq, a₃]
             · simp [ehyp]
-              have temp : a₃ + 5 * B + 5 * B = ↑a₁ + (I + 5 * B + (I + 5 * B)) := by simp_arith [a₃]
+              have temp : a₃ + 5 * B + 5 * B = ↑a₁ + (I + 5 * B + (I + 5 * B)) := by simp +arith [a₃]
               have temp₁: f a₃ = f (↑a₁ + (I + 5 * B + (I + 5 * B))) := notc fa₃a₁ fblock₂
               rw [temp, temp₁]
     | isTrue fblock₂ =>
@@ -200,14 +198,14 @@ lemma vdW325 : vdWProp 325 3 1 := by
             simp (config := { zeta := false }) [ehyp]
             rw [← Nat.add_assoc, a₁plusI, a₂eq]
             simp [Nat.mul_sub_left_distrib 5, ← Nat.add_sub_assoc tmp₁, Nat.add_assoc (5 * ↑block₁), Nat.add_comm i₂]
-            have i₂lt5 : i₂ < 5 := by trans 3 <;> simp_arith [i₂ineq]
+            have i₂lt5 : i₂ < 5 := by trans 3 <;> simp +arith [i₂ineq]
             have beqi₂ := blockeq (Fin.mk i₂ i₂lt5)
             simp at beqi₂
             aesop
           · rw [← fblock₂]
             simp [ehyp]
             congr
-            simp_arith [I, B]
+            simp +arith [I, B]
   | isTrue fa₃a₁=>
     use {start := a₁, diff := I}
     simp (config := { zeta := false })
@@ -288,7 +286,8 @@ lemma isArithProgIffGet {N : ℕ} {t : List (Fin N.succ)} {h h' d : Fin N.succ} 
           have ctr := (Nat.lt_trans d.prop hLth')
           simp at ctr
         · apply And.intro
-          · simp [← hdh', Fin.lt_def, hd] at hLth' ⊢
+          · rw [← hdh', Fin.lt_def, hd] at hLth'
+            simp +arith at hLth'
             exact hLth'
           · intro i
             fin_cases i
@@ -304,10 +303,9 @@ lemma isArithProgIffGet {N : ℕ} {t : List (Fin N.succ)} {h h' d : Fin N.succ} 
       intros dpos iprop
       have i1 := iprop ((0 : Fin N.succ).succ)
       simp at i1
-      simp [Fin.lt_def] at dpos
+      rw [Fin.lt_def] at dpos ⊢
       apply And.intro
-      · simp [Fin.lt_def, i1]
-        exact dpos
+      · simpa [i1]
       · have hd := h.val_add_eq_ite d
         split at hd
         next ctr =>
@@ -361,8 +359,8 @@ lemma isArithProgIffGet {N : ℕ} {t : List (Fin N.succ)} {h h' d : Fin N.succ} 
           simp [isArithProg] at isAPRest
           simp [isAPRest]
           apply And.intro
-          · simp [Fin.lt_def, g1] at dpos ⊢
-            exact dpos
+          · rw [Fin.lt_def] at dpos ⊢
+            simpa [g1]
           · apply Fin.ext
             simp [hd, g1]
 
@@ -466,10 +464,15 @@ theorem vdWByList (N : ℕ) (k : ℕ) (r : ℕ) : vdWProp N.succ k r ↔ ∀ (f 
     have fy := let e := Nat.iterate (λ (j : ℕ) ↦ j + s.diff) y.val s.start; (sprop e ⟨y, refl e⟩)
     simp [f'] at fy
     rcases fy with ⟨fyIneq, fyc⟩
-    suffices f'n : f' n.val = c by aesop
+    suffices f'n : f' n.val = c by
+      -- NOTE: aesop was able to close this goal by v4.16.0-rc1
+      simp [f'] at f'n
+      split at f'n
+      · assumption
+      · aesop
     next =>
-    simp [f', ← ny]
-    split <;> aesop
+      simp [f', ← ny]
+      split <;> aesop
   · intro vdWList
     unfold vdWProp
     intro f
@@ -504,7 +507,7 @@ theorem vdWByList (N : ℕ) (k : ℕ) (r : ℕ) : vdWProp N.succ k r ↔ ∀ (f 
             rw [isArithProgIffGet] at dprop
             cases dprop
             next dpos iprop =>
-              simp [Fin.lt_def] at dpos
+              rw [GT.gt] at dpos
               simp [dpos]
               intros e ein
               simp [Membership.mem] at ein
@@ -581,5 +584,5 @@ theorem vdW32 : vdW 3 2 = 9 := by
           exact ⟨d, isAP⟩
       have myReplace : ((List.finRange (Nat.succ 7)).sublistsLen 3).filter (λ l' => ∃ d, isArithProg l' d) = [[(5:Fin (Nat.succ 7)), 6, 7], [4, 5, 6], [3, 5, 7], [3, 4, 5], [2, 4, 6], [2, 3, 4], [1, 4, 7], [1, 3, 5], [1, 2, 3], [0, 3, 6], [0, 2, 4], [0, 1, 2]] := by native_decide
       rw [myReplace] at lFiltered
-      fin_cases c <;> fin_cases lFiltered <;> simp_arith
+      fin_cases c <;> fin_cases lFiltered <;> decide
   · monotone

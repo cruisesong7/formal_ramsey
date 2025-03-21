@@ -146,7 +146,7 @@ theorem RamseyPropIneq : ∀ {k : ℕ} (M : List.Vector ℕ k.succ.succ) (s : Li
         have partCard : ∀ {n m : ℕ} (f' : Sym2 (Fin n.succ) → Fin m.succ), Finset.univ.sum (λ x ↦ (((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).filter (λ v ↦ f' s(0, v) = x)).card) = ((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).card := by
           intro n
           cases n with
-          | zero => simp [Finset.eq_empty_iff_forall_not_mem]; simp_arith
+          | zero => simp [Finset.eq_empty_iff_forall_not_mem]; decide
           | succ n' =>
             simp
             intro m f'
@@ -212,7 +212,7 @@ theorem RamseyPropIneq : ∀ {k : ℕ} (M : List.Vector ℕ k.succ.succ) (s : Li
     apply And.intro
     · simp [← Rat.num_pos, Rat.mkRat_num_one]
     · rw [← Rat.mkRat_one, Rat.le_def, Rat.mkRat_den_one, Rat.mkRat_num_one, Rat.mkRat_num_one, Rat.mkRat_den_one, Int.one_mul, Int.one_mul, Nat.cast_le]
-      simp_arith
+      simp +arith
   have MleqNeighbora := Int.ceil_mono gha
   simp [ceilOne] at MleqNeighbora
   rw [Int.add_comm, Int.ofNat_add_one_out, Nat.cast_le] at MleqNeighbora
@@ -389,7 +389,7 @@ theorem Ramsey2 : ∀ {k : ℕ} (s : List.Vector ℕ k.succ), Ramsey (2 ::ᵥ s)
     use ∅, i.succ
     simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, Set.Pairwise, i0]
   | inr sInfPos =>
-    rcases (Nat.exists_eq_succ_of_ne_zero (Nat.not_eq_zero_of_lt sInfPos)) with ⟨N, NProp⟩
+    rcases (Nat.exists_eq_succ_of_ne_zero (Nat.ne_zero_of_lt sInfPos)) with ⟨N, NProp⟩
     rw [Nat.succ_eq_add_one] at NProp
     rw [NProp]
     rw [Nat.sInf_upward_closed_eq_succ_iff (Rleq k s)] at NProp
@@ -466,19 +466,19 @@ theorem R333 : Ramsey (3 ::ᵥ 3 ::ᵥ 3 ::ᵥ Vector.nil) = 17 := by
     rw [R33] at Ramsey233
     fin_cases i <;> simp [increaseVectorExcept, List.Vector.ofFn, List.Vector.get]
     · exact Ramsey233
-    · have vecPerm : (2 ::ᵥ 3 ::ᵥ 3 ::ᵥ Vector.nil).toList ~ (3 ::ᵥ 2 ::ᵥ 3 ::ᵥ Vector.nil).toList := by simp_arith
+    · have vecPerm : (2 ::ᵥ 3 ::ᵥ 3 ::ᵥ Vector.nil).toList ~ (3 ::ᵥ 2 ::ᵥ 3 ::ᵥ Vector.nil).toList := by decide
       apply RamseyPropSymm Ramsey233 vecPerm
-    · have vecPerm : (2 ::ᵥ 3 ::ᵥ 3 ::ᵥ Vector.nil).toList ~ (3 ::ᵥ 3 ::ᵥ 2 ::ᵥ Vector.nil).toList := by simp_arith
+    · have vecPerm : (2 ::ᵥ 3 ::ᵥ 3 ::ᵥ Vector.nil).toList ~ (3 ::ᵥ 3 ::ᵥ 2 ::ᵥ Vector.nil).toList := by decide
       apply RamseyPropSymm Ramsey233 vecPerm
   · simp
     apply RamseyPropG6Partition
     let V : List.Vector String 3 := "O_k_ClSCDD`S[_`DkIa[_" ::ᵥ "OWBYaAJIaOQJ@SMOOPX`S" ::ᵥ "OFODXO_pWiK_aJOiBcCAJ" ::ᵥ Vector.nil
     with_panel_widgets [SelectionPanel]
-    have VProp : ∀ {s : String}, s ∈ V.toList → 16 = (readG6Header s).toNat := by simp_arith [V]
+    have VProp : ∀ {s : String}, s ∈ V.toList → 16 = (readG6Header s).toNat := by decide
     use V, VProp
     apply And.intro
     · intro i
-      fin_cases i <;> simp_arith [V, SimpleGraph.CliqueFree] <;> intros S SNClique <;> rw [← SimpleGraph.mem_cliqueFinset_iff] at SNClique
+      fin_cases i <;> simp +arith [V, SimpleGraph.CliqueFree] <;> intros S SNClique <;> rw [← SimpleGraph.mem_cliqueFinset_iff] at SNClique
       · have myReplace : (readG6 (("O_k_ClSCDD`S[_`DkIa[_" ::ᵥ "OWBYaAJIaOQJ@SMOOPX`S" ::ᵥ "OFODXO_pWiK_aJOiBcCAJ" ::ᵥ Vector.nil).get 0)).cliqueFinset 3 = ∅ := by
           rw [← @exists_eq_left String (λ s ↦ (readG6 s).cliqueFinset 3 = ∅)]
           use "O_k_ClSCDD`S[_`DkIa[_"

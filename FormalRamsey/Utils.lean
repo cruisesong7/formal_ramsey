@@ -355,7 +355,7 @@ variable {α : Type} [DecidableEq α] {a : Finset α} {P : FinpartitionWithEmpty
 theorem biUnion_parts : P.parts.biUnion id = a :=
   (sup_eq_biUnion _ _).symm.trans P.supParts
 
-theorem sum_card_parts_with_empty (P : FinpartitionWithEmpty a) : ∑ i in P.parts, Finset.card i = a.card := by
+theorem sum_card_parts_with_empty (P : FinpartitionWithEmpty a) : ∑ i ∈ P.parts, Finset.card i = a.card := by
   convert congr_arg Finset.card P.biUnion_parts
   rw [card_biUnion P.pwDisj]
   rfl
@@ -398,9 +398,6 @@ lemma univ_disjUnion_zero_succ : ∀ (n : ℕ), (Finset.univ : Finset (Fin n.suc
   simp [Finset.ext_iff]
   intro n
   apply Fin.cases <;> simp [Fin.succ_ne_zero]
-
--- TODO: Is this really missing? There are embeddings for LE, LE, succ, etc...
-def castEmb {n : Nat} {m : Nat} (eq : n = m) : Fin n ↪ Fin m := ⟨Fin.cast eq, by simp [Function.Injective, Fin.cast, Fin.ext_iff]⟩
 
 end Fin
 

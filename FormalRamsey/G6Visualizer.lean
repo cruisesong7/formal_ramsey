@@ -62,8 +62,8 @@ def lineBetweenCoords (startCoord endCoord : Float × Float) (isRed : Bool) : St
     s!"<line x1='{x1}' y1='{y1}' x2='{x2}' y2='{y2}' stroke='{strokeColor}' stroke-width='{strokeWidth}' />\n"
 def allVertexLines (vertices : Array (Float × Float)) (adjMatrix : Array (Array (Fin 2))) : List String :=
   let n := vertices.size
-  List.join (List.range n |>.map (λ i =>
-    List.range n |>.map (λ j =>
+  List.flatten (List.range n |>.map (λ i ↦
+    List.range n |>.map (λ j ↦
       if i < j then
         let isRed := adjMatrix[i]![j]! == (0 : Fin 2)
         some (lineBetweenCoords (vertices[i]!) (vertices[j]!) isRed)
@@ -84,11 +84,11 @@ def decodeG6Adjacency (s : String) (n : Nat) : Array (Array (Fin 2)) :=
   emptyMatrix.mapIdx (λ i row =>
     row.mapIdx (λ j _ =>
       if i < j then
-        if bitIdx j i < bits.size then bits.get! (bitIdx j i) else 0
+        if bitIdx j i < bits.size then bits[bitIdx j i]! else 0
       else if i = j then
         0
       else
-        if bitIdx i j < bits.size then bits.get! (bitIdx i j) else 0))
+        if bitIdx i j < bits.size then bits[bitIdx i j]! else 0))
 
 def decodeG6 (s : String) : Array (Array (Fin 2)) :=
   let n := charToValue s.front

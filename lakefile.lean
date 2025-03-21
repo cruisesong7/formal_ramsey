@@ -5,9 +5,9 @@ package «formal_ramsey» {
   -- add any package configuration options here
 }
 
-require mathlib from git "https://github.com/leanprover-community/mathlib4"@"v4.16.0-rc1"
+require mathlib from git "https://github.com/leanprover-community/mathlib4"@"v4.18.0-rc1"
 
-require proofwidgets from git "https://github.com/EdAyers/ProofWidgets4"@"v0.0.50"
+require proofwidgets from git "https://github.com/EdAyers/ProofWidgets4"@"v0.0.53"
 
 @[default_target]
 lean_lib «FormalRamsey» {

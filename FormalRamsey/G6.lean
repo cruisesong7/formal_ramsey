@@ -5,7 +5,7 @@ open Std
 def readG6Header (s : String) : UInt32 :=
 match s.toList with
 | [] => 0
-| h :: _ => h.val - (UInt32.ofNatCore 63 (by simp_arith [UInt32.size]))
+| h :: _ => h.val - (UInt32.ofNatLT 63 (by simp +arith [UInt32.size]))
 
 def addIdx {α : Type} : List α → ℕ → ℕ → List (α × ℕ × ℕ)
 | [], _, _ => []

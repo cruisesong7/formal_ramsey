@@ -15,23 +15,17 @@ def Ramsey₂GraphProp (N s t : ℕ) : Ramsey₂Prop N s t ↔ RamseyGraphProp N
   · intros Ramsey₂N G _
     have coloredClique := Ramsey₂N (λ e ↦ if e ∈ G.edgeSet then 0 else 1)
     rcases coloredClique with ⟨S, i, Sclique⟩
-    fin_cases i <;> simp [graphAtColor] at Sclique <;>
-    simp [SimpleGraph.isNClique_iff, SimpleGraph.IsClique, Set.Pairwise] at Sclique ⊢
+    fin_cases i <;> simp [graphAtColor] at Sclique <;> simp [SimpleGraph.isNClique_iff, SimpleGraph.IsClique, SimpleGraph.isNIndepSet_iff, SimpleGraph.IsIndepSet, Set.Pairwise, List.Vector.get] at Sclique ⊢
     . left
       use S
       simp [Sclique.right]
       intros _ xInS _ yInS xneqy
-      have tmp := Sclique.left xInS yInS xneqy
-      by_contra h
-      simp[h] at tmp
+      exact (Sclique.left xInS yInS xneqy).right
     · right
       use S
-      simp [Sclique.right, List.Vector.get]
+      simp [Sclique.right]
       intros _ xInS _ yInS xneqy
-      have tmp := Sclique.left xInS yInS xneqy
-      simp[xneqy]
-      by_contra h
-      simp[h] at tmp
+      exact (Sclique.left xInS yInS xneqy).right
   · intros RamseyGraphN f
     let GAdj : Fin N → Fin N → Prop := λ u v ↦ ((u ≠ v) ∧ (f s(u, v) = 0))
     have GAdjSym : Symmetric GAdj := by
@@ -47,10 +41,10 @@ def Ramsey₂GraphProp (N s t : ℕ) : Ramsey₂Prop N s t ↔ RamseyGraphProp N
       intros _ xInS _ yInS xneqy
       simp_all
     · use T, 1
-      simp [SimpleGraph.isNClique_iff, SimpleGraph.IsClique, Set.Pairwise, GAdj] at Tclique ⊢
+      simp [SimpleGraph.isNClique_iff, SimpleGraph.IsClique, SimpleGraph.isNIndepSet_iff, SimpleGraph.IsIndepSet, Set.Pairwise, GAdj] at Tclique ⊢
       simp [Tclique.right, graphAtColor, List.Vector.get]
       intros _ xInT _ yInT xneqy
-      have tmp :=  (Tclique.left xInT yInT xneqy).right xneqy
+      have tmp :=  Tclique.left xInT yInT xneqy
       simp [not0_eq1] at tmp
       simp [xneqy, tmp]
 
@@ -220,7 +214,7 @@ theorem Ramsey₂2 : ∀ k : ℕ, Ramsey₂ 2 k.succ = k.succ := by
       · simp [SimpleGraph.isNClique_iff, graphAtColor, SimpleGraph.isClique_iff, Set.Pairwise, List.Vector.get, f]
         intros Scard
         have absurd := Finset.card_le_card (Finset.subset_univ S)
-        simp_arith [Scard] at absurd
+        simp +arith [Scard] at absurd
   · assumption
 
 theorem Ramsey₂Prop1 : ∀ N k : ℕ, Ramsey₂Prop N.succ 1 k := by
@@ -442,8 +436,8 @@ theorem Ramsey₂Finite : ∀ s t : ℕ, { N : ℕ | Ramsey₂Prop N s t }.Nonem
         | succ t =>
           apply_fun Nat.pred at h
           simp at h
-          have s1t : m' = s + t.succ := by simp_arith [h, Nat.succ_add]
-          have st1 : m' = s.succ + t := by simp_arith [s1t]
+          have s1t : m' = s + t.succ := by simp +arith [h, Nat.succ_add]
+          have st1 : m' = s.succ + t := by simp +arith [s1t]
           rcases (ih s t.succ s1t) with ⟨S, Sprop⟩
           rcases (ih s.succ t st1) with ⟨T, Tprop⟩
           simp at Sprop Tprop
@@ -638,8 +632,7 @@ theorem friendship : Ramsey₂ 3 3 = 6 := by
     · exact friendshipUpperbound
     · rw [Ramsey₂ByList, not_forall]
       use (λ (e : Sym2 (Fin 5)) ↦ if e ∈ ({s(0, 1), s(1, 2), s(2, 3), s(3, 4), s(4, 0)}:Finset (Sym2 (Fin 5))) then 0 else 1)
-      simp_arith
-
+      decide
   · simp [Ramsey₂Prop]
     intros M N MleN Ramsey₂M
     exact RamseyMonotone Ramsey₂M MleN
@@ -651,7 +644,7 @@ theorem R43 : Ramsey₂ 4 3 = 9 := by
     apply And.intro
     · have Ramsey4 := Ramsey₂ToRamsey₂Prop (Ramsey₂2 3)
       rw [Ramsey₂PropSymm] at Ramsey4
-      have Ramsey9 := Ramsey₂PropStrictIneq (by simp_arith) (by simp_arith) friendshipUpperbound Ramsey4
+      have Ramsey9 := Ramsey₂PropStrictIneq (by decide) (by decide) friendshipUpperbound Ramsey4
       exact Ramsey9
     · -- Proof 1
       -- rw [Ramsey₂ByList, not_forall]

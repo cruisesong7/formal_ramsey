@@ -5,7 +5,7 @@ import Mathlib.Data.Nat.Lattice
 import FormalRamsey.G6
 import FormalRamsey.G6Visualizer
 
-def RamseyGraphProp (N s t : ℕ) : Prop := (∀ (G : SimpleGraph (Fin N)) [DecidableRel G.Adj], (∃ S, G.IsNClique s S) ∨ (∃ T, Gᶜ.IsNClique t T))
+def RamseyGraphProp (N s t : ℕ) : Prop := (∀ (G : SimpleGraph (Fin N)) [DecidableRel G.Adj], (∃ S, G.IsNClique s S) ∨ (∃ T, G.IsNIndepSet t T))
 
 lemma RamseyGraphMonotone : ∀ {N s t}, RamseyGraphProp N s t → ∀ {M}, N ≤ M → RamseyGraphProp M s t := by
   unfold RamseyGraphProp
@@ -23,7 +23,7 @@ lemma RamseyGraphMonotone : ∀ {N s t}, RamseyGraphProp N s t → ∀ {M}, N �
   left; swap; right
   all_goals{
     use S.map (Fin.castLEEmb NleqM)
-    simp [SimpleGraph.isNClique_iff, SimpleGraph.IsClique, Set.Pairwise, G', subAdj] at SProp ⊢
+    simp [SimpleGraph.isNClique_iff, SimpleGraph.IsClique, SimpleGraph.isNIndepSet_iff, SimpleGraph.IsIndepSet, Set.Pairwise, G', subAdj] at SProp ⊢
     simp [SProp.right]
     intros x _ y _ _
     simp_all
@@ -37,6 +37,7 @@ theorem RamseyGraphPropSymm : ∀ N s t, RamseyGraphProp N s t ↔ RamseyGraphPr
     | inl R =>
       right
       rcases R with ⟨S, Sprop⟩
+      simp at Sprop
       use S
     | inr R =>
       left
@@ -56,20 +57,18 @@ theorem GraphRamsey2 : ∀ k : ℕ, GraphRamsey 2 k.succ = k.succ := by
   apply And.intro
   · unfold RamseyGraphProp
     intros G _
-    simp [SimpleGraph.isNClique_iff, SimpleGraph.IsClique, Set.Pairwise]
-    rcases Finset.eq_empty_or_nonempty (G.edgeFinset) with GEmp| ⟨⟨x,y⟩, xyInG⟩
+    simp [SimpleGraph.isNClique_iff, SimpleGraph.IsClique, SimpleGraph.isNIndepSet_iff, SimpleGraph.IsIndepSet, Set.Pairwise]
+    rcases Finset.eq_empty_or_nonempty (G.edgeFinset) with GEmp | ⟨⟨x,y⟩, xyInG⟩
     · rw [Finset.eq_empty_iff_forall_not_mem] at GEmp
       right
       use Finset.univ
       simp_all
       intros x y _
       let e: Sym2 (Fin (k + 1)) := s(x, y)
-      have tmp := GEmp e
-      intro xyEdge
-      simp [e] at tmp
-      contradiction
+      rw [← SimpleGraph.mem_edgeSet]
+      exact GEmp e
     · left
-      use {x,y}
+      use {x, y}
       simp[Finset.card_eq_two]
       simp at xyInG
       apply And.intro
@@ -78,7 +77,7 @@ theorem GraphRamsey2 : ∀ k : ℕ, GraphRamsey 2 k.succ = k.succ := by
         simp
         intro h
         simp_all
-  · simp [RamseyGraphProp, SimpleGraph.isNClique_iff, SimpleGraph.IsClique, Set.Pairwise]
+  · simp [RamseyGraphProp, SimpleGraph.isNClique_iff, SimpleGraph.IsClique, SimpleGraph.isNIndepSet_iff, SimpleGraph.IsIndepSet, Set.Pairwise]
     use (⊥ : SimpleGraph (Fin k))
     simp
     apply And.intro
@@ -115,10 +114,10 @@ theorem RamseyGraph1 : ∀ k : ℕ, GraphRamsey 1 k.succ = 1 := by
   · simp [RamseyGraph1Prop 0 k.succ]
     simp [RamseyGraphProp]
     use (⊥ : SimpleGraph (Fin 0))
-    simp
-    intro x
-    have xempty : x = ∅ := by simp[Finset.eq_empty_iff_forall_not_mem]
-    simp [xempty, SimpleGraph.isNClique_iff]
+    intros x botIndep
+    have xempty : x = ∅ := by simp [Finset.eq_empty_iff_forall_not_mem]
+    have ctr := botIndep.card_eq
+    simp [xempty] at ctr
   · assumption
 
 open ProofWidgets
@@ -132,12 +131,12 @@ theorem R34 : ¬(RamseyGraphProp 8 3 4) := by
   apply And.intro
   · intros S
     rw [← SimpleGraph.mem_cliqueFinset_iff]
-    have cliqueFree : SimpleGraph.cliqueFinset (readG6 "GhdGKC") 3 = Finset.empty := by native_decide
+    have cliqueFree : (readG6 "GhdGKC").cliqueFinset 3 = Finset.empty := by native_decide
     rw [cliqueFree]
     exact Finset.not_mem_empty S
   · intros T
-    rw [← SimpleGraph.mem_cliqueFinset_iff]
-    have cliqueFree : SimpleGraph.cliqueFinset (readG6 "GhdGKC")ᶜ 4 = Finset.empty := by native_decide
+    rw [← SimpleGraph.mem_indepSetFinset_iff]
+    have cliqueFree : (readG6 "GhdGKC").indepSetFinset 4 = Finset.empty := by native_decide
     rw [cliqueFree]
     exact Finset.not_mem_empty T
 
@@ -150,12 +149,12 @@ theorem R35 : ¬(RamseyGraphProp 13 3 5) := by
   apply And.intro
   · intros S
     rw [← SimpleGraph.mem_cliqueFinset_iff]
-    have cliqueFree : SimpleGraph.cliqueFinset (readG6 "LhEIHEPQHGaPaP") 3 = Finset.empty := by native_decide
+    have cliqueFree : (readG6 "LhEIHEPQHGaPaP").cliqueFinset 3 = Finset.empty := by native_decide
     rw [cliqueFree]
     exact Finset.not_mem_empty S
   · intros T
-    rw [← SimpleGraph.mem_cliqueFinset_iff]
-    have cliqueFree : SimpleGraph.cliqueFinset (readG6 "LhEIHEPQHGaPaP")ᶜ 5 = Finset.empty := by native_decide
+    rw [← SimpleGraph.mem_indepSetFinset_iff]
+    have cliqueFree : (readG6 "LhEIHEPQHGaPaP").indepSetFinset 5 = Finset.empty := by native_decide
     rw [cliqueFree]
     exact Finset.not_mem_empty T
 
@@ -171,11 +170,11 @@ theorem R44' : ¬(RamseyGraphProp 17 4 4) := by
   apply And.intro
   · intros S
     rw [← SimpleGraph.mem_cliqueFinset_iff]
-    have cliqueFree : SimpleGraph.cliqueFinset (readG6 "P}qTKukXaUja[IBjanPeMI\\K") 4 = Finset.empty := by native_decide
+    have cliqueFree : (readG6 "P}qTKukXaUja[IBjanPeMI\\K").cliqueFinset 4 = Finset.empty := by native_decide
     rw [cliqueFree]
     exact Finset.not_mem_empty S
   · intros T
-    rw [← SimpleGraph.mem_cliqueFinset_iff]
-    have cliqueFree : SimpleGraph.cliqueFinset (readG6 "P}qTKukXaUja[IBjanPeMI\\K")ᶜ 4 = Finset.empty := by native_decide
+    rw [← SimpleGraph.mem_indepSetFinset_iff]
+    have cliqueFree : (readG6 "P}qTKukXaUja[IBjanPeMI\\K").indepSetFinset 4 = Finset.empty := by native_decide
     rw [cliqueFree]
     exact Finset.not_mem_empty T
