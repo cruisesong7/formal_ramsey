@@ -124,7 +124,6 @@ open ProofWidgets
 
 theorem R34 : ¬(RamseyGraphProp 8 3 4) := by
   simp only [RamseyGraphProp, not_forall]
-  -- use readG6 "GhdGKC", (by infer_instance)
   g6 "GhdGKC"
   with_panel_widgets [SelectionPanel]
   simp [not_or]
@@ -142,7 +141,6 @@ theorem R34 : ¬(RamseyGraphProp 8 3 4) := by
 
 theorem R35 : ¬(RamseyGraphProp 13 3 5) := by
   simp only [RamseyGraphProp, not_forall]
-  -- use readG6 "LhEIHEPQHGaPaP", (by infer_instance)
   g6 "LhEIHEPQHGaPaP"
   with_panel_widgets [SelectionPanel]
   simp [not_or]
@@ -163,7 +161,6 @@ set_option maxHeartbeats 500000
 
 theorem R44' : ¬(RamseyGraphProp 17 4 4) := by
   simp only [RamseyGraphProp, not_forall]
-  -- use readG6 "P}qTKukXaUja[IBjanPeMI\\K", (by infer_instance)
   g6 "P}qTKukXaUja[IBjanPeMI\\K"
   with_panel_widgets [SelectionPanel]
   simp [not_or]
