@@ -15,11 +15,10 @@ lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : �
     rw [← Finset.card_eq_zero]
     symm
     exact h
-  -- NOTE: One requires the @ to refer to a and s which seems dumb, possibly a bug
-  | @insert a s anotins ih =>
+  | insert a s anotins ih =>
     intros t tcard
     right
-    rw [(Finset.card_insert_of_not_mem anotins)] at tcard
+    rw [(Finset.card_insert_of_notMem anotins)] at tcard
     have tinsert := Eq.symm tcard
     rw [Finset.card_eq_succ] at tinsert
     rcases tinsert with ⟨b, t', bnotint', bins, tcards⟩
@@ -37,7 +36,7 @@ lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : �
       apply Subtype.ext
       have a₁prop := a₁.prop
       have a₂prop := a₂.prop
-      simp only [Finset.mem_insert, Finset.not_mem_empty, or_false] at a₁prop a₂prop
+      simp only [Finset.mem_insert, Finset.notMem_empty, or_false] at a₁prop a₂prop
       simp [a₁prop, a₂prop]
     · intros b'
       use ⟨a, Finset.mem_insert_self a ∅⟩
@@ -122,7 +121,6 @@ lemma bijection_of_List_perm {α : Type} : ∀ {l₁ l₂ : List α}, l₁ ~ l�
           | inl j0 =>
             rcases isucc with ⟨i', i'Val⟩
             simp [j0, i'Val] at fab
-            cases (Fin.succ_ne_zero (f i')) fab
           | inr jsucc =>
             rcases isucc with ⟨i', i'Val⟩
             rcases jsucc with ⟨j', j'Val⟩
@@ -199,7 +197,6 @@ lemma bijection_of_List_perm {α : Type} : ∀ {l₁ l₂ : List α}, l₁ ~ l�
               | inl j'0 =>
                 rcases i'succ with ⟨i'', i''Val⟩
                 simp [i''Val, j'0] at fab
-                cases (Fin.succ_ne_zero i''.succ) fab
               | inr j'succ =>
                 rcases i'succ with ⟨i'', i''Val⟩
                 rcases j'succ with ⟨j'', j''Val⟩
@@ -365,7 +362,7 @@ end FinpartitionWithEmpty
 theorem sum_image_vanishing {β : Type u} {α : Type v} {γ : Type w} {f : α → β} [AddCommMonoid β] [DecidableEq α] [DecidableEq γ] {s : Finset γ} {g : γ → α} : (∀ x ∈ s, ∀ y ∈ s, g x = g y → f (g x) ≠ 0 → x = y) → (s.image g).sum (λ x ↦ f x) = s.sum (f ∘ g) := by
   induction s using Finset.induction with
   | empty => simp
-  | insert anotins ih =>
+  | insert _ _ anotins ih =>
     next a s' =>
       intro aProp
       simp [Finset.sum_insert anotins]

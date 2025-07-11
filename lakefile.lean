@@ -5,9 +5,9 @@ package «formal_ramsey» {
   -- add any package configuration options here
 }
 
-require mathlib from git "https://github.com/leanprover-community/mathlib4"@"v4.18.0-rc1"
+require mathlib from git "https://github.com/leanprover-community/mathlib4"@"v4.21.0"
 
-require proofwidgets from git "https://github.com/EdAyers/ProofWidgets4"@"v0.0.53"
+require proofwidgets from git "https://github.com/EdAyers/ProofWidgets4"@"v0.0.64"
 
 @[default_target]
 lean_lib «FormalRamsey» {
@@ -78,15 +78,3 @@ script folkman (args) do
     } >>= λ proc => do
       proc.wait
     return runResult
-
-
-  -- script cadical (args) do
-  -- if List.length args != 1
-  -- then IO.println "Usage: lake script run cadical <cnf>" return 1
-  -- else
-    --   let cadicalPath := System.FilePath.mk "../../../../../SAT/cadical/build/cadical" -- Update this path
-  --   let runResult ← IO.Process.spawn {
-  --   cmd := externalExePath.toString
-  --   args := args
-  -- } >>= λ proc => do
-  --   proc.wait

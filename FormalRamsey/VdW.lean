@@ -244,7 +244,7 @@ theorem vdW1 :∀ {k : ℕ}, vdW k.succ 1 = k.succ := by
       simp [vdWProp, eq_iff_true_of_subsingleton] at vdWk
       rcases vdWk with ⟨s, sdiff, eProp⟩
       change 1 ≤ s.diff at sdiff
-      have eend := eProp (s.start + k * s.diff) ⟨k, by simp⟩
+      have eend := eProp (s.start + k * s.diff) ⟨Fin.last k, by simp⟩
       have contra : k ≤ s.start + k * s.diff := by cases k with
         |zero => simp
         |succ k' => trans (k'.succ * s.diff); simp [Nat.mul_le_mul_left, sdiff]; simp
@@ -262,10 +262,10 @@ theorem vdW2 : ∀ {r : ℕ}, vdW 2 r.succ = r.succ.succ := by
     · simp
       intro vdWr
       simp [vdWProp] at vdWr
-      rcases (vdWr (λ n ↦ Fin.ofNat' (r + 1) n)) with ⟨s, sdiff, ⟨_, eProp⟩⟩
+      rcases (vdWr (λ n ↦ Fin.ofNat (r + 1) n)) with ⟨s, sdiff, ⟨_, eProp⟩⟩
       have estart := eProp s.start ⟨0, by simp⟩
       have eend := eProp (s.start + s.diff)  ⟨1, by simp⟩
-      rw [← eend.right, ← Fin.val_eq_val, Fin.val_ofNat', Fin.val_ofNat'] at estart
+      rw [← eend.right, ← Fin.val_eq_val, Fin.val_ofNat, Fin.val_ofNat] at estart
       simp [Nat.mod_eq_of_lt estart.left, Nat.mod_eq_of_lt eend.left] at estart
       simp [estart.right] at sdiff
   · monotone
@@ -297,11 +297,11 @@ lemma isArithProgIffGet {N : ℕ} {t : List (Fin N.succ)} {h h' d : Fin N.succ} 
               split at hd
               · have ctr := add_tsub_le_assoc (a := ↑h) (b := ↑d) (c := N.succ)
                 simp [Nat.sub_eq_zero_iff_le.mpr (le_of_lt d.prop), ← hd, hdh'] at ctr
-                cases (not_le_of_lt hLth' ctr)
+                cases (not_le_of_gt hLth' ctr)
               · simp [← hdh', hd]
     · simp
       intros dpos iprop
-      have i1 := iprop ((0 : Fin N.succ).succ)
+      have i1 := iprop (Fin.last 1)
       simp at i1
       rw [Fin.lt_def] at dpos ⊢
       apply And.intro
@@ -310,7 +310,7 @@ lemma isArithProgIffGet {N : ℕ} {t : List (Fin N.succ)} {h h' d : Fin N.succ} 
         split at hd
         next ctr =>
           rw [← i1] at ctr
-          cases (not_lt_of_le ctr) h'.prop
+          cases (not_lt_of_ge ctr) h'.prop
         next =>
           rw [← i1] at hd
           exact Fin.ext hd
@@ -349,7 +349,7 @@ lemma isArithProgIffGet {N : ℕ} {t : List (Fin N.succ)} {h h' d : Fin N.succ} 
         split at hd
         next ctr =>
           rw [← g1] at ctr
-          cases (not_lt_of_le ctr) h'.prop
+          cases (not_lt_of_ge ctr) h'.prop
         · have getRest : ∀ (i : Fin (Nat.succ (Nat.succ (List.length t)))), ↑(List.get (h' :: h'' :: t) i) = h'.val + i.val * d.val := by
             intro i
             have gi := getProp i.succ
@@ -414,9 +414,7 @@ theorem vdWByList (N : ℕ) (k : ℕ) (r : ℕ) : vdWProp N.succ k r ↔ ∀ (f 
     let l : List (Fin N.succ) := List.ofFn f''
     have lsublk : l ∈ List.sublistsLen k (List.finRange N.succ) := by
       simp only [List.mem_sublistsLen, List.sublist_iff_exists_fin_orderEmbedding_get_eq, l, List.length_ofFn, and_true]
-      let idxMap : Fin (List.ofFn f'').length → Fin (List.finRange N.succ).length := (λ idx ↦
-        let mappedIdx := f'' (Fin.cast (List.length_ofFn f'') idx);
-        Fin.cast (List.length_finRange N.succ).symm mappedIdx)
+      let idxMap : Fin (List.ofFn f'').length → Fin (List.finRange N.succ).length := (λ idx ↦ Fin.cast List.length_finRange.symm (f'' (Fin.cast List.length_ofFn idx)))
       have idxMapInj : Function.Injective idxMap := by
         intros a₁ a₂
         simp [idxMap, f'']
@@ -437,7 +435,8 @@ theorem vdWByList (N : ℕ) (k : ℕ) (r : ℕ) : vdWProp N.succ k r ↔ ∀ (f 
       use { toFun := idxMap, inj' := idxMapInj, map_rel_iff' := idxOrdered }
       simp [idxMap, f'']
     have lArithP : ∃ (d : Fin N.succ), isArithProg l d := by
-      use s.diff
+      -- 
+      -- use s.diff
       induction k with
       | zero => simp [isArithProg, l]
       | succ k' ih =>
@@ -445,13 +444,14 @@ theorem vdWByList (N : ℕ) (k : ℕ) (r : ℕ) : vdWProp N.succ k r ↔ ∀ (f 
         | zero => simp [isArithProg, l]
         | succ k'' =>
           simp [l, isArithProgIffGet]
+          have diffLt := sprop (s.start + s.diff) ⟨(0 : Fin k''.succ).succ, by simp⟩
+          use ⟨s.diff, Nat.lt_of_add_left_lt diffLt.left⟩
           have sdiffN : s.diff < N.succ := by
             calc
               s.diff ≤ s.start + s.diff := Nat.le_add_left s.diff s.start
               _ < N.succ := (sprop (s.start + s.diff) ⟨1, refl (s.start + s.diff)⟩).left
           apply And.intro
-          · rw [Fin.lt_def, Fin.val_cast_of_lt sdiffN]
-            simp [sdiff.lt]
+          · simp [Fin.lt_def, sdiff.lt]
           · apply Fin.cases
             · simp
             · rw [← Nat.mod_eq_iff_lt] at sdiffN

@@ -41,7 +41,7 @@ def polygonVertex (sides : Nat) (radius centerX centerY : Float) (index : Nat) :
   (centerX + radius * cos angle, centerY + radius * sin angle)
 
 def polygonVertices (sides : Nat) (radius centerX centerY : Float) : Array (Float × Float) :=
-  Array.mkArray sides (0.0, 0.0) |>.mapIdx (λ idx _ => polygonVertex sides radius centerX centerY idx)
+  Array.replicate sides (0.0, 0.0) |>.mapIdx (λ idx _ => polygonVertex sides radius centerX centerY idx)
 
 def circleAtCoord (coord : Float × Float) : String :=
   let (cx, cy) := coord
@@ -80,7 +80,7 @@ def decodeG6Adjacency (s : String) (n : Nat) : Array (Array (Fin 2)) :=
   let bytes := s.toList.map charToValue
   let bits := bytes.foldl (λ acc b => acc ++ List.toArray (List.range 6 |>.map (λ i => boolToFin2 ((b) / (2 ^ (5 - i)) % 2 = 1)))) #[]
   let bitIdx (i j : Nat) : Nat := i * (i - 1) / 2 + j
-  let emptyMatrix := Array.mkArray n (Array.mkArray n 0)
+  let emptyMatrix := Array.replicate n (Array.replicate n 0)
   emptyMatrix.mapIdx (λ i row =>
     row.mapIdx (λ j _ =>
       if i < j then

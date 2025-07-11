@@ -1,4 +1,5 @@
 import Mathlib.Combinatorics.Pigeonhole
+import Mathlib.Data.Finset.Sort
 
 -- import FormalRamsey.PickTactic
 import FormalRamsey.RamseyBase
@@ -75,7 +76,7 @@ theorem friendshipUpperbound : Ramsey₂Prop 6 3 3 := by
   intro f
   haveI tmpInst := SimpleGraph.neighborSetFintype (⊤:SimpleGraph (Fin 6)) 0
   let g : ((⊤:SimpleGraph (Fin 6)).neighborFinset 0) → Fin 2 := λ x ↦  f s(0, x)
-  have ghyp : Fintype.card (Fin 2) • 2 < Fintype.card ↑((completeGraph (Fin 6)).neighborFinset 0) := by simp
+  have ghyp : Fintype.card (Fin 2) • 2 < Fintype.card ↑((⊤ : SimpleGraph (Fin 6)).neighborFinset 0) := by simp
   have ghyp := Fintype.exists_lt_card_fiber_of_mul_lt_card g ghyp
   rcases ghyp with ⟨c, chyp⟩
   simp [Finset.two_lt_card_iff] at chyp
@@ -109,7 +110,7 @@ theorem friendshipUpperbound : Ramsey₂Prop 6 3 3 := by
     have fxy_eq_fyz:= notc fxyneqc fyzneqc
     have fxy_eq_fxz:= notc fxyneqc fxzneqc
     have d0 :(graphAtColor (⊤:SimpleGraph (Fin 6)) f  (f s(↑x, ↑y))).IsNClique 3 {↑x, ↑ y, ↑ z} := by
-      simp [graphAtColor, completeGraph]
+      simp [graphAtColor]
       constructor
       · simp [SimpleGraph.isClique_iff, Set.Pairwise]
         rw [@Sym2.eq_swap (Fin 6) ↑y x, @Sym2.eq_swap (Fin 6) ↑z y, @Sym2.eq_swap (Fin 6) ↑z ↑x]
@@ -133,7 +134,7 @@ theorem friendshipUpperbound : Ramsey₂Prop 6 3 3 := by
   --pick e from (Finset.filter (λ (e : Fin 2)↦ e = c) {f ⟦(↑x, ↑y)⟧,f ⟦(↑y, ↑z)⟧,f ⟦(↑x, ↑z)⟧})
   simp at eIns
   rcases eIns with ⟨eVal, eColor⟩
-  suffices c0 : ∃ a b : (Fin 6), (graphAtColor (completeGraph (Fin 6)) f c).IsNClique 3 {0, a, b} by
+  suffices c0 : ∃ a b : (Fin 6), (graphAtColor ⊤ f c).IsNClique 3 {0, a, b} by
     rcases c0 with ⟨a, b, _⟩
     fin_cases c
     · use {0, a, b}, 0
@@ -144,7 +145,7 @@ theorem friendshipUpperbound : Ramsey₂Prop 6 3 3 := by
   set i := ↑x; set j := ↑y; rotate_left; set i := ↑y; set j := ↑z; rotate_left; set i := ↑x; set j := ↑z
   all_goals {
   · use i, j
-    simp [graphAtColor, completeGraph]
+    simp [graphAtColor]
     constructor
     · simp [SimpleGraph.isClique_iff, Set.Pairwise]
       rw [@Sym2.eq_swap (Fin 6) i 0, @Sym2.eq_swap (Fin 6) j 0, @Sym2.eq_swap (Fin 6) j i]
@@ -241,7 +242,7 @@ theorem Ramsey₂1 : ∀ k : ℕ, Ramsey₂ 1 k.succ = 1 := by
     simp [Ramsey₂Prop, RamseyProp]
     use (λ _ ↦ 0)
     intros S i
-    have Sempty : S = ∅ := by simp[Finset.eq_empty_iff_forall_not_mem]
+    have Sempty : S = ∅ := by simp [Finset.eq_empty_iff_forall_notMem]
     fin_cases i <;> simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor, Sempty, List.Vector.get]
   · assumption
 
@@ -271,7 +272,7 @@ theorem Ramsey₂PropIneq : ∀ {M N s t : ℕ}, 0 < M + N → Ramsey₂Prop M s
       rw [aeqb] at ainS
       cases Eq.trans (Eq.symm binT.right) ainS.right
     rw [Rat.add_def' ↑(Finset.card (monochromaticVicinity ⊤ 0 f 0)) ↑(Finset.card (monochromaticVicinity ⊤ 0 f 1)), Rat.den_natCast, Rat.num_natCast, Rat.den_natCast, Rat.num_natCast, Int.ofNat_one]
-    simp only [Nat.mul_one, Int.mul_one, ← Int.ofNat_add]
+    simp only [Nat.mul_one, Int.mul_one, ←Int.natCast_add]
     have seteq : (monochromaticVicinity ⊤ 0 f 0) ∪ (monochromaticVicinity ⊤ 0 f 1) = ((⊤:SimpleGraph (Fin (M + N))).neighborFinset 0) := by
       apply subset_antisymm <;> rw [Finset.subset_iff]
       · intros _ ainset
@@ -284,7 +285,7 @@ theorem Ramsey₂PropIneq : ∀ {M N s t : ℕ}, 0 < M + N → Ramsey₂Prop M s
         simp [univ_fin2] at funiv
         assumption
     rw [← Finset.card_union_of_disjoint filterdisj, seteq, SimpleGraph.neighborFinset_eq_filter]
-    simp [← SimpleGraph.completeGraph_eq_top, completeGraph, Finset.filter_ne]
+    simp [← SimpleGraph.completeGraph_eq_top, Finset.filter_ne]
     have rep := congr_arg (@Int.cast Rat _) (Int.ofNat_sub MNpos)
     simp at rep
     rw [rep]
@@ -572,9 +573,7 @@ theorem Ramsey₂ByList : ∀ (N s t : ℕ), Ramsey₂Prop N s.succ t.succ ↔ (
       apply And.intro
       · simp only [Slist, List.mem_sublistsLen, List.sublist_iff_exists_fin_orderEmbedding_get_eq, Finset.length_sort instLEFin.le, SProp.right, and_true]
         let f' : Fin Slist.length → Fin N := λ (i: Fin Slist.length) ↦ Slist.get i
-        let idxMap : Fin Slist.length → Fin (List.finRange N).length := (λ idx ↦
-          let mappedIdx := f' idx;
-          Fin.cast (List.length_finRange N).symm mappedIdx)
+        let idxMap : Fin Slist.length → Fin (List.finRange N).length := (λ idx ↦ Fin.cast List.length_finRange.symm (f' idx))
         have idxMapInj : Function.Injective idxMap := by
           unfold Function.Injective
           intros a₁ a₂

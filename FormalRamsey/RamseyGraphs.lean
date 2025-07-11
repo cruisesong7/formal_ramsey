@@ -59,7 +59,7 @@ theorem GraphRamsey2 : ∀ k : ℕ, GraphRamsey 2 k.succ = k.succ := by
     intros G _
     simp [SimpleGraph.isNClique_iff, SimpleGraph.IsClique, SimpleGraph.isNIndepSet_iff, SimpleGraph.IsIndepSet, Set.Pairwise]
     rcases Finset.eq_empty_or_nonempty (G.edgeFinset) with GEmp | ⟨⟨x,y⟩, xyInG⟩
-    · rw [Finset.eq_empty_iff_forall_not_mem] at GEmp
+    · rw [Finset.eq_empty_iff_forall_notMem] at GEmp
       right
       use Finset.univ
       simp_all
@@ -115,7 +115,7 @@ theorem RamseyGraph1 : ∀ k : ℕ, GraphRamsey 1 k.succ = 1 := by
     simp [RamseyGraphProp]
     use (⊥ : SimpleGraph (Fin 0))
     intros x botIndep
-    have xempty : x = ∅ := by simp [Finset.eq_empty_iff_forall_not_mem]
+    have xempty : x = ∅ := by simp [Finset.eq_empty_iff_forall_notMem]
     have ctr := botIndep.card_eq
     simp [xempty] at ctr
   · assumption
@@ -132,12 +132,12 @@ theorem R34 : ¬(RamseyGraphProp 8 3 4) := by
     rw [← SimpleGraph.mem_cliqueFinset_iff]
     have cliqueFree : (readG6 "GhdGKC").cliqueFinset 3 = Finset.empty := by native_decide
     rw [cliqueFree]
-    exact Finset.not_mem_empty S
+    exact Finset.notMem_empty S
   · intros T
     rw [← SimpleGraph.mem_indepSetFinset_iff]
     have cliqueFree : (readG6 "GhdGKC").indepSetFinset 4 = Finset.empty := by native_decide
     rw [cliqueFree]
-    exact Finset.not_mem_empty T
+    exact Finset.notMem_empty T
 
 theorem R35 : ¬(RamseyGraphProp 13 3 5) := by
   simp only [RamseyGraphProp, not_forall]
@@ -149,12 +149,12 @@ theorem R35 : ¬(RamseyGraphProp 13 3 5) := by
     rw [← SimpleGraph.mem_cliqueFinset_iff]
     have cliqueFree : (readG6 "LhEIHEPQHGaPaP").cliqueFinset 3 = Finset.empty := by native_decide
     rw [cliqueFree]
-    exact Finset.not_mem_empty S
+    exact Finset.notMem_empty S
   · intros T
     rw [← SimpleGraph.mem_indepSetFinset_iff]
     have cliqueFree : (readG6 "LhEIHEPQHGaPaP").indepSetFinset 5 = Finset.empty := by native_decide
     rw [cliqueFree]
-    exact Finset.not_mem_empty T
+    exact Finset.notMem_empty T
 
 -- NOTE: This is required since leanprover/lean4:v4.16.0-rc1
 set_option maxHeartbeats 500000
@@ -169,9 +169,9 @@ theorem R44' : ¬(RamseyGraphProp 17 4 4) := by
     rw [← SimpleGraph.mem_cliqueFinset_iff]
     have cliqueFree : (readG6 "P}qTKukXaUja[IBjanPeMI\\K").cliqueFinset 4 = Finset.empty := by native_decide
     rw [cliqueFree]
-    exact Finset.not_mem_empty S
+    exact Finset.notMem_empty S
   · intros T
     rw [← SimpleGraph.mem_indepSetFinset_iff]
     have cliqueFree : (readG6 "P}qTKukXaUja[IBjanPeMI\\K").indepSetFinset 4 = Finset.empty := by native_decide
     rw [cliqueFree]
-    exact Finset.not_mem_empty T
+    exact Finset.notMem_empty T

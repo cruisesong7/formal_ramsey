@@ -23,14 +23,14 @@ def graphAtColor {N k : ℕ} (G : SimpleGraph (Fin N)) (ϕ : Sym2 (Fin N) → Fi
 
 def RamseyProp {k : ℕ} (N : ℕ) (s : List.Vector ℕ k.succ) : Prop :=
 ∀ f : Sym2 (Fin N) → Fin k.succ,
-(∃ S i, (graphAtColor (completeGraph (Fin N)) f i).IsNClique (s.get i) S)
+(∃ S i, (graphAtColor ⊤ f i).IsNClique (s.get i) S)
 
 lemma RamseyProp0 : ∀ {k : ℕ} {s : List.Vector ℕ k.succ}, RamseyProp 0 s → ∃ (i : Fin k.succ), s.get i = 0 := by
   intros k s R
   simp [RamseyProp] at R
   rcases (R (λ _ ↦ 0)) with ⟨S, c, SNclique⟩
   simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at SNclique
-  have Sempty : S = ∅ := by simp [Finset.eq_empty_iff_forall_not_mem]
+  have Sempty : S = ∅ := by simp [Finset.eq_empty_iff_forall_notMem]
   simp [Sempty] at SNclique
   use c
   rw [SNclique]
@@ -52,16 +52,16 @@ lemma RamseyMonotone : ∀ {N k : ℕ} {s : List.Vector ℕ k.succ}, RamseyProp 
 
 def monochromaticVicinity {α : Type} [Fintype α] {c : ℕ} (g : SimpleGraph α) [DecidableRel g.Adj] (v : α) (f : Sym2 α → Fin c) (i : Fin c) : Finset α := Finset.filter (λ x ↦  f s(v, x) = i) (g.neighborFinset v)
 
-lemma monochromaticVicinity_Ramsey {N c : ℕ} {v : Fin N} {f : Sym2 (Fin N) → Fin c.succ} {i : Fin c.succ} {s : List.Vector ℕ c.succ} : RamseyProp ((monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card) s → (∃ S, (graphAtColor (completeGraph (Fin N)) f i).IsNClique (s.get i).succ S) ∨ (∃ i' S, i' ≠ i ∧ (graphAtColor (completeGraph (Fin N)) f i').IsNClique (s.get i') S) := by
+lemma monochromaticVicinity_Ramsey {N c : ℕ} {v : Fin N} {f : Sym2 (Fin N) → Fin c.succ} {i : Fin c.succ} {s : List.Vector ℕ c.succ} : RamseyProp ((monochromaticVicinity ⊤ v f i).card) s → (∃ S, (graphAtColor ⊤ f i).IsNClique (s.get i).succ S) ∨ (∃ i' S, i' ≠ i ∧ (graphAtColor ⊤ f i').IsNClique (s.get i') S) := by
   intro vicinityProp
-  have cardeq : (Finset.card (@Finset.univ (Fin (monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card) _)) = (monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card := by simp
+  have cardeq : (Finset.card (@Finset.univ (Fin (monochromaticVicinity ⊤ v f i).card) _)) = (monochromaticVicinity ⊤ v f i).card := by simp
   cases bijection_of_eq_card cardeq with
   | inl bothEmpty =>
     simp [bothEmpty.right] at vicinityProp
     unfold RamseyProp at vicinityProp
     rcases (vicinityProp (λ _ ↦ 0)) with ⟨S, j, SNClique⟩
     simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at SNClique
-    have Sempty : S = ∅ := by simp [Finset.eq_empty_iff_forall_not_mem]
+    have Sempty : S = ∅ := by simp [Finset.eq_empty_iff_forall_notMem]
     simp [Sempty] at SNClique
     rcases (instDecidableEqFin c.succ j i) with h | h
     · right
@@ -73,7 +73,7 @@ lemma monochromaticVicinity_Ramsey {N c : ℕ} {v : Fin N} {f : Sym2 (Fin N) →
       rw [← h, SNClique]
   | inr bijMapper =>
     rcases bijMapper with ⟨mapper, mapperBij⟩
-    let ftrans : Fin (monochromaticVicinity (⊤:SimpleGraph (Fin N)) v f i).card → Fin N := λ x ↦ ↑(mapper ⟨x, Finset.mem_univ x⟩)
+    let ftrans : Fin (monochromaticVicinity ⊤ v f i).card → Fin N := λ x ↦ ↑(mapper ⟨x, Finset.mem_univ x⟩)
     have ftransembinj : Function.Injective ftrans := by
       intros _ _ fa₁a₂
       simp [ftrans] at fa₁a₂
@@ -131,7 +131,7 @@ lemma monochromaticVicinity_Ramsey {N c : ℕ} {v : Fin N} {f : Sym2 (Fin N) →
           simp [ftransemb, ftrans] at mappera
           simp only [mappera, monochromaticVicinity, Finset.mem_filter, SimpleGraph.mem_neighborFinset, SimpleGraph.top_adj] at mapperat
           simp [← mappera] at mapperat
-        rw [Finset.card_insert_of_not_mem vnotinSmap]
+        rw [Finset.card_insert_of_notMem vnotinSmap]
         simp [Sclique.card_eq, h]
 
 end Ramsey

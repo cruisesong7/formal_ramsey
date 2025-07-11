@@ -51,7 +51,7 @@ lemma collectInFinsetMem {α : Type} [DecidableEq α] : ∀ x (l : List (Bool ×
   induction l with
   | nil =>
     simp [collectInFinset]
-    exact Finset.not_mem_empty x
+    exact Finset.notMem_empty x
   | cons h t ih =>
     simp [collectInFinset]
     apply Iff.intro
@@ -101,7 +101,7 @@ instance : ∀ s, DecidableRel (readG6 s).Adj := by
     cases s with
     | nil =>
       apply isFalse
-      apply Finset.not_mem_empty
+      apply Finset.notMem_empty
     | cons h t =>
       dsimp [readG6AdjAux]
       rw [collectInFinsetMem, List.mem_map]

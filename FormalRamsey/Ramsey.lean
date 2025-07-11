@@ -146,7 +146,7 @@ theorem RamseyPropIneq : ∀ {k : ℕ} (M : List.Vector ℕ k.succ.succ) (s : Li
         have partCard : ∀ {n m : ℕ} (f' : Sym2 (Fin n.succ) → Fin m.succ), Finset.univ.sum (λ x ↦ (((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).filter (λ v ↦ f' s(0, v) = x)).card) = ((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).card := by
           intro n
           cases n with
-          | zero => simp [Finset.eq_empty_iff_forall_not_mem]; decide
+          | zero => simp [Finset.eq_empty_iff_forall_notMem]; decide
           | succ n' =>
             simp
             intro m f'
@@ -162,7 +162,7 @@ theorem RamseyPropIneq : ∀ {k : ℕ} (M : List.Vector ℕ k.succ.succ) (s : Li
               rw [← xProp] at ainx
               rw [← yProp] at ainy
               rw [Finset.subset_iff] at ainx ainy
-              rw [Finset.eq_empty_iff_forall_not_mem]
+              rw [Finset.eq_empty_iff_forall_notMem]
               intros b bina
               have binx := ainx bina
               have biny := ainy bina
@@ -445,6 +445,23 @@ set_option maxHeartbeats 4000000
 
 open ProofWidgets
 
+namespace List.Vector
+
+-- We need to teach Lean how to count to 3
+@[simp]
+lemma get_cons_cons_one {α : Type} (a b : α) (v : List.Vector α n) : List.Vector.get (a ::ᵥ b ::ᵥ v) 1 = b := by
+  have one : 1 = (0 : Fin v.length.succ).succ := by simp
+  rw [one, get_cons_succ, get_zero]
+  rfl
+
+@[simp]
+lemma get_cons_cons_cons_two {α : Type} (a b c : α) (v : List.Vector α n) : List.Vector.get (a ::ᵥ b ::ᵥ c ::ᵥ v) 2 = c := by
+  have two : 2 = (0 : Fin v.length.succ).succ.succ := by simp
+  rw [two, get_cons_succ, get_cons_succ, get_zero]
+  rfl
+
+end List.Vector
+
 -- NOTE: Maybe a theorem like Rleq should become the standard theorem
 theorem R333 : Ramsey (3 ::ᵥ 3 ::ᵥ 3 ::ᵥ Vector.nil) = 17 := by
   simp [Ramsey]
@@ -486,30 +503,30 @@ theorem R333 : Ramsey (3 ::ᵥ 3 ::ᵥ 3 ::ᵥ Vector.nil) = 17 := by
           · simp
           · native_decide
         simp [myReplace] at SNClique
-      · have myReplace : (readG6 (("O_k_ClSCDD`S[_`DkIa[_" ::ᵥ "OWBYaAJIaOQJ@SMOOPX`S" ::ᵥ "OFODXO_pWiK_aJOiBcCAJ" ::ᵥ Vector.nil).val[1])).cliqueFinset 3 = ∅ := by
+      · have myReplace : (readG6 (("O_k_ClSCDD`S[_`DkIa[_" ::ᵥ "OWBYaAJIaOQJ@SMOOPX`S" ::ᵥ "OFODXO_pWiK_aJOiBcCAJ" ::ᵥ Vector.nil).get 1)).cliqueFinset 3 = ∅ := by
           rw [← @exists_eq_left String (λ s ↦ (readG6 s).cliqueFinset 3 = ∅)]
           use "OWBYaAJIaOQJ@SMOOPX`S"
           apply And.intro
-          · simp
+          · simp [List.Vector.get]
           · native_decide
-        simp [-SimpleGraph.mem_cliqueFinset_iff, List.Vector.get, myReplace] at SNClique
-      · have myReplace : (readG6 (("O_k_ClSCDD`S[_`DkIa[_" ::ᵥ "OWBYaAJIaOQJ@SMOOPX`S" ::ᵥ "OFODXO_pWiK_aJOiBcCAJ" ::ᵥ Vector.nil).val[2])).cliqueFinset 3 = ∅ := by
+        simp [myReplace] at SNClique
+      · have myReplace : (readG6 (("O_k_ClSCDD`S[_`DkIa[_" ::ᵥ "OWBYaAJIaOQJ@SMOOPX`S" ::ᵥ "OFODXO_pWiK_aJOiBcCAJ" ::ᵥ Vector.nil).get 2)).cliqueFinset 3 = ∅ := by
           rw [← @exists_eq_left String (λ s ↦ (readG6 s).cliqueFinset 3 = ∅)]
           use "OFODXO_pWiK_aJOiBcCAJ"
           apply And.intro
           · simp
           · native_decide
-        simp [-SimpleGraph.mem_cliqueFinset_iff, List.Vector.get, myReplace] at SNClique
+        simp [myReplace] at SNClique
     · intros u v uneqv
-      suffices vecSup : sSup { castGraph (VProp (V.get_mem i)) (readG6 (V.get i)) | i : Fin 3 } = completeGraph (Fin 16) by
-        have uvAdj : (completeGraph (Fin 16)).Adj u v := by simp [uneqv]
+      suffices vecSup : sSup { castGraph (VProp (V.get_mem i)) (readG6 (V.get i)) | i : Fin 3 } = ⊤ by
+        have uvAdj : (⊤ : SimpleGraph (Fin 16)).Adj u v := by simp [uneqv]
         rw [← vecSup] at uvAdj
         simp at uvAdj
         rcases uvAdj with ⟨i, iProp⟩
         simp [castGraph] at iProp
         use i
       rw [SimpleGraph.ext_iff]
-      simp only [castGraph, readG6, completeGraph]
+      simp only [castGraph, readG6]
       ext x y
       simp
       rw [Fin.ext_iff, Fin.exists_fin_succ, Fin.exists_fin_succ, Fin.exists_fin_succ]
