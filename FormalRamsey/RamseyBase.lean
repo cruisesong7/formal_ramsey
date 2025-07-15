@@ -4,26 +4,46 @@ import FormalRamsey.Utils
 
 namespace Ramsey
 
-def graphAtColor {N k : ℕ} (G : SimpleGraph (Fin N)) (ϕ : Sym2 (Fin N) → Fin k)
- (i : Fin k): SimpleGraph (Fin N) := {
-  Adj := λ u v ↦ (G.Adj u v) ∧ (ϕ s(u, v) = i),
+def graphAtColor {N k : ℕ} (G : SimpleGraph (Fin N)) (f : Sym2 (Fin N) → Fin k) (i : Fin k): SimpleGraph (Fin N) := {
+  Adj := λ u v ↦ (G.Adj u v) ∧ (f s(u, v) = i),
   symm := by
     unfold Symmetric
     intros _ _ h
-    rcases h with ⟨Gxy,ϕxy⟩
+    rcases h with ⟨Gxy, fxy⟩
     apply And.intro
     apply G.symm Gxy
     rw [Sym2.eq_swap]
-    exact ϕxy,
+    exact fxy,
   loopless :=  by
     unfold Irreflexive
     intros _ h
     simp at h
  }
 
+instance : ∀ {N k : ℕ} (G : SimpleGraph (Fin N)) [DecidableRel G.Adj] (f : Sym2 (Fin N) → Fin k) (i : Fin k), DecidableRel (graphAtColor G f i).Adj := by
+  intros _ _ G GAdj f i u v
+  simp [graphAtColor]
+  cases GAdj u v with
+  | isTrue uvAdj =>
+    cases instDecidableEqFin _ (f s(u, v)) i with
+    | isTrue fuvi =>
+      apply isTrue
+      tauto
+    | isFalse fuvneqi =>
+      apply isFalse
+      tauto
+  | isFalse uvNotAdj =>
+    apply isFalse
+    tauto
+
 def RamseyProp {k : ℕ} (N : ℕ) (s : List.Vector ℕ k.succ) : Prop :=
 ∀ f : Sym2 (Fin N) → Fin k.succ,
 (∃ S i, (graphAtColor ⊤ f i).IsNClique (s.get i) S)
+
+instance : ∀ (k : ℕ) (s : List.Vector ℕ k.succ), DecidablePred (Membership.mem { N | RamseyProp N s }) := by
+  intros k s N
+  simp [RamseyProp]
+  infer_instance
 
 lemma RamseyProp0 : ∀ {k : ℕ} {s : List.Vector ℕ k.succ}, RamseyProp 0 s → ∃ (i : Fin k.succ), s.get i = 0 := by
   intros k s R

@@ -409,3 +409,18 @@ lemma vector_list_finset_sum : ∀ {n : ℕ} (V : List.Vector ℕ n), Finset.sum
     have ihv := ih V.tail
     simp at ihv
     exact ihv
+
+namespace Nat
+
+lemma find_upward_closed_eq_succ_iff {p : ℕ → Prop} [DecidablePred p] (h : ∃ n, p n) (hs : ∀ (k₁ k₂ : ℕ), k₁ ≤ k₂ → p k₁ → p k₂) (k : ℕ) : Nat.find h = k + 1 ↔ p (k + 1) ∧ ¬(p k) := by
+  rw [Nat.find_eq_iff]
+  simp
+  intro pk1
+  apply Iff.intro
+  · intros npn pk
+    cases (npn k (by simp)) pk
+  · intros npk n nlek pn
+    rw [Nat.lt_succ] at nlek
+    cases npk (hs n k nlek pn)
+
+end Nat
