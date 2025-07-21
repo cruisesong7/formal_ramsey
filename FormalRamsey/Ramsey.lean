@@ -265,7 +265,7 @@ theorem RamseyPropIneq : ∀ {k : ℕ} (M : List.Vector ℕ k.succ.succ) (s : Li
     rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul, Rat.natCast_eq_divInt, ← Int.natCast_one, Rat.divInt_ofNat, Rat.mkRat_mul_mkRat, Nat.mul_comm, Rat.mkRat_mul_left k.succ.succ_ne_zero, Rat.mkRat_one]
     simp
     trans ↑((⊤ : SimpleGraph (Fin M.toList.sum.succ.succ)).neighborFinset 0).card
-    · simp [vector_list_finset_sum]
+    · simp [← vector_list_finset_sum]
     · trans ↑(Finset.sum Finset.univ (λ x ↦ (Finset.filter (λ v ↦ f s(0, v) = x) ((⊤ : SimpleGraph (Fin M.toList.sum.succ.succ)).neighborFinset 0)).card))
       · rw [Nat.cast_inj]
         have partCard : ∀ {n m : ℕ} (f' : Sym2 (Fin n.succ) → Fin m.succ), Finset.univ.sum (λ x ↦ (((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).filter (λ v ↦ f' s(0, v) = x)).card) = ((⊤ : SimpleGraph (Fin n.succ)).neighborFinset 0).card := by

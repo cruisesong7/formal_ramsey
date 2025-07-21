@@ -398,17 +398,16 @@ lemma univ_disjUnion_zero_succ : ∀ (n : ℕ), (Finset.univ : Finset (Fin n.suc
 
 end Fin
 
-lemma vector_list_finset_sum : ∀ {n : ℕ} (V : List.Vector ℕ n), Finset.sum Finset.univ (λ x ↦ ↑(V.get x) : (Fin n) → ℚ) = sum (map Nat.cast V.toList) := by
-  intro n
+lemma vector_list_finset_sum {α β : Type} [AddCommMonoid β] {n : ℕ} : ∀ (V : List.Vector α n) (f : α → β), Finset.univ.sum (f ∘ V.get) = (V.toList.map f).sum := by
   induction n with
   | zero => simp
   | succ k' ih =>
-    intro V
+    intros V f
     rw [← Vector.cons_head_tail V, Fin.univ_disjUnion_zero_succ, Finset.sum_disjUnion]
     simp [-Vector.cons_head_tail]
-    have ihv := ih V.tail
+    have ihv := ih V.tail f
     simp at ihv
-    exact ihv
+    simp [ihv]
 
 namespace Nat
 
