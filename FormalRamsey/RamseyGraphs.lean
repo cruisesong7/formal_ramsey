@@ -4,6 +4,7 @@ import Mathlib.Data.Nat.Lattice
 
 import FormalRamsey.G6
 import FormalRamsey.G6Visualizer
+import FormalRamsey.Encodings.CNF.RamseyEncoder
 
 def RamseyGraphProp (N s t : ℕ) : Prop := (∀ (G : SimpleGraph (Fin N)) [DecidableRel G.Adj], (∃ S, G.IsNClique s S) ∨ (∃ T, G.IsNIndepSet t T))
 
@@ -178,3 +179,98 @@ theorem R44' : ¬(RamseyGraphProp 17 4 4) := by
     have cliqueFree : (readG6 "P}qTKukXaUja[IBjanPeMI\\K").indepSetFinset 4 = Finset.empty := by native_decide
     rw [cliqueFree]
     exact Finset.not_mem_empty T
+
+namespace SimpleGraph
+
+section Iso
+
+theorem IsIndepSet.subset {α : Type} {G : SimpleGraph α} {s t : Finset α} (h : t ⊆ s) : G.IsIndepSet s → G.IsIndepSet t := Set.Pairwise.mono h
+
+lemma Iso.IsClique {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, G.IsClique s ↔ G'.IsClique (iso.toEquiv '' s) := by
+  simp [SimpleGraph.IsClique, Set.Pairwise]
+  intros
+  apply Iff.intro <;> intros sprop u uins v vins uneqv
+  · simp [← iso.map_rel_iff'] at sprop
+    apply sprop <;> assumption
+  · rw [← iso.map_rel_iff']
+    simp
+    apply sprop <;> assumption
+
+lemma Iso.IsIndepSet {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, G.IsIndepSet s ↔ G'.IsIndepSet (iso.toEquiv '' s) := by
+  simp [SimpleGraph.IsIndepSet, Set.Pairwise]
+  intros
+  apply Iff.intro <;> intros sprop u uins v vins uneqv
+  · simp [← iso.map_rel_iff'] at sprop
+    apply sprop <;> assumption
+  · rw [← iso.map_rel_iff']
+    simp
+    apply sprop <;> assumption
+
+lemma Iso.IsNClique {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, G.IsNClique n s ↔ G'.IsNClique n (s.map iso.toEquiv) := by simp [isNClique_iff, iso.IsClique]
+
+lemma Iso.IsNIndepSet {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, G.IsNIndepSet n s ↔ G'.IsNIndepSet n (s.map iso.toEquiv) := by simp [isNIndepSet_iff, iso.IsIndepSet]
+
+lemma Iso.cliqueNum {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : G.cliqueNum = G'.cliqueNum := by
+  unfold SimpleGraph.cliqueNum
+  congr
+  ext n
+  simp
+  apply Iff.intro
+  · intro Gclique
+    obtain ⟨S, Sprop⟩ := Gclique
+    use (S.map iso.toEquiv)
+    rw [iso.IsNClique] at Sprop
+    assumption
+  · intro Gclique'
+    obtain ⟨S', Sprop'⟩ := Gclique'
+    use (S'.map iso.toEquiv.symm)
+    simpa [iso.IsNClique, Finset.map_map]
+
+end Iso
+
+lemma exists_isNIndset_of_le_indepNum  {α : Type} [Fintype α] {G : SimpleGraph α} (h : n ≤ G.indepNum) : ∃ S : Finset α, G.IsNIndepSet n S := by
+  rcases G.exists_isNIndepSet_indepNum with ⟨s, sindset⟩
+  have nlescard : n ≤ s.card := by simp [h, sindset.card_eq]
+  obtain ⟨t, tprop⟩ := s.exists_subset_card_eq nlescard
+  use t
+  simp [← tprop.right, isNIndepSet_iff]
+  exact sindset.isIndepSet.subset tprop.left
+
+end SimpleGraph
+
+open Trestle Model PropFun
+
+theorem R36 : RamseyGraphProp 18 3 6 := by
+  suffices Runsat: ¬(satisfiable (RamseyEncoding 17 3 6).val.toRichCnf.toICnf.toPropFun) by
+    simp [satisfiable, (RamseyEncoding 17 3 6).toICnf_equisatisfiable] at Runsat
+    unfold RamseyGraphProp
+    intros G GDecAdj
+    let τ : PropAssignment (EdgeVar 18) := (λ e ↦ (GDecAdj e.i e.j).decide)
+    have iso : G ≃g (assignment_to_graph τ true) := {
+      toEquiv := (by use id; use id; simp [Function.LeftInverse]; simp [Function.RightInverse]; simp [Function.LeftInverse]),
+      map_rel_iff' := by
+       simp [τ, assignment_to_graph]
+       intros u v
+       split
+       next vequ _ => simp [vequ]
+       next vnequ _ =>
+         simp [min_def, max_def]
+         split
+         next => exact G.adj_comm v u
+         next => simp
+    }
+    cases Nat.decLt G.cliqueNum 3 with
+    | isTrue Gcnlt3 =>
+      right
+      simp [iso.cliqueNum] at Gcnlt3
+      obtain ⟨T, TIsNIndepSet⟩ := SimpleGraph.exists_isNIndset_of_le_indepNum (Runsat τ Gcnlt3)
+      rw [iso.symm.IsNIndepSet] at TIsNIndepSet
+      use T.map iso.symm.toEquiv
+    | isFalse Gcnge3 =>
+      left
+      simp at Gcnge3
+      exact G.exists_isNClique_of_le_cliqueNum Gcnge3
+  simp [satisfiable]
+  intros τ τmodels
+  -- from here on one would add clauses until τ models ⊥ and we would be done
+  sorry
