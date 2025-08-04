@@ -123,7 +123,7 @@ end List
 -- TODO: Probably move to Utils.lean
 namespace SimpleGraph
 
-lemma exists_isNClique_of_le_cliqueNum {α : Type} [Fintype α] {n : ℕ} {G : SimpleGraph α} (h : n ≤ G.cliqueNum) : ∃ S : Finset α, G.IsNClique n S := by
+private lemma exists_isNClique_of_le_cliqueNum {α : Type} [Fintype α] {n : ℕ} {G : SimpleGraph α} (h : n ≤ G.cliqueNum) : ∃ S : Finset α, G.IsNClique n S := by
   rcases G.exists_isNClique_cliqueNum with ⟨s, sclique⟩
   have nlescard : n ≤ s.card := by simp [h, sclique.card_eq]
   obtain ⟨t, tprop⟩ := s.exists_subset_card_eq nlescard
@@ -131,7 +131,7 @@ lemma exists_isNClique_of_le_cliqueNum {α : Type} [Fintype α] {n : ℕ} {G : S
   simp [← tprop.right, isNClique_iff]
   exact sclique.isClique.subset tprop.left
 
-lemma cliqueNum_lt_iff_cliqueFree {α : Type} [Fintype α] {G : SimpleGraph α} {n : ℕ} : G.cliqueNum < n ↔ G.CliqueFree n := by
+private lemma cliqueNum_lt_iff_cliqueFree {α : Type} [Fintype α] {G : SimpleGraph α} {n : ℕ} : G.cliqueNum < n ↔ G.CliqueFree n := by
   apply Iff.intro
   · rintro Gcn S ⟨SIsClique, Scard⟩
     have absurd := SIsClique.card_le_cliqueNum

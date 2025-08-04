@@ -179,11 +179,19 @@ theorem R44' : ¬(RamseyGraphProp 17 4 4) := by
 
 namespace SimpleGraph
 
-theorem IsIndepSet.subset {α : Type} {G : SimpleGraph α} {s t : Finset α} (h : t ⊆ s) : G.IsIndepSet s → G.IsIndepSet t := Set.Pairwise.mono h
+private theorem IsIndepSet.subset {α : Type} {G : SimpleGraph α} {s t : Finset α} (h : t ⊆ s) : G.IsIndepSet s → G.IsIndepSet t := Set.Pairwise.mono h
+
+private lemma exists_isNClique_of_le_cliqueNum {α : Type} [Fintype α] {n : ℕ} {G : SimpleGraph α} (h : n ≤ G.cliqueNum) : ∃ S : Finset α, G.IsNClique n S := by
+  rcases G.exists_isNClique_cliqueNum with ⟨s, sclique⟩
+  have nlescard : n ≤ s.card := by simp [h, sclique.card_eq]
+  obtain ⟨t, tprop⟩ := s.exists_subset_card_eq nlescard
+  use t
+  simp [← tprop.right, isNClique_iff]
+  exact sclique.isClique.subset tprop.left
 
 namespace Iso
 
-lemma IsClique {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, G.IsClique s ↔ G'.IsClique (iso.toEquiv '' s) := by
+private lemma IsClique {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, G.IsClique s ↔ G'.IsClique (iso.toEquiv '' s) := by
   simp [SimpleGraph.IsClique, Set.Pairwise]
   intros
   apply Iff.intro <;> intros sprop u uins v vins uneqv
@@ -193,7 +201,7 @@ lemma IsClique {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, G.
     simp
     apply sprop <;> assumption
 
-lemma IsIndepSet {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, G.IsIndepSet s ↔ G'.IsIndepSet (iso.toEquiv '' s) := by
+private lemma IsIndepSet {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, G.IsIndepSet s ↔ G'.IsIndepSet (iso.toEquiv '' s) := by
   simp [SimpleGraph.IsIndepSet, Set.Pairwise]
   intros
   apply Iff.intro <;> intros sprop u uins v vins uneqv
@@ -203,11 +211,11 @@ lemma IsIndepSet {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, 
     simp
     apply sprop <;> assumption
 
-lemma IsNClique {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, G.IsNClique n s ↔ G'.IsNClique n (s.map iso.toEquiv) := by simp [isNClique_iff, iso.IsClique]
+private lemma IsNClique {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, G.IsNClique n s ↔ G'.IsNClique n (s.map iso.toEquiv) := by simp [isNClique_iff, iso.IsClique]
 
-lemma IsNIndepSet {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, G.IsNIndepSet n s ↔ G'.IsNIndepSet n (s.map iso.toEquiv) := by simp [isNIndepSet_iff, iso.IsIndepSet]
+private lemma IsNIndepSet {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, G.IsNIndepSet n s ↔ G'.IsNIndepSet n (s.map iso.toEquiv) := by simp [isNIndepSet_iff, iso.IsIndepSet]
 
-lemma cliqueNum {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : G.cliqueNum = G'.cliqueNum := by
+private lemma cliqueNum {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : G.cliqueNum = G'.cliqueNum := by
   unfold SimpleGraph.cliqueNum
   congr
   ext n
@@ -225,7 +233,7 @@ lemma cliqueNum {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : G.clique
 
 end Iso
 
-lemma exists_isNIndset_of_le_indepNum  {α : Type} [Fintype α] {G : SimpleGraph α} (h : n ≤ G.indepNum) : ∃ S : Finset α, G.IsNIndepSet n S := by
+private lemma exists_isNIndset_of_le_indepNum  {α : Type} [Fintype α] {G : SimpleGraph α} (h : n ≤ G.indepNum) : ∃ S : Finset α, G.IsNIndepSet n S := by
   rcases G.exists_isNIndepSet_indepNum with ⟨s, sindset⟩
   have nlescard : n ≤ s.card := by simp [h, sindset.card_eq]
   obtain ⟨t, tprop⟩ := s.exists_subset_card_eq nlescard
