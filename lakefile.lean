@@ -9,6 +9,8 @@ require mathlib from git "https://github.com/leanprover-community/mathlib4"@"v4.
 
 require proofwidgets from git "https://github.com/EdAyers/ProofWidgets4"@"v0.0.64"
 
+require trestle from git "https://github.com/dMaggot/trestle"@"21e589d76f411d9ee3a70926c860e5c67285db7c"
+
 @[default_target]
 lean_lib «FormalRamsey» {
   -- add any library configuration options here
@@ -18,8 +20,8 @@ lean_exe «vdWEncoder» {
   root := `VdWEncoder
 }
 
-lean_exe «ramseyEncoder» {
-  srcDir := "code"
+lean_exe «RamseyEncoder» {
+  srcDir := "FormalRamsey/Encodings/CNF"
   root := `RamseyEncoder
 }
 
@@ -45,15 +47,14 @@ script vdW (args) do
       proc.wait
     return runResult
 
-script ramsey (args) do
+script Ramsey (args) do
   if List.length args != 3
-  then IO.println "Usage: lake script run ramsey <N> <S> <T>" return 1
+  then IO.println "Usage: lake script run Ramsey <N> <s> <t>" return 1
   else
     -- IO.println "Building ramseyEncoder executable..."
-    let buildCmd := "lake build"
+    let buildCmd := "lake build RamseyEncoder"
     let _ ← IO.Process.run { cmd := "sh", args := #["-c", buildCmd] }
-    let exePath := "./build/bin/RamseyEncoder"
-    -- IO.println s!"Running ramseyEncoder executable at: {exePath}"
+    let exePath := ".lake/build/bin/RamseyEncoder"
 
     let runResult ← IO.Process.spawn {
       cmd := exePath
@@ -69,7 +70,7 @@ script folkman (args) do
     -- IO.println "Building folkmanEncoder executable..."
     let buildCmd := "lake build"
     let _ ← IO.Process.run { cmd := "sh", args := #["-c", buildCmd] }
-    let exePath := "./build/bin/FolkmanEncoder"
+    let exePath := ".build/bin/FolkmanEncoder"
     -- IO.println s!"Running folkmanEncoder executable at: {exePath}"
 
     let runResult ← IO.Process.spawn {

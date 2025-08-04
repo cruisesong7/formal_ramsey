@@ -72,6 +72,7 @@ lemma RamseyMonotone : ∀ {N k : ℕ} {s : List.Vector ℕ k.succ}, RamseyProp 
 
 def monochromaticVicinity {α : Type} [Fintype α] {c : ℕ} (g : SimpleGraph α) [DecidableRel g.Adj] (v : α) (f : Sym2 α → Fin c) (i : Fin c) : Finset α := Finset.filter (λ x ↦  f s(v, x) = i) (g.neighborFinset v)
 
+-- TODO: Revisit this proof in light of the stuff added to SimpleGrah in RamseyGraph.lean
 lemma monochromaticVicinity_Ramsey {N c : ℕ} {v : Fin N} {f : Sym2 (Fin N) → Fin c.succ} {i : Fin c.succ} {s : List.Vector ℕ c.succ} : RamseyProp ((monochromaticVicinity ⊤ v f i).card) s → (∃ S, (graphAtColor ⊤ f i).IsNClique (s.get i).succ S) ∨ (∃ i' S, i' ≠ i ∧ (graphAtColor ⊤ f i').IsNClique (s.get i') S) := by
   intro vicinityProp
   have cardeq : (Finset.card (@Finset.univ (Fin (monochromaticVicinity ⊤ v f i).card) _)) = (monochromaticVicinity ⊤ v f i).card := by simp
