@@ -444,7 +444,8 @@ def main (argv : List String) : IO UInt32 := do
   let N := argv[0]!.toNat!;
   let x := argv[1]!.toNat!;
   let y := argv[2]!.toNat!;
-  -- TODO: Preprocess so that the input is a PNat and one cn call RamseyEncoding N.succ x y
+  -- TODO: Preprocess so that the input is a PNat and one can call RamseyEncoding N.succ x y.
+  -- Update the README when this is fixed!
   let cnf := RamseyEncoding N x y
 
   Solver.Dimacs.printICnf IO.print cnf.val.toICnf

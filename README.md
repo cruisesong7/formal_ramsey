@@ -1,28 +1,56 @@
 # Formalizing Finite Ramsey Theory Using Lean 4 
-This ongoing project is a joint work by **David Narvez, Congyan (Cruise) Song, and Ningxin Zhang**. We use **interactive theorm proving (in Lean 4)** combined with **automated theorem proving** to formalize finite Ramsey theorey. We prove exact values for several small Ramsey numbers and related van der Waerden numbers. 
+
+We combinte automated and interactive theorm proving (in Lean 4) to
+formalize finite Ramsey theorey. We prove exact values for several
+small Ramsey numbers and related van der Waerden numbers.
 
 ## Van der Waerden's theorem
-The statement of the theorem is at [here](https://en.wikipedia.org/wiki/Van_der_Waerden%27s_theorem). 
 
-In ```VdW.lean```, the first major result was formalzing $W(2,3) <= 325$ by interactive theorem proving.
+The statement of the theorem is [here](https://en.wikipedia.org/wiki/Van_der_Waerden%27s_theorem).
 
-The second major contribution so far was formalizing $W(2,3) = 9$, in which we proved the lowerbound by brutal force and the upperbound by automated theorem proving by SAT solveres.
+In ```VdW.lean```, the first major result was formalzing $W(2,3) <=
+325$ by interactive theorem proving.
+
+The second major contribution so far was formalizing $W(2,3) = 9$, in
+which we proved the lowerbound by brute force and the upperbound by
+automated reasoning (via SAT solving).
 
 ## Ramsey Theory 
-The statement of the theorem is at [here](https://en.wikipedia.org/wiki/Ramsey%27s_theorem). 
 
-In ```Ramsey2Color.lean``` We proved a series of theorems with small Ramsey numbers, including the exact values such as $R(3,3) = 6$. 
+The statement of the theorem is [here](https://en.wikipedia.org/wiki/Ramsey%27s_theorem). 
 
-To fully understand the details of our proof, one might find it helpful to read ```Utils.lean```, in which we put some definitions and interesting lemmas. 
+The development is divided into several theories:
 
-## Pick Tactic
-We designed a powerful pick tactic to pick distinct elements from a multiset (based on Generalized Pigeonhole Principle), see ```PickTactic.lean```.
+* The `RamseyGraphs.lean` theory interprets Ramsey's theorem as a
+  theorem about cliques and independent sets.
+  
+* The `RamseyBase.lean` theory defines the basics of multicolor Ramsey
+  theory and proves some basic facts about the definition.
+  
+* The `Ramsey2Color.lean` theory depends on the `RamseyBase.lean`
+  theory and specializes it to 2 colors. This theory contains the
+  proofs of exact Ramsey numbers of the form `R(s,t)`. It uses
+  theorems from the `RamseyGraphs.lean` to establish those results.
+  
+* The more general theory is `Ramsey.lean` which proves statements
+  about multicolor Ramsey numbers. It also contains the proof of
+  `R(3,3,3)=17`.
 
-## Widget
-In order to provide visualization for the graphs in our proofs, we built a Lean Widget in ```G6Visualizer```.
+## G6 Graphs and Graph Visualization Widget
 
-## Usage
-First, install Lean 4 following the instructions from [here](https://github.com/leanprover/lean4).
+To easily refer to graphs in the various theorems where graphs serve
+as witnesses, we use the g6 format from [nauty](https://pallini.di.uniroma1.it/Guide.html).
 
-Then clone the project onto your computer e.g. with ```git clone https://github.com/cruisesong7/formal_ramsey.git```.
+In order to visualize those graphs, we developed a Lean Widget in
+`G6Visualizer.lean`.
 
+## Verified Encodders
+
+To obtain verifiable correct encodings of the Ramsey property as a Boolean formula in CNF run
+
+```
+lake exe RamseyEncoder <N> <s> <t>
+```
+
+The formula output will be satisfiable iff the number `N+1` does not
+have the Ramsey property. This is proven in the [trestle](https://github.com/FormalSAT/trestle) framework.
