@@ -1,6 +1,8 @@
 import Mathlib.Combinatorics.SimpleGraph.Clique
 import Mathlib.Data.Finset.Sort
 import Mathlib.Logic.Equiv.Fin.Basic
+import Mathlib.Algebra.BigOperators.Intervals
+import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
 import Trestle
 
@@ -151,94 +153,14 @@ open Trestle Encode VEncCNF
 
 lemma triangular_monotone : Monotone (λ N : ℕ ↦ N * (N - 1) / 2) := by
   intros a b aleqb
-  simp
-  cases a with
-  | zero => simp
-  | succ a' =>
-    cases b with
-    | zero =>
-      simp at aleqb
-    | succ b' =>
-      simp
-      obtain ⟨a'', aprop⟩ := Nat.even_or_odd' a'
-      obtain ⟨b'', bprop⟩ := Nat.even_or_odd' b'
-      cases aprop with
-      | inl aeven =>
-        cases bprop with
-        | inl beven =>
-          simp [aeven, beven, ← Nat.mul_assoc] at aleqb ⊢
-          rw [Nat.mul_comm _ 2, Nat.mul_comm _ 2, Nat.mul_assoc, Nat.mul_assoc, Nat.mul_div_cancel_left _ (by simp), Nat.mul_div_cancel_left _ (by simp)]
-          nlinarith
-        | inr bodd =>
-          simp [aeven, bodd, ← Nat.mul_assoc] at aleqb ⊢
-          conv =>
-            rhs
-            left
-            left
-            change 2 * (b'' + 1)
-          rw [Nat.mul_assoc 2, Nat.mul_div_cancel_left _ (by simp)]
-          rw [Nat.mul_comm _ 2, Nat.mul_assoc, Nat.mul_div_cancel_left _ (by simp)]
-          nlinarith
-      | inr aodd =>
-        cases bprop with
-        | inl beven =>
-          simp [aodd, beven, ← Nat.mul_assoc] at aleqb ⊢
-          conv =>
-            lhs
-            left
-            left
-            change 2 * (a'' + 1)
-          rw [Nat.mul_assoc 2, Nat.mul_div_cancel_left _ (by simp)]
-          rw [Nat.mul_comm _ 2, Nat.mul_assoc, Nat.mul_div_cancel_left _ (by simp)]
-          nlinarith
-        | inr bodd =>
-          simp [aodd, bodd, ← Nat.mul_assoc] at aleqb ⊢
-          conv =>
-            lhs
-            left
-            left
-            change 2 * (a'' + 1)
-          conv =>
-            rhs
-            left
-            left
-            change 2 * (b'' + 1)
-          simp [Nat.mul_assoc 2, Nat.mul_div_cancel_left _ (by simp : 0 < 2)]
-          nlinarith
+  simp +arith [← Finset.sum_range_id]
+  apply Finset.sum_le_sum_of_subset
+  simpa
 
 lemma triangular_next : ∀ (n : ℕ), n * (n - 1) / 2 + n = (n + 1) * n / 2 := by
   intros n
-  cases n with
-  | zero => simp +arith
-  | succ n' =>
-    obtain ⟨m, nprop⟩ := Nat.even_or_odd' n'
-    cases nprop with
-    | inl neven =>
-      simp [neven]
-      conv =>
-        rhs
-        left
-        left
-        change 2 * (m + 1)
-      rw [Nat.mul_comm _ (2 * m), Nat.mul_assoc 2, Nat.mul_assoc 2]
-      simp
-      nlinarith
-    | inr nodd =>
-      simp [nodd]
-      conv =>
-        rhs
-        left
-        right
-        change 2 * (m + 1)
-      conv =>
-        lhs
-        left
-        left
-        left
-        change 2 * (m + 1)
-      rw [Nat.mul_assoc 2, Nat.mul_comm _ (2 * (m + 1)), Nat.mul_assoc 2]
-      simp
-      nlinarith
+  rw [← Finset.sum_range_id, ← Finset.sum_range_succ]
+  simp [Finset.sum_range_id]
 
 structure EdgeVar (N : ℕ) where
   i : Fin N
