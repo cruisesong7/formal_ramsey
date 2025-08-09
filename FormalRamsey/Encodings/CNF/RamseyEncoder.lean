@@ -271,6 +271,59 @@ lemma assignment_to_graph_compl : ∀ {N : ℕ} (τ : PropAssignment (EdgeVar N)
       simp at Gedge
       assumption
 
+instance : ∀ {N : ℕ} (τ : PropAssignment (EdgeVar N)) b, DecidableRel (assignment_to_graph τ b).Adj := by
+  intros N τ b u v
+  cases instDecidableEqFin N u v with
+  | isTrue ueqv =>
+    apply isFalse
+    intro uv
+    simp [ueqv] at uv
+  | isFalse uneqv =>
+    cases Fin.decLt u v with
+    | isTrue ultv =>
+      cases instDecidableEqBool (τ (EdgeVar.mk v u ultv)) b with
+      | isTrue τb =>
+        apply isTrue
+        simp [assignment_to_graph]
+        split
+        next ueqv _ =>
+          simp [ueqv] at uneqv
+        next =>
+          simp [max_eq_right (Fin.le_of_lt ultv), min_eq_left (Fin.le_of_lt ultv)]
+          exact τb
+      | isFalse τb =>
+        apply isFalse
+        intro uv
+        simp [assignment_to_graph] at uv
+        split at uv
+        next ueqv _ =>
+          simp [ueqv] at uneqv
+        next =>
+          simp [max_eq_right (Fin.le_of_lt ultv), min_eq_left (Fin.le_of_lt ultv)] at uv
+          contradiction
+    | isFalse vleu =>
+      simp at vleu
+      cases instDecidableEqBool (τ (EdgeVar.mk u v (by cases Fin.lt_or_eq_of_le vleu with | inl _ => assumption | inr ueqv => simp [ueqv] at uneqv))) b with
+      | isTrue τb =>
+        apply isTrue
+        simp [assignment_to_graph]
+        split
+        next ueqv _ =>
+          simp [ueqv] at uneqv
+        next =>
+          simp [max_eq_left vleu, min_eq_right vleu]
+          exact τb
+      | isFalse τb =>
+        apply isFalse
+        intro uv
+        simp [assignment_to_graph] at uv
+        split at uv
+        next ueqv _ =>
+          simp [ueqv] at uneqv
+        next =>
+          simp [max_eq_left vleu, min_eq_right vleu] at uv
+          contradiction
+
 -- NOTE: In the original version there was no need to annotate the p parameter in the pmap inside the for_all
 def CliqueFreeEncoding (N x : ℕ) (polarity : Bool) : VEncCNF (EdgeVar N.succ) Unit (λ τ ↦ (assignment_to_graph τ polarity).CliqueFree x) :=
   seq[
