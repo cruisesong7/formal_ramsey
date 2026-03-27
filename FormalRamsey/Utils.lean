@@ -57,9 +57,9 @@ lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : �
       simp at fa₁a₂
       split at fa₁a₂ <;> split at fa₁a₂ <;> simp at fa₁a₂
       next a₁ins _ _ a₂ins _ =>
-        have a₁eqa₂ := fbij.left (Subtype.ext fa₁a₂)
+        have a₁eqa₂ := fbij.left fa₁a₂
         simp at a₁eqa₂
-        exact Subtype.ext a₁eqa₂
+        exact a₁eqa₂
       next a₁ins _ _ a₂notins _ =>
         have fa₁prop := (f ⟨↑a₁, a₁ins⟩).prop
         rw [fa₁a₂] at fa₁prop
@@ -91,7 +91,7 @@ lemma bijection_of_eq_card {α β : Type} [DecidableEq α] [DecidableEq β] : �
         split
         · simp [fa']
         · next _ anotins _ =>
-            simp [Subtype.coe_mk] at anotins
+            simp at anotins
 
 lemma bijection_of_List_perm {α : Type} : ∀ {l₁ l₂ : List α}, l₁ ~ l₂ → ∃ (f : Fin l₁.length → Fin l₂.length), Function.Bijective f ∧ ∀ (i : Fin l₁.length), l₁.get i = l₂.get (f i) := by
   intro l₁ l₂ permProp
@@ -266,8 +266,7 @@ lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 
   have hm : ∀ (a : Sym2 (Fin (M' + N').succ)), a ∈ s → (Finset.bipartiteAbove r t a).card = 2 := by
     intros a ains
     rcases (Quot.exists_rep a) with ⟨⟨fst,snd⟩, aprop⟩
-    simp[SimpleGraph.mem_edgeSet] at ains
-    --simp [SimpleGraph.mem_edgeSet, ← SimpleGraph.completeGraph_eq_top,completeGraph] at ains --NOTE: can be replace by simp_all
+    simp at ains
     simp [Finset.bipartiteAbove, Finset.card_eq_two]
     simp [s] at ains
     rcases ains with ⟨ains_left, ains_right⟩
@@ -276,8 +275,8 @@ lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 
       simp [ains_left]
     use SimpleGraph.Dart.mk (fst,snd) aOutAdj
     have aOutSwapAdj : (⊤ : SimpleGraph (Fin (M' + N').succ)).Adj snd fst := by
-      simp[aOutAdj]
-      simp [Sym2.eq_swap, ←aprop] at ains_left
+      simp
+      simp [← aprop] at ains_left
       intro
       simp_all
     use SimpleGraph.Dart.mk (snd,fst) aOutSwapAdj
@@ -302,20 +301,19 @@ lemma dblcnt (M' N': ℕ) (f : Sym2 (Fin (M'+ N').succ) → Fin 2): ∀ c : Fin 
   have hn : ∀ (b : (⊤ : SimpleGraph (Fin (M' + N').succ)).Dart), b ∈ t → (Finset.bipartiteBelow r s b).card = 1 := by
     intros b bint
     simp [Finset.bipartiteBelow, Finset.card_eq_one]
-    simp[SimpleGraph.mem_edgeSet] at bint
-    -- simp[← SimpleGraph.completeGraph_eq_top, completeGraph] at bint
+    simp at bint
     use b.edge
-    simp[Finset.Subset.antisymm_iff, Finset.subset_iff, SimpleGraph.mem_edgeSet]
+    simp [Finset.Subset.antisymm_iff, Finset.subset_iff]
     have toEdge : b.edge = Sym2.mk b.toProd := by simp [SimpleGraph.dart_edge_eq_mk'_iff]
     apply And.intro
     · intros
       simp_all [r]
     · have btop := b.adj
       simp [t] at bint
-      simp [s, r, toEdge, bint, btop]
+      simp [s, r, toEdge, bint]
    --NOTE: try avoid temp
   have temp := Finset.card_mul_eq_card_mul r hm hn
-  simp [s, r, t, mul_one (t.card)] at temp
+  simp [s, t, mul_one (t.card)] at temp
   simp [← temp, SimpleGraph.edgeFinset, mul_comm]
 
 namespace Rat
@@ -419,7 +417,6 @@ lemma find_upward_closed_eq_succ_iff {p : ℕ → Prop} [DecidablePred p] (h : �
   · intros npn pk
     cases (npn k (by simp)) pk
   · intros npk n nlek pn
-    rw [Nat.lt_succ] at nlek
     cases npk (hs n k nlek pn)
 
 end Nat

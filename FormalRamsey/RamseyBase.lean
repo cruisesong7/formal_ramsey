@@ -98,7 +98,7 @@ lemma monochromaticVicinity_Ramsey {N c : ℕ} {v : Fin N} {f : Sym2 (Fin N) →
     have ftransembinj : Function.Injective ftrans := by
       intros _ _ fa₁a₂
       simp [ftrans] at fa₁a₂
-      have a₁a₂eq := mapperBij.left (Subtype.ext fa₁a₂)
+      have a₁a₂eq := mapperBij.left fa₁a₂
       simp at a₁a₂eq
       exact a₁a₂eq
     let ftransemb : Function.Embedding _ _ := ⟨ftrans, ftransembinj⟩
@@ -112,7 +112,7 @@ lemma monochromaticVicinity_Ramsey {N c : ℕ} {v : Fin N} {f : Sym2 (Fin N) →
       · simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor]
         intros a ainS b binS ftransneq
         simp [ftransneq]
-        simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at Sclique
+        simp [graphAtColor] at Sclique
         rcases (instDecidableEqFin _ a b) with aneqb | aeqb
         have abedge := Sclique.isClique ainS binS aneqb
         simp at abedge
@@ -139,7 +139,7 @@ lemma monochromaticVicinity_Ramsey {N c : ℕ} {v : Fin N} {f : Sym2 (Fin N) →
           assumption
         · intros b binS mapperneq
           simp [mapperneq]
-          simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at Sclique
+          simp [graphAtColor] at Sclique
           rcases (instDecidableEqFin _ a b) with aneqb | aeqb
           · have abedge := Sclique.isClique ainS binS aneqb
             simp at abedge
