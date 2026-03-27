@@ -1,10 +1,9 @@
+import Mathlib.Data.Fintype.Basic
 import Mathlib.Tactic.FinCases
 
 -- NOTE: This is in Mathlib.LinearAlgebra.AffineSpace.Combination
 -- but we would like to use this fact without invoking 50 Gb of math
-theorem univ_fin2 : (Finset.univ : Finset (Fin 2)) = {0, 1} := by
-  ext x
-  fin_cases x <;> simp
+theorem univ_fin2 : (Finset.univ : Finset (Fin 2)) = {0, 1} := rfl
 
 lemma notc : ∀ {c x y : Fin 2}, x ≠ c → y ≠ c → x = y := by
   intros c x y _ _

@@ -28,7 +28,7 @@ def mem_of_mem_all_pairs {α : Type} {l : List α} {p : α × α} (h : p ∈ l.a
       tauto
     | inr h' => tauto
 
-lemma all_pairs_sorted_of_sorted {α : Type} {l : List α} {R : α → α → Prop} (h : l.Sorted R) : ∀ p ∈ l.all_pairs, R p.fst p.snd := by
+lemma all_pairs_sorted_of_sorted {α : Type} {l : List α} {R : α → α → Prop} (h : List.Pairwise R l) : ∀ p ∈ l.all_pairs, R p.fst p.snd := by
   induction l with
   | nil => simp [all_pairs]
   | cons x l' ih =>
@@ -42,7 +42,7 @@ lemma all_pairs_sorted_of_sorted {α : Type} {l : List α} {R : α → α → Pr
 
 lemma all_pairs_neq_of_nodup {α : Type} {l : List α} (lnodup : l.Nodup) : ∀ p ∈ l.all_pairs, p.fst ≠ p.snd := all_pairs_sorted_of_sorted lnodup
 
-lemma mem_all_pairs_iff_of_irrefl_of_antisymm_of_sorted {α : Type} {l : List α} {R : α → α → Prop} [Rirrefl : IsIrrefl α R] [Ranti : IsAntisymm α R] (lsorted : l.Sorted R) : ∀ p, p ∈ l.all_pairs ↔ R p.fst p.snd ∧ (p.fst ∈ l ∧ p.snd ∈ l) := by
+lemma mem_all_pairs_iff_of_irrefl_of_antisymm_of_sorted {α : Type} {l : List α} {R : α → α → Prop} [Rirrefl : Std.Irrefl R] [Ranti : Std.Antisymm R] (lsorted : List.Pairwise R l) : ∀ p, p ∈ l.all_pairs ↔ R p.fst p.snd ∧ (p.fst ∈ l ∧ p.snd ∈ l) := by
   intro p
   apply Iff.intro
   · intro pmem
@@ -76,7 +76,7 @@ lemma mem_all_pairs_iff_of_irrefl_of_antisymm_of_sorted {α : Type} {l : List α
 
 namespace Sorted
 
-lemma antisymm_is_le_sorted_of_nodup_of_sorted {α : Type} {l : List α} {R : α → α → Prop} [Ranti : IsAntisymm α R] (hnodup: l.Nodup) (hsorted : l.Sorted R) {a b : Fin l.length} (hab : R l[a] l[b]) : a ≤ b := by
+lemma antisymm_is_le_sorted_of_nodup_of_sorted {α : Type} {l : List α} {R : α → α → Prop} [Ranti : Std.Antisymm R] (hnodup: l.Nodup) (hsorted : List.Pairwise R l) {a b : Fin l.length} (hab : R l[a] l[b]) : a ≤ b := by
   induction hsorted with
   | nil => apply Fin.elim0 a
   | cons hR tsorted ih =>
@@ -103,20 +103,20 @@ end Sorted
 
 namespace Sublist
 
-lemma sorted {α : Type} {l l' : List α} {R : α → α → Prop} (sub : l'.Sublist l) : l.Sorted R → l'.Sorted R := by
-  induction sub with
-  | slnil => simp
-  | cons h₁ sub' ih =>
-    simp
-    intros _ Sl₂
-    exact ih Sl₂
-  | cons₂ h₁ sub' ih =>
-    simp
-    intros Rl₂ Sl₂
-    apply And.intro
-    · intros b bmem
-      exact Rl₂ _ (sub'.mem bmem)
-    · exact ih Sl₂
+-- lemma sorted {α : Type} {l l' : List α} {R : α → α → Prop} (sub : l'.Sublist l) : List.Pairwise R l → List.Pairwise R l := by simp
+--   induction sub with
+--   | slnil => simp
+--   | cons h₁ sub' ih =>
+--     simp
+--     -- intros _ Sl₂
+--     -- exact ih Sl₂
+--   | cons₂ h₁ sub' ih =>
+--     simp
+--     -- intros Rl₂ Sl₂
+--     -- apply And.intro
+--     -- · intros b bmem
+--     --   exact Rl₂ _ (sub'.mem bmem)
+--     -- · exact ih Sl₂
 
 end Sublist
 
@@ -177,7 +177,7 @@ match N with
     let e := (decoder ⟨idx.val, idxub⟩);
     { i := f e.i, j := f e.j, ijord := by simp [f, e, Fin.castLT, e.ijord] }
   | isFalse idxlb =>
-    { i := ⟨M, by simp⟩, j:= ⟨idx.val - M * (M - 1) / 2, by rw [Nat.sub_lt_iff_lt_add (Nat.le_of_not_lt idxlb)]; have idxub := idx.prop; simp [← Nat.add_assoc, triangular_next, -Fin.is_lt] at idxub ⊢; simp_rw [Nat.add_comm M _, Nat.add_assoc, Nat.add_comm M, triangular_next]; apply Nat.lt_add_left _ idxub⟩, ijord := by simp; rw [Nat.sub_lt_iff_lt_add (Nat.le_of_not_lt idxlb), Nat.add_comm M, triangular_next]; exact idx.prop }
+    { i := ⟨M, by simp⟩, j:= ⟨idx.val - M * (M - 1) / 2, by rw [Nat.sub_lt_iff_lt_add (Nat.le_of_not_lt idxlb)]; have idxub := idx.prop; simp [-Fin.is_lt] at idxub ⊢; simp_rw [Nat.add_comm M _, Nat.add_assoc, Nat.add_comm M, triangular_next]; apply Nat.lt_add_left _ idxub⟩, ijord := by simp; rw [Nat.sub_lt_iff_lt_add (Nat.le_of_not_lt idxlb), Nat.add_comm M, triangular_next]; exact idx.prop }
 
 -- #eval decoder ⟨9, (by simp : 9 < (6 * (6 - 1) / 2))⟩
 
@@ -327,7 +327,8 @@ instance : ∀ {N : ℕ} (τ : PropAssignment (EdgeVar N)) b, DecidableRel (assi
 -- NOTE: In the original version there was no need to annotate the p parameter in the pmap inside the for_all
 def CliqueFreeEncoding (N x : ℕ) (polarity : Bool) : VEncCNF (EdgeVar N.succ) Unit (λ τ ↦ (assignment_to_graph τ polarity).CliqueFree x) :=
   seq[
-    for_all (@((List.finRange N.succ).sublistsLen x).pmap _ _ (λ l ↦ l.Sorted instLTFin.lt) (λ clique (cliquesorted : clique.Sorted instLTFin.lt) ↦ clique.all_pairs.pmap (λ p psorted ↦ (match polarity with | true => Literal.neg | false => Literal.pos) { i := p.snd, j := p.fst, ijord := psorted }) (List.all_pairs_sorted_of_sorted cliquesorted)) (by simp; intros l lsub _; apply List.Pairwise.sublist lsub; simp [List.Sorted, List.finRange, Fin.pos_iff_ne_zero])).toArray (λ clique ↦ addClause clique.toArray)
+    -- NOTE: Maybe try to formulate this with SortedLT?
+    for_all (@((List.finRange N.succ).sublistsLen x).pmap _ _ (λ l ↦ List.Pairwise instLTFin.lt l) (λ clique (cliquesorted : List.Pairwise instLTFin.lt clique) ↦ clique.all_pairs.pmap (λ p psorted ↦ (match polarity with | true => Literal.neg | false => Literal.pos) { i := p.snd, j := p.fst, ijord := psorted }) (List.all_pairs_sorted_of_sorted cliquesorted)) (by simp; intros l lsub _; apply List.Pairwise.sublist lsub; simp [List.finRange, Fin.pos_iff_ne_zero])).toArray (λ clique ↦ addClause clique.toArray)
   ]
   |>.mapProp (by
     ext τ
@@ -336,20 +337,20 @@ def CliqueFreeEncoding (N x : ℕ) (polarity : Bool) : VEncCNF (EdgeVar N.succ) 
     · intro τmodels
       simp only [SimpleGraph.CliqueFree]
       rintro X ⟨XClique, Xcard⟩
-      have xsublx : (X.sort instLEFin.le).all_pairs.pmap (λ p psorted ↦ (match polarity with | true => Literal.neg | false => Literal.pos) ({ i := p.snd, j := p.fst, ijord := psorted } : EdgeVar N.succ)) (by simp; intros u v uvpair; have uvsorted := (List.all_pairs_sorted_of_sorted (X.sort_sorted instLEFin.le)) _ uvpair; have uvneq := (List.all_pairs_neq_of_nodup (X.sort_nodup instLEFin.le)) _ uvpair; simp at uvsorted uvneq; cases Fin.lt_or_eq_of_le uvsorted with | inl _ => assumption | inr _ => contradiction) ∈ (((List.finRange N.succ).sublistsLen x).pmap (λ clique cliquesorted ↦ clique.all_pairs.pmap (λ p psorted ↦ (match polarity with | true => Literal.neg | false => Literal.pos) { i := p.snd, j := p.fst, ijord := psorted }) (List.all_pairs_sorted_of_sorted cliquesorted)) (by simp; intros l lsub _; apply List.Pairwise.sublist lsub; simp [List.Sorted, List.finRange, Fin.pos_iff_ne_zero])).toArray := by
+      have xsublx : (X.sort instLEFin.le).all_pairs.pmap (λ p psorted ↦ (match polarity with | true => Literal.neg | false => Literal.pos) ({ i := p.snd, j := p.fst, ijord := psorted } : EdgeVar N.succ)) (by simp; intros u v uvpair; have uvsorted := (List.all_pairs_sorted_of_sorted (X.pairwise_sort instLEFin.le)) _ uvpair; have uvneq := (List.all_pairs_neq_of_nodup (X.sort_nodup instLEFin.le)) _ uvpair; simp at uvsorted uvneq; cases Fin.lt_or_eq_of_le uvsorted with | inl _ => assumption | inr _ => contradiction) ∈ (((List.finRange N.succ).sublistsLen x).pmap (λ clique cliquesorted ↦ clique.all_pairs.pmap (λ p psorted ↦ (match polarity with | true => Literal.neg | false => Literal.pos) { i := p.snd, j := p.fst, ijord := psorted }) (List.all_pairs_sorted_of_sorted cliquesorted)) (by simp; intros l lsub _; apply List.Pairwise.sublist lsub; simp [List.finRange, Fin.pos_iff_ne_zero])).toArray := by
         simp
         use (X.sort instLEFin.le)
         simp [Xcard, List.sublist_iff_exists_fin_orderEmbedding_get_eq]
         let idxMap : Fin (X.sort instLEFin.le).length → Fin (List.finRange N.succ).length := (λ idx ↦ Fin.castLE (by simp) ((X.sort instLEFin.le).get idx))
-        have idxMapInj : Function.Injective idxMap := by simp [Function.Injective, idxMap, List.Nodup.getElem_inj_iff (Finset.sort_nodup instLEFin.le X), Fin.val_inj]
+        have idxMapInj : Function.Injective idxMap := by simp [Function.Injective, idxMap, List.Nodup.getElem_inj_iff (X.sort_nodup instLEFin.le), Fin.val_inj]
         have idxOrdered : ∀ {a₁ a₂ : Fin (X.sort instLEFin.le).length}, idxMap a₁ ≤ idxMap a₂ ↔ a₁ ≤ a₂ := by
           intros a₁ a₂
           apply Iff.intro
           · intro Ra₁a₂
-            exact List.Sorted.antisymm_is_le_sorted_of_nodup_of_sorted (Finset.sort_nodup instLEFin.le X) (Finset.sort_sorted instLEFin.le X) Ra₁a₂
+            exact List.Sorted.antisymm_is_le_sorted_of_nodup_of_sorted (X.sort_nodup instLEFin.le) (X.pairwise_sort instLEFin.le) Ra₁a₂
           · intro a₁lea₂
             simp [idxMap]
-            apply List.Sorted.rel_get_of_le (Finset.sort_sorted instLEFin.le X) a₁lea₂
+            apply List.Pairwise.rel_get_of_le (X.pairwise_sort instLEFin.le) a₁lea₂
         use { toFun := idxMap, inj' := idxMapInj, map_rel_iff' := idxOrdered }
         simp [idxMap]
       obtain ⟨xl, ⟨xlprop, xlτ⟩⟩ := τmodels.left _ xsublx
@@ -359,7 +360,7 @@ def CliqueFreeEncoding (N x : ℕ) (polarity : Bool) : VEncCNF (EdgeVar N.succ) 
       simp [SimpleGraph.isClique_iff, Set.Pairwise, assignment_to_graph] at XClique
       have uvmem := List.mem_of_mem_all_pairs uvprop
       simp at uvmem
-      have ultv := List.all_pairs_sorted_of_sorted (X.sort_sorted_lt) _ uvprop
+      have ultv := List.all_pairs_sorted_of_sorted (by have := X.sortedLT_sort; rw [List.sortedLT_iff_pairwise] at this; exact this) _ uvprop
       simp at ultv
       have contra := XClique uvmem.left uvmem.right (Fin.ne_of_lt ultv)
       split at contra
@@ -381,26 +382,41 @@ def CliqueFreeEncoding (N x : ℕ) (polarity : Bool) : VEncCNF (EdgeVar N.succ) 
             · exact (min_eq_left_of_lt ultv).symm
         simp at vareq
     · simp [SimpleGraph.CliqueFree]
-      rintro cliquefree lits clique ⟨cliquesubl, cliquelength⟩ litseq
+      rintro cliquefree lits clique cliquesubl cliquelength litseq
       simp [← litseq]
       have notclique := cliquefree clique.toFinset
       simp [SimpleGraph.isNClique_iff, clique.toFinset_card_of_nodup (cliquesubl.nodup (List.nodup_ofFn.mpr Function.injective_id)), cliquelength, SimpleGraph.isClique_iff, Set.Pairwise] at notclique
       obtain ⟨u, ⟨umem, ⟨v, ⟨vmem, ⟨uneqv, uvnotadj⟩⟩⟩⟩⟩ := notclique
-      use (match polarity with | true => Literal.neg | false => Literal.pos) { i := max u v, j := min u v, ijord := (by simp; intro ueqv; simp [ueqv] at uneqv) }
-      apply And.intro
-      · use min u v, max u v
-        simp [clique.mem_all_pairs_iff_of_irrefl_of_antisymm_of_sorted (cliquesubl.sorted (List.sorted_lt_ofFn_iff.mpr strictMono_id))]
-        apply And.intro
-        · intro ueqv
-          simp [ueqv] at uneqv
-        · simp [max_def, min_def]
-          split <;> tauto
-      · simp [assignment_to_graph] at uvnotadj
-        split at uvnotadj
-        next ueqv _ =>
-          simp [ueqv] at uneqv
-        next =>
-          cases polarity <;> simp at uvnotadj ⊢ <;> assumption
+      use min u v, max u v
+      have cliquesublpw := (List.Pairwise.sublist cliquesubl (List.pairwise_ofFn.mpr strictMono_id))
+      simp at cliquesublpw
+      have h := clique.mem_all_pairs_iff_of_irrefl_of_antisymm_of_sorted cliquesublpw (min u v, max u v)
+      haveI : ∀ {N : ℕ}, Std.MinEqOr (Fin N) := by
+        intros
+        constructor
+        simp [Fin.le_total]
+      have minmem : min u v ∈ clique := by
+        cases @Std.min_eq_or _ _ _ u v with
+        | inl m => simp [m, umem]
+        | inr m => simp [m, vmem]
+      haveI : ∀ {N : ℕ}, Std.MaxEqOr (Fin N) := by
+        intros
+        constructor
+        simp [Fin.le_total]
+      have maxmem : max u v ∈ clique := by
+        cases @Std.max_eq_or _ _ _ u v with
+        | inl m => simp [m, umem]
+        | inr m => simp [m, vmem]
+      have vnequ := λ (e : v = u) ↦ uneqv e.symm
+      simp at vnequ
+      simp [minmem, maxmem, vnequ] at h
+      use h
+      simp [assignment_to_graph] at uvnotadj
+      split at uvnotadj
+      next ueqv _ =>
+        simp [ueqv] at uneqv
+      next =>
+        cases polarity <;> simp at uvnotadj ⊢ <;> assumption
   )
 
 def RamseyEncoding (N x y : ℕ) : VEncCNF (EdgeVar N.succ) Unit (λ τ ↦ (assignment_to_graph τ true).cliqueNum < x ∧ (assignment_to_graph τ true).indepNum < y) :=
