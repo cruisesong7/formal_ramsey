@@ -92,7 +92,7 @@ def decodeG6Adjacency (s : String) (n : Nat) : Array (Array (Fin 2)) :=
 
 def decodeG6 (s : String) : Array (Array (Fin 2)) :=
   let n := charToValue s.front
-  decodeG6Adjacency (s.drop 1) n
+  decodeG6Adjacency (s.drop 1).toString n
 
 private def frame : Frame where
   xmin   := -2

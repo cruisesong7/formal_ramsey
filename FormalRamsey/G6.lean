@@ -2,10 +2,10 @@ import Mathlib.Combinatorics.SimpleGraph.Basic
 
 open Std
 
-def readG6Header (s : String) : UInt8 :=
-match s.byteIterator.toList with
+def readG6Header (s : List Char) : ℕ :=
+match s with
 | [] => 0
-| h :: _ => h - (UInt8.ofNatLT 63 (by simp +arith [UInt8.size]))
+| h :: _ => h.toNat - 63
 
 def addIdx {α : Type} : List α → ℕ → ℕ → List (α × ℕ × ℕ)
 | [], _, _ => []
@@ -64,14 +64,14 @@ lemma collectInFinsetMem {α : Type} [DecidableEq α] : ∀ x (l : List (Bool ×
       next b y =>
         cases b <;> simp [← ih] at xin <;>  simp [collectInFinset, xin]
 
-def readG6AdjAux (l : List UInt8) : Finset (Sym2 (ℕ)) := collectInFinset ((addIdx (List.foldl (λ l (x : UInt8) ↦ l ++ (List.ofFn (BitVec.ofNat 6 (x.toNat - 63)).getMsb)) [] l) 0 0).map (λ p ↦ (p.fst, Sym2.mk p.snd)))
+def readG6AdjAux (l : List Char) : Finset (Sym2 (ℕ)) := collectInFinset ((addIdx (List.foldl (λ l (x : Char) ↦ l ++ (List.ofFn (BitVec.ofNat 6 (x.toNat - 63)).getMsb)) [] l) 0 0).map (λ p ↦ (p.fst, Sym2.mk p.snd)))
 
-def readG6Adj (s : String) : Finset (Sym2 (ℕ)) :=
-match s.byteIterator.toList with
+def readG6Adj (s : List Char) : Finset (Sym2 (ℕ)) :=
+match s with
 | [] => Finset.empty
 | _ :: t => readG6AdjAux t
 
-def readG6 (s : String) : SimpleGraph (Fin (readG6Header s).toNat) := {
+def readG6 (s : List Char) : SimpleGraph (Fin (readG6Header s)) := {
   Adj := λ u v ↦ s(u.val, v.val) ∈ readG6Adj s,
   symm := by
     unfold Symmetric
@@ -81,12 +81,12 @@ def readG6 (s : String) : SimpleGraph (Fin (readG6Header s).toNat) := {
   loopless := by
     simp [Irreflexive, readG6Adj]
     intros v loop
-    cases h : s.byteIterator.toList with
+    cases s with
     | nil =>
-      simp [h, readG6Header] at v
+      simp [readG6Header] at v
       exact Fin.elim0 v
     | cons h t =>
-      simp [h, readG6AdjAux, readG6Header, collectInFinsetMem] at loop
+      simp [readG6AdjAux, readG6Header, collectInFinsetMem] at loop
       have vLtv := addIdxLt _ 0 0 (Nat.le_refl 0) loop
       simp at vLtv
 }
@@ -94,7 +94,7 @@ def readG6 (s : String) : SimpleGraph (Fin (readG6Header s).toNat) := {
 instance : ∀ s, DecidableRel (readG6 s).Adj := by
   simp [DecidableRel, readG6, readG6Adj]
   intros s a b
-  cases s.byteIterator.toList with
+  cases s with
   | nil =>
     apply isFalse
     apply Finset.notMem_empty
@@ -107,8 +107,8 @@ open Lean.Parser
 
 macro "g6" g6str:strLit : tactic => `(tactic| use readG6 $g6str, (by infer_instance))
 macro_rules
-  | `(tactic| g6 $g6str) => `(tactic| use readG6 $g6str, (by infer_instance))
-  
+  | `(tactic| g6 $g6str) => `(tactic| use readG6 (($g6str).toList), (by infer_instance))
+
 -- def c_k_succ_s (k : ℕ) : simple_graph (fin k.succ.succ) := { adj := λ u v, ((min u v + 1 = max u v) ∨ ((min u v = 0) ∧ (max u v = fin.last k.succ))), symm := begin unfold symmetric, finish end, loopless := begin unfold irreflexive, simp, intro h, have h' := fin.veq_of_eq h, tauto end }
 
 -- def c5 := c_k_succ_s 3
