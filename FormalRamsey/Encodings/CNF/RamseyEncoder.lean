@@ -101,25 +101,6 @@ lemma antisymm_is_le_sorted_of_nodup_of_sorted {α : Type} {l : List α} {R : α
 
 end Sorted
 
-namespace Sublist
-
--- lemma sorted {α : Type} {l l' : List α} {R : α → α → Prop} (sub : l'.Sublist l) : List.Pairwise R l → List.Pairwise R l := by simp
---   induction sub with
---   | slnil => simp
---   | cons h₁ sub' ih =>
---     simp
---     -- intros _ Sl₂
---     -- exact ih Sl₂
---   | cons₂ h₁ sub' ih =>
---     simp
---     -- intros Rl₂ Sl₂
---     -- apply And.intro
---     -- · intros b bmem
---     --   exact Rl₂ _ (sub'.mem bmem)
---     -- · exact ih Sl₂
-
-end Sublist
-
 end List
 
 -- TODO: Probably move to Utils.lean
