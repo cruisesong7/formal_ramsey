@@ -60,11 +60,9 @@ theorem Ramsey₂PropSymm : ∀ {N s t}, Ramsey₂Prop N s t ↔ Ramsey₂Prop N
   simp [Ramsey₂Prop, RamseyProp]
   intros N s t R f
   let f' : Sym2 (Fin N) → Fin 2 := λ e ↦ if f e = 0 then 1 else 0
-  rcases (R f') with ⟨S, ⟨i, ⟨SClique, SCard⟩⟩⟩
-  use S
-  fin_cases i; use 1; swap; use 0
+  rcases (R f') with ⟨S, ⟨SClique, SCard⟩ | ⟨SClique, SCard⟩⟩
+  use S; right; swap; use S; left
   all_goals (
-    simp_all
     constructor
     simp [SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor, f'] at SClique ⊢
     intros _ xinS _ yinS xneqy
@@ -72,7 +70,8 @@ theorem Ramsey₂PropSymm : ∀ {N s t}, Ramsey₂Prop N s t ↔ Ramsey₂Prop N
   )
   · simp [List.Vector.get] at SCard
     assumption
-  · by_contra h; simp[← not0_eq1] at h; simp_all
+  · rw [← not0_eq1]
+    apply SClique <;> assumption
   · simp [List.Vector.get, SCard]
 
 theorem friendshipUpperbound : Ramsey₂Prop 6 3 3 := by
@@ -109,7 +108,6 @@ theorem friendshipUpperbound : Ramsey₂Prop 6 3 3 := by
 
   rcases Nat.eq_zero_or_pos (Finset.filter (λ e ↦ e = c) {f s(↑x, ↑y),f s(↑y, ↑z),f s(↑x, ↑z)}).card with h | h
   · simp at h
-    simp [Finset.filter_eq_empty_iff ] at h
     rcases h with ⟨fxyneqc, fyzneqc, fxzneqc⟩
     have fxy_eq_fyz:= notc fxyneqc fyzneqc
     have fxy_eq_fxz:= notc fxyneqc fxzneqc
@@ -121,15 +119,15 @@ theorem friendshipUpperbound : Ramsey₂Prop 6 3 3 := by
         tauto
       · rw [Finset.card_eq_three]
         use ↑x, ↑y, ↑z
-    simp [xneqy, yneqz, xneqz]
+    simp
     fin_cases c
     · simp [not0_eq1] at fxyneqc
       simp [fxyneqc] at d0
-      use {↑x, ↑y, ↑z}, 1
+      use {↑x, ↑y, ↑z}
       simp[List.Vector.get, d0]
     · simp [← not0_eq1] at fxyneqc
       simp [fxyneqc] at d0
-      use {↑x, ↑y, ↑z}, 0
+      use {↑x, ↑y, ↑z}
       simp[List.Vector.get, d0]
   simp [Finset.card_pos] at h
   have e := Finset.Nonempty.exists_mem h
@@ -164,10 +162,9 @@ theorem Ramsey₂Prop1 : ∀ N k : ℕ, Ramsey₂Prop N.succ 1 k := by
   intros
   simp [Ramsey₂Prop, RamseyProp]
   intros
-  use {0}, 0
+  use {0}
   constructor
-  simp [SimpleGraph.isClique_iff, Set.Pairwise]
-  simp [List.Vector.get]
+  simp
 
 theorem Ramsey₂PropIneq : ∀ {M N s t : ℕ}, 0 < M + N → Ramsey₂Prop M s t.succ → Ramsey₂Prop N s.succ t → Ramsey₂Prop (M + N) s.succ t.succ := by
   intros M N s t MNpos RamseyM RamseyN
@@ -207,10 +204,7 @@ theorem Ramsey₂PropIneq : ∀ {M N s t : ℕ}, 0 < M + N → Ramsey₂Prop M s
         simp [univ_fin2] at funiv
         assumption
     rw [← Finset.card_union_of_disjoint filterdisj, seteq, SimpleGraph.neighborFinset_eq_filter]
-    simp [← SimpleGraph.completeGraph_eq_top, Finset.filter_ne]
-    have rep := congr_arg (@Int.cast Rat _) (Int.ofNat_sub MNpos)
-    simp at rep
-    rw [rep]
+    simp [← SimpleGraph.completeGraph_eq_top, Finset.filter_ne, Int.ofNat_sub MNpos, Rat.mkRat_one]
   have mp := Finset.exists_le_of_sum_le (Exists.intro (0 : Fin 2) (Finset.mem_univ (0 : Fin 2))) (le_of_eq hgsum)
   rcases mp with ⟨a, _, gha⟩
   have floor0 :  ⌊mkRat 1 2⌋ = 0 := by simp; tauto
@@ -246,25 +240,19 @@ theorem Ramsey₂Finite : ∀ s t : ℕ, { N : ℕ | Ramsey₂Prop N s t }.Nonem
       rcases (Nat.eq_zero_of_add_eq_zero st.symm) with ⟨rfl, rfl⟩
       use 0
       simp [Ramsey₂Prop, RamseyProp]
-      intro f
-      use {}, 0
-      simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, graphAtColor, List.Vector.get]
     | succ m' ih =>
       intros s t h
       cases s with
       | zero =>
         use 0
         simp [Ramsey₂Prop, RamseyProp]
-        intro f
-        use {}, 0
-        simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, graphAtColor, List.Vector.get]
       | succ s =>
         cases t with
         | zero =>
           use 0
           simp [Ramsey₂Prop, RamseyProp]
           intro f
-          use {}, 1
+          use {}
           simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, graphAtColor, List.Vector.get]
         | succ t =>
           apply_fun Nat.pred at h
@@ -297,21 +285,25 @@ theorem Ramsey₂2 : ∀ k : ℕ, Ramsey₂ 2 k.succ = k.succ := by
     apply And.intro
     · simp [Ramsey₂Prop, RamseyProp]
       intros f
-      rcases Finset.eq_empty_or_nonempty (Finset.filter (λ (x : Sym2 (Fin k.succ))↦ ¬ x.IsDiag ∧ f x = 0) Finset.univ) with h | h
-      rw [Finset.filter_eq_empty_iff] at h
-      use Finset.univ, 1
-      constructor
-      · simp [graphAtColor, List.Vector.get, SimpleGraph.isClique_iff, Set.Pairwise]
-        intros x y xneqy
-        -- let a: Sym2 (Fin (k + 1)) := s(x, y)
-        rcases (Quot.exists_rep s(x, y)) with ⟨⟨fst, snd⟩, aprop⟩
-        simp_all
-        have nDiag : ¬(s(x, y)).IsDiag  := by simp_all
-        cases aprop <;> simp [← not0_eq1, h nDiag]
-      · simp [List.Vector.get]
-      · rcases h with ⟨⟨fst, snd⟩, wprop⟩
+      cases Finset.eq_empty_or_nonempty (Finset.filter (λ (x : Sym2 (Fin k.succ)) ↦ ¬ x.IsDiag ∧ f x = 0) Finset.univ) with
+      | inl fempty =>
+        simp [Finset.filter_eq_empty_iff] at fempty
+        use Finset.univ
+        right
+        constructor
+        · simp [graphAtColor]
+          intros x _ y _ xneqy
+          simp [xneqy, ← not0_eq1]
+          intro fsxy
+          have nDiag : ¬(s(x, y)).IsDiag  := by simp_all
+          have := fempty nDiag
+          contradiction
+        · simp [List.Vector.get]
+      | inr fnonempty =>
+        obtain ⟨⟨x, y⟩, wprop⟩ := fnonempty
         simp at wprop
-        use {fst, snd}, 0
+        use {x, y}
+        left
         constructor
         · simp [SimpleGraph.isClique_iff, graphAtColor, Set.Pairwise]
           apply And.intro
@@ -321,8 +313,8 @@ theorem Ramsey₂2 : ∀ k : ℕ, Ramsey₂ 2 k.succ = k.succ := by
           · intro h
             simp [h, Sym2.eq_swap]
             exact wprop.right
-        · simp [List.Vector.get, Finset.card_eq_two]
-          use fst, snd
+        · simp [Finset.card_eq_two]
+          use x, y
           simp
           intro h
           rw [← Sym2.mk_isDiag_iff] at h
@@ -330,8 +322,8 @@ theorem Ramsey₂2 : ∀ k : ℕ, Ramsey₂ 2 k.succ = k.succ := by
     · simp [Ramsey₂Prop, RamseyProp]
       let f : Sym2 (Fin k) → Fin 2 := λ _ ↦ 1
       use f
-      intros S i
-      fin_cases i
+      intros S
+      apply And.intro
       · simp [SimpleGraph.isNClique_iff, graphAtColor, SimpleGraph.isClique_iff, Set.Pairwise]
         intros absurd Scard
         rw [Finset.card_eq_two] at Scard
@@ -355,9 +347,9 @@ theorem Ramsey₂1 : ∀ k : ℕ, Ramsey₂ 1 k.succ = 1 := by
     apply Ramsey₂Prop1 0 k.succ
     simp [Ramsey₂Prop, RamseyProp]
     use (λ _ ↦ 0)
-    intros S i
+    intros S SNClique
     have Sempty : S = ∅ := by simp [Finset.eq_empty_iff_forall_notMem]
-    fin_cases i <;> simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor, Sempty, List.Vector.get]
+    simp [SimpleGraph.isNClique_iff, SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor, Sempty, List.Vector.get] at SNClique
   · intros M₁ M₂ M₁leM₂
     simp
     intro M₁Ramsey
@@ -368,39 +360,42 @@ theorem Ramsey₂PropStrictIneq : ∀ {M N s t : ℕ}, Odd M → Odd N → Ramse
   unfold Ramsey₂Prop RamseyProp
   simp
   intro f
-  let g : Fin 2 → ℕ := (λ x ↦ 2 * (Finset.filter (λ e ↦ f e = x) (Finset.filter (fun e => ¬Sym2.IsDiag e) Finset.univ)).card)
+  let g : Fin 2 → ℕ := (λ x ↦ 2 * (Finset.filter (λ e ↦ f e = x) (⊤ : SimpleGraph (Fin (M + N).succ)).edgeFinset).card)
   let h : Fin 2 → ℕ := ![(M + N).succ * M, (M + N).succ * N]
   have hgsum : Finset.univ.sum h = Finset.univ.sum g := by
-    simp [Finset.univ_fin2, h , g]
+    simp [Finset.univ_fin2, h, g, -SimpleGraph.edgeFinset_top]
     rw [← Nat.left_distrib, ← Nat.left_distrib]
     have filterdisj : Disjoint (Finset.filter (λ e ↦ f e = 0) (⊤ : SimpleGraph (Fin (M + N).succ)).edgeFinset) (Finset.filter (λ e ↦ f e = 1) (⊤ : SimpleGraph (Fin (M + N).succ)).edgeFinset) := by
       simp [Finset.disjoint_iff_ne]
-      intros a _ fa0 b _ fb1
-      by_contra h
+      intros a _ fa0 b _ fb1 h
       simp [h,fb1] at fa0
-    simp at filterdisj
+    simp [-SimpleGraph.edgeFinset_top] at filterdisj
     rw [← Finset.card_union_of_disjoint filterdisj]
-    have seteq : Finset.filter (fun e => f e = 0) (Finset.filter (fun e => ¬Sym2.IsDiag e) Finset.univ) ∪
-    Finset.filter (fun e => f e = 1) (Finset.filter (fun e => ¬Sym2.IsDiag e) Finset.univ) =
-    Finset.filter (fun e => ¬Sym2.IsDiag e) Finset.univ := by
+    have seteq : Finset.filter (λ e ↦ f e = 0) (⊤ : SimpleGraph (Fin (M + N).succ)).edgeFinset ∪ Finset.filter (λ e ↦ f e = 1) (⊤ : SimpleGraph (Fin (M + N).succ)).edgeFinset = (⊤ : SimpleGraph (Fin (M + N).succ)).edgeFinset := by
       simp [Finset.Subset.antisymm_iff, Finset.subset_iff]
       apply And.intro
       intros _ xprop ; cases xprop <;> simp_all
       intros x xprop
-      by_contra h
-      simp [not_or,not0_eq1, xprop] at h
-    rw [seteq, ← SimpleGraph.edgeFinset_top,  ← SimpleGraph.sum_degrees_eq_twice_card_edges]
-    simp
+      simp [xprop]
+      have fx : f x ∈ Finset.univ := by simp
+      simp [Finset.univ_fin2] at fx
+      exact fx
+    rw [seteq, SimpleGraph.card_edgeFinset_top_eq_card_choose_two]
+    simp [Nat.choose_two_right]
+    symm
+    apply Nat.mul_div_cancel'
+    rw [Nat.dvd_iff_mod_eq_zero, ← Nat.even_iff, Nat.mul_comm]
+    exact Nat.even_mul_succ_self (M + N)
   have mp := Finset.exists_le_of_sum_le (Exists.intro (0 : Fin 2) (Finset.mem_univ (0 : Fin 2))) (Nat.le_of_eq hgsum)
   rcases mp with ⟨a, ainuniv, gha⟩
-  have xoreven : ∀ {O : ℕ}, Odd O → Xor' (Even ((M + N).succ * O)) (Even (2 * (Finset.filter (λ (e : Sym2 (Fin (M + N).succ))↦ f e = a) (Finset.filter (fun e => ¬Sym2.IsDiag e) Finset.univ)).card)) := by
+  have xoreven : ∀ {O : ℕ}, Odd O → Xor' (Even ((M + N).succ * O)) (Even (2 * (Finset.filter (λ (e : Sym2 (Fin (M + N).succ)) ↦ f e = a) (⊤ : SimpleGraph (Fin (M + N).succ)).edgeFinset).card)) := by
     have cardodd := Even.add_one (Odd.add_odd oddM oddN)
     intros O OddO
     right
     simp
     apply Odd.mul <;> assumption
   have cardeq : ∀ (v : Fin (M + N).succ) (i : Fin 2), (Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M + N).succ)).Dart)↦ x.toProd.snd = v)
-        (Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M + N).succ)).Dart)↦ f (Sym2.mk x.toProd) = i) Finset.univ)).card = (monochromaticVicinity (⊤ : SimpleGraph (Fin (M + N).succ)) v f i).card := by
+        (Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M + N).succ)).Dart) ↦ f (Sym2.mk x.toProd) = i) Finset.univ)).card = (monochromaticVicinity (⊤ : SimpleGraph (Fin (M + N).succ)) v f i).card := by
     intro v i
     apply Finset.card_bij (λ (a : (⊤ : SimpleGraph (Fin (M + N).succ)).Dart) _ ↦ a.fst)
     · intro a
@@ -421,36 +416,40 @@ theorem Ramsey₂PropStrictIneq : ∀ {M N s t : ℕ}, Odd M → Odd N → Ramse
       have bvAdj: (⊤ : SimpleGraph (Fin (M + N).succ)).Adj b v := by simp [Ne.symm, bnotv]
       use SimpleGraph.Dart.mk (b,v) bvAdj
       simp [Sym2.eq_swap, fvb0]
-  fin_cases a <;> simp at gha
+  fin_cases a <;> simp [-SimpleGraph.edgeFinset_top] at gha
   · have ghalt := xor_even_le_implies_lt (xoreven oddM) gha
-    simp at ghalt
-    rw [← SimpleGraph.edgeFinset_top, dblcnt M N f 0] at ghalt
+    simp [-SimpleGraph.edgeFinset_top] at ghalt
+    rw [dblcnt M N f 0] at ghalt
     have pghineq : (@Finset.univ (Fin (M + N).succ) _).card • M < ↑((Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M + N).succ)).Dart) ↦ f (Sym2.mk x.toProd) = 0) Finset.univ).card) := by simp [ghalt]
     have pgh := Finset.exists_lt_card_fiber_of_mul_lt_card_of_maps_to (λ (e : (⊤ : SimpleGraph (Fin (M + N).succ)).Dart) _ ↦ Finset.mem_univ e.snd) pghineq
     rcases pgh with ⟨v, _, vprop⟩
     rw [cardeq] at vprop
     have cliquecases := monochromaticVicinity_Ramsey (RamseyMonotone RamseyM vprop)
     rcases cliquecases with ⟨S, Sclique⟩ | ⟨i, ⟨S, Sclique⟩⟩
-    · use S, 0
+    · use S
+      simp at Sclique
+      left
       exact Sclique
-    · use S, 1
-      have ieq1 := notc Sclique.left (Fin.succ_ne_zero 0)
-      simp [ieq1] at Sclique
+    · use S
+      simp [notc Sclique.left (Fin.succ_ne_zero 0)] at Sclique
+      right
       exact Sclique
   · have ghalt := xor_even_le_implies_lt (xoreven oddN) gha
-    simp at ghalt
-    rw [← SimpleGraph.edgeFinset_top, dblcnt M N f 1] at ghalt
+    simp [-SimpleGraph.edgeFinset_top] at ghalt
+    rw [dblcnt M N f 1] at ghalt
     have pghineq : (@Finset.univ (Fin (M + N).succ) _).card • N < ↑((Finset.filter (λ (x : (⊤ : SimpleGraph (Fin (M + N).succ)).Dart) ↦ f (Sym2.mk x.toProd) = 1) Finset.univ).card) := by simp [ghalt]
     have pgh := Finset.exists_lt_card_fiber_of_mul_lt_card_of_maps_to (λ (e : (⊤ : SimpleGraph (Fin (M + N).succ)).Dart) _ ↦ Finset.mem_univ e.snd) pghineq
     rcases pgh with ⟨v, _, vprop⟩
     rw [cardeq] at vprop
     have cliquecases := monochromaticVicinity_Ramsey (RamseyMonotone RamseyN vprop)
     rcases cliquecases with ⟨T, Tclique⟩ | ⟨i, ⟨T, Tclique⟩⟩
-    · use T, 1
+    · use T
+      simp at Tclique
+      right
       exact Tclique
-    · use T, 0
-      have ieq1 := notc Tclique.left (Fin.succ_ne_zero 0).symm
-      simp [ieq1] at Tclique
+    · use T
+      simp [notc Tclique.left (Fin.succ_ne_zero 0).symm] at Tclique
+      left
       exact Tclique
 
 theorem Ramsey₂ToRamsey₂Prop : ∀ {N s t : ℕ}, Ramsey₂ s t = N → Ramsey₂Prop N s t := by
@@ -556,24 +555,25 @@ theorem Ramsey₂ByList : ∀ (N s t : ℕ), Ramsey₂Prop N s.succ t.succ ↔ (
   apply Iff.intro
   · intros h f
     simp [SimpleGraph.isNClique_iff,SimpleGraph.isClique_iff, Set.Pairwise, graphAtColor] at h
-    rcases h f with ⟨S, i,SProp⟩
-    let Slist := Finset.sort instLEFin.le S
-    have hs: Symmetric fun u v => f (s(u, v)) = i := by
+    rcases h f with ⟨S, SProp⟩
+    let Slist := Finset.sort S instLEFin.le
+    have hs: ∀ {i : Fin 2}, Symmetric fun u v => f (s(u, v)) = i := by
       unfold Symmetric
-      simp[Sym2.eq_swap]
-    fin_cases i; simp [List.Vector.head] at SProp hs; left; swap; simp [List.Vector.get] at SProp hs; right;
+      simp [Sym2.eq_swap]
+    rcases SProp with SProp | SProp
+    left; swap; simp [List.Vector.get] at SProp; right;
     all_goals {
       use Slist
       apply And.intro
-      · simp only [Slist, List.mem_sublistsLen, List.sublist_iff_exists_fin_orderEmbedding_get_eq, Finset.length_sort instLEFin.le, SProp.right, and_true]
-        let f' : Fin Slist.length → Fin N := λ (i: Fin Slist.length) ↦ Slist.get i
+      · simp only [Slist, List.mem_sublistsLen, List.sublist_iff_exists_fin_orderEmbedding_get_eq, Finset.length_sort instLEFin.le]
+        let f' : Fin Slist.length → Fin N := Slist.get
         let idxMap : Fin Slist.length → Fin (List.finRange N).length := (λ idx ↦ Fin.cast List.length_finRange.symm (f' idx))
         have idxMapInj : Function.Injective idxMap := by
           unfold Function.Injective
           intros a₁ a₂
           intro h
           simp [idxMap, f', Slist, Fin.cast, ← Fin.ext_iff] at h
-          rw [← List.Nodup.get_inj_iff (Finset.sort_nodup instLEFin.le S)]
+          rw [← List.Nodup.get_inj_iff (Finset.sort_nodup S instLEFin.le)]
           exact h
         have idxOrdered : ∀ {a₁ a₂ : Fin Slist.length}, idxMap a₁ ≤ idxMap a₂ ↔ a₁ ≤ a₂ := by
           intros a₁ a₂
@@ -584,15 +584,16 @@ theorem Ramsey₂ByList : ∀ (N s t : ℕ), Ramsey₂Prop N s.succ t.succ ↔ (
             | isTrue p => exact p
             | isFalse p =>
               simp at p
-              have a₂lea₁ := List.Sorted.rel_get_of_lt (Finset.sort_sorted instLEFin.le S) p
+              have a₂lea₁ := List.Pairwise.rel_get_of_lt (Finset.pairwise_sort S instLEFin.le) p
               have a₂eqa₁ := le_antisymm valCond a₂lea₁
-              rw [List.Nodup.get_inj_iff (Finset.sort_nodup instLEFin.le S)] at a₂eqa₁
+              rw [List.Nodup.get_inj_iff (Finset.sort_nodup S instLEFin.le)] at a₂eqa₁
               simp [a₂eqa₁] at p
           · intro idCond
-            exact List.Sorted.rel_get_of_le (Finset.sort_sorted instLEFin.le S) idCond
+            exact List.Pairwise.rel_get_of_le (Finset.pairwise_sort S instLEFin.le) idCond
+        simp [SProp.right]
         use { toFun := idxMap, inj' := idxMapInj, map_rel_iff' := idxOrdered }
         simp [Fin.cast, idxMap, f', Slist]
-      · simp [Slist, ← List.pairwise_iff_coe_toFinset_pairwise (Finset.sort_nodup instLEFin.le S) hs, Set.Pairwise]
+      · simp [Slist, ← List.pairwise_iff_coe_toFinset_pairwise (Finset.sort_nodup S instLEFin.le) hs, Set.Pairwise]
         -- TODO: At some point the simplification started introducing ¬x = y in the conclusion of SProp, find out why
         intros _ xinS _ yinS xneqy
         exact (SProp.left xinS yinS xneqy).right
@@ -696,7 +697,7 @@ theorem Ramsey₂_binomial_coefficient_ineq : ∀ s t : ℕ, Ramsey₂ s.succ t.
       · apply Ramsey₂Ineq s'.succ t'.succ
         apply Nat.pos_of_ne_zero
         intro h
-        simp [not_or] at h
+        simp at h
         have RamseyMem := Nat.find_spec (Ramsey₂Finite (Nat.succ s') (Nat.succ (Nat.succ t')))
         unfold Ramsey₂ at h
         rw [h.left] at RamseyMem
