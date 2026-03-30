@@ -2,10 +2,12 @@ import Mathlib.Combinatorics.SimpleGraph.Basic
 
 open Std
 
-def readG6Header (s : List Char) : ℕ :=
+def readG6HeaderInternal (s : List Char) : ℕ :=
 match s with
 | [] => 0
 | h :: _ => h.toNat - 63
+
+def readG6Header (s : String) : ℕ := readG6HeaderInternal s.toList
 
 def addIdx {α : Type} : List α → ℕ → ℕ → List (α × ℕ × ℕ)
 | [], _, _ => []
@@ -71,7 +73,7 @@ match s with
 | [] => Finset.empty
 | _ :: t => readG6AdjAux t
 
-def readG6 (s : List Char) : SimpleGraph (Fin (readG6Header s)) := {
+def readG6Internal (s : List Char) : SimpleGraph (Fin (readG6HeaderInternal s)) := {
   Adj := λ u v ↦ s(u.val, v.val) ∈ readG6Adj s,
   symm := by
     unfold Symmetric
@@ -83,16 +85,18 @@ def readG6 (s : List Char) : SimpleGraph (Fin (readG6Header s)) := {
     intros v loop
     cases s with
     | nil =>
-      simp [readG6Header] at v
+      simp [readG6HeaderInternal] at v
       exact Fin.elim0 v
     | cons h t =>
-      simp [readG6AdjAux, readG6Header, collectInFinsetMem] at loop
+      simp [readG6AdjAux, readG6HeaderInternal, collectInFinsetMem] at loop
       have vLtv := addIdxLt _ 0 0 (Nat.le_refl 0) loop
       simp at vLtv
 }
 
-instance : ∀ s, DecidableRel (readG6 s).Adj := by
-  simp [DecidableRel, readG6, readG6Adj]
+def readG6 (s : String) : SimpleGraph (Fin (readG6Header s)) := readG6Internal s.toList
+
+instance : ∀ s, DecidableRel (readG6Internal s).Adj := by
+  simp [DecidableRel, readG6Internal, readG6Adj]
   intros s a b
   cases s with
   | nil =>
@@ -103,11 +107,15 @@ instance : ∀ s, DecidableRel (readG6 s).Adj := by
     rw [collectInFinsetMem, List.mem_map]
     apply List.decidableBEx
 
+instance : ∀ s, DecidableRel (readG6 s).Adj := by
+  simp [readG6]
+  infer_instance
+
 open Lean.Parser
 
 macro "g6" g6str:strLit : tactic => `(tactic| use readG6 $g6str, (by infer_instance))
 macro_rules
-  | `(tactic| g6 $g6str) => `(tactic| use readG6 (($g6str).toList), (by infer_instance))
+  | `(tactic| g6 $g6str) => `(tactic| use readG6 ($g6str), (by infer_instance))
 
 -- def c_k_succ_s (k : ℕ) : simple_graph (fin k.succ.succ) := { adj := λ u v, ((min u v + 1 = max u v) ∨ ((min u v = 0) ∧ (max u v = fin.last k.succ))), symm := begin unfold symmetric, finish end, loopless := begin unfold irreflexive, simp, intro h, have h' := fin.veq_of_eq h, tauto end }
 

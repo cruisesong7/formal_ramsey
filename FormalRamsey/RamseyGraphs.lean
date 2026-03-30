@@ -125,12 +125,12 @@ theorem R34 : ¬(RamseyGraphProp 8 3 4) := by
   apply And.intro
   · intros S
     rw [← SimpleGraph.mem_cliqueFinset_iff]
-    have cliqueFree : (readG6 "GhdGKC".toList).cliqueFinset 3 = Finset.empty := by native_decide
+    have cliqueFree : (readG6 "GhdGKC").cliqueFinset 3 = Finset.empty := by native_decide
     rw [cliqueFree]
     exact Finset.notMem_empty S
   · intros T
     rw [← SimpleGraph.mem_indepSetFinset_iff]
-    have cliqueFree : (readG6 "GhdGKC".toList).indepSetFinset 4 = Finset.empty := by native_decide
+    have cliqueFree : (readG6 "GhdGKC").indepSetFinset 4 = Finset.empty := by native_decide
     rw [cliqueFree]
     exact Finset.notMem_empty T
 
@@ -142,12 +142,12 @@ theorem R35 : ¬(RamseyGraphProp 13 3 5) := by
   apply And.intro
   · intros S
     rw [← SimpleGraph.mem_cliqueFinset_iff]
-    have cliqueFree : (readG6 "LhEIHEPQHGaPaP".toList).cliqueFinset 3 = Finset.empty := by native_decide
+    have cliqueFree : (readG6 "LhEIHEPQHGaPaP").cliqueFinset 3 = Finset.empty := by native_decide
     rw [cliqueFree]
     exact Finset.notMem_empty S
   · intros T
     rw [← SimpleGraph.mem_indepSetFinset_iff]
-    have cliqueFree : (readG6 "LhEIHEPQHGaPaP".toList).indepSetFinset 5 = Finset.empty := by native_decide
+    have cliqueFree : (readG6 "LhEIHEPQHGaPaP").indepSetFinset 5 = Finset.empty := by native_decide
     rw [cliqueFree]
     exact Finset.notMem_empty T
 
@@ -162,12 +162,12 @@ theorem R44' : ¬(RamseyGraphProp 17 4 4) := by
   apply And.intro
   · intros S
     rw [← SimpleGraph.mem_cliqueFinset_iff]
-    have cliqueFree : (readG6 "P}qTKukXaUja[IBjanPeMI\\K".toList).cliqueFinset 4 = Finset.empty := by native_decide
+    have cliqueFree : (readG6 "P}qTKukXaUja[IBjanPeMI\\K").cliqueFinset 4 = Finset.empty := by native_decide
     rw [cliqueFree]
     exact Finset.notMem_empty S
   · intros T
     rw [← SimpleGraph.mem_indepSetFinset_iff]
-    have cliqueFree : (readG6 "P}qTKukXaUja[IBjanPeMI\\K".toList).indepSetFinset 4 = Finset.empty := by native_decide
+    have cliqueFree : (readG6 "P}qTKukXaUja[IBjanPeMI\\K").indepSetFinset 4 = Finset.empty := by native_decide
     rw [cliqueFree]
     exact Finset.notMem_empty T
 
