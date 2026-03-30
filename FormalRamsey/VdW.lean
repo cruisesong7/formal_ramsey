@@ -77,150 +77,153 @@ lemma vdW325 : vdWProp 325 3 1 := by
   rcases y₅hyp with ⟨block₁, block₂, block₁Ins, block₂Ins, block₁Neblock₂⟩
   simp at block₁Ins block₂Ins
   wlog block₁Ltblock₂ : block₁ < block₂
-  have tmp₁ := this f
-  simp at tmp₁
-  have tmp₂ := tmp₁ y₅ block₂ block₁ block₁Neblock₂.symm block₂Ins block₁Ins
-  have block₂Ltblock₁ := lt_trichotomy block₁ block₂
-  simp [block₁Ltblock₂, block₁Neblock₂] at block₂Ltblock₁
-  rcases (tmp₂ block₂Ltblock₁) with ⟨s, sdiff, c, sc⟩
-  use s, c
-  --
-  have blockeq : ∀ (i : Fin 5), f (5 * ↑block₁ + i) = f (5 * ↑block₂ + i) := by
-    intro i
-    have fb₁b₂ := congrArg (λ v ↦ List.Vector.get v i) (block₂Ins.trans block₁Ins.symm)
-    simp at fb₁b₂
-    have fb := Finset.mem_univ (f (5 * ↑block₁ + ↑i))
-    simp [univ_fin2] at fb
-    cases fb with
-    | inl f0 => simp (config := { zetaDelta := true }) [f0] at fb₁b₂
-                simp [f0, fb₁b₂]
-    | inr f1 => simp (config := { zetaDelta := true }) [f1, not0_eq1] at fb₁b₂
-                simp [f1, fb₁b₂]
-  let targetfinset: Finset ℕ := {5 * block₁.val, 5 * block₁.val + 1, 5 * block₁.val + 2}
-  have fin25 : Fintype.card (Fin 2) * 1 <  Fintype.card { x // x ∈ targetfinset } := by simp [targetfinset]
-  -- Define f': takes one of the elemnet in finset ∅, return its color
-  let f' : targetfinset → Fin 2 := λ k => f k
-  -- There exists more than 1 elements that have the same color
-  have fh' := Fintype.exists_lt_card_fiber_of_mul_lt_card f' fin25
-  rcases fh' with ⟨c, chyp⟩
-  -- pick a₁ a₂ from (Finset.filter (λ (x :({5 * block₁.val, 5 * block₁.val + 1, 5 * block₁.val + 2}:Finset ℕ )) => f' x = c) Finset.univ)
-  rw [Finset.one_lt_card_iff] at chyp
-  rcases chyp with ⟨a₁, a₂, a₁Ins, a₂Ins, a₁Nea₂⟩
-  simp [f', targetfinset] at a₁Ins a₂Ins
-  clear f' -- Bug #21396
-  wlog a₁Lta₂ : a₁ < a₂
-  have a₂Lta₁ := lt_trichotomy a₁ a₂
-  simp [a₁Lta₂, a₁Nea₂] at a₂Lta₁
-  have tmp₁ := this f fin533 y₅ block₁ block₂ block₁Neblock₂ block₁Ins block₂Ins block₁Ltblock₂ blockeq fin25 c a₂ a₁ a₁Nea₂.symm a₂Ins a₁Ins a₂Lta₁
-  rcases tmp₁ with ⟨s, c, sdiff, sc⟩
-  use s, c
-  clear fin25 -- chyp
-  -- express a₂ as 5b₂+i and prove
-  have out₂ : ∃ i, (↑a₂ = 5 * block₁.val + i) ∧ (i < 3):= by
-    -- three cases for a2: i =0,1,2
-    rcases a₂Ins.left with rfl | rfl | rfl
-    use 0
-    simp
-    use 1
-    simp
-    use 2
-    simp
-  rcases out₂ with ⟨i₂, a₂eq, i₂ineq⟩
-  -- express a1 as 5b1+i and prove
-  have out₁ : ∃ i, (↑a₁ = 5 * block₁.val + i) ∧ (i < i₂):= by
-    -- three cases for a1: i =0,1,2
-    rcases a₁Ins.left with rfl | rfl | rfl <;> rw [Subtype.mk_lt_mk] at a₁Lta₂ <;> simp [a₂eq] at a₁Lta₂
-    use 0
-    simp [a₁Lta₂]
-    use 1
-    use 2
-  rcases out₁ with ⟨i₁, a₁eq, i₁ineq⟩
-  -- clear targetfinset a₁.lt.a₂ a₁.lt.a₂.cast_bound,
-  let I := i₂ - i₁
-  let B : ℕ := ↑block₂ - ↑block₁
-  have Ibound : i₁ + I < 3 := by
-    change i₁ + (i₂ - i₁) < 3
-    simp [←Nat.add_sub_assoc (le_of_lt i₁ineq) i₁, i₂ineq]
-  have Bbound : ↑block₁ + B < 33 := by simp [B, ←Nat.add_sub_assoc (le_of_lt block₁Ltblock₂) block₁]
-  let a₃ : ℕ := a₁.val + (I + I)
-  -- two cases: same color vs. different color
-  cases instDecidableEqFin 2 (f a₃) (f a₁) with
-  | isFalse fa₃a₁ =>
-    cases instDecidableEqFin 2 (f (↑a₁ + (I + 5 * B + (I + 5 * B)))) (f a₁) with
-    | isFalse fblock₂ =>
-      --Case III:  5block₁ + i₃, 5block₂ + i₃, 5block₃ + i₃
-      use {start := a₃, diff := 5 * B}, f a₃
-      simp (config := { zeta := false })
-      apply And.intro
-      · simp [B]
-        assumption
-      · intros e H
+  · have tmp₁ := this f
+    simp at tmp₁
+    have tmp₂ := tmp₁ y₅ block₂ block₁ block₁Neblock₂.symm block₂Ins block₁Ins
+    have block₂Ltblock₁ := lt_trichotomy block₁ block₂
+    simp [block₁Ltblock₂, block₁Neblock₂] at block₂Ltblock₁
+    obtain ⟨s, ⟨sdiff, sprop⟩⟩ := tmp₂ block₂Ltblock₁
+    use s
+    cases sprop with
+    | inl fe0 =>
+      use 0
+    | inr fe1 =>
+      use 1
+  · have blockeq : ∀ (i : Fin 5), f (5 * ↑block₁ + i) = f (5 * ↑block₂ + i) := by
+      intro i
+      have fb₁b₂ := congrArg (λ v ↦ List.Vector.get v i) (block₂Ins.trans block₁Ins.symm)
+      simp at fb₁b₂
+      have fb := Finset.mem_univ (f (5 * ↑block₁ + ↑i))
+      simp [univ_fin2] at fb
+      cases fb with
+      | inl f0 =>
+        simp (config := { zetaDelta := true }) [f0] at fb₁b₂
+        simp [f0, fb₁b₂]
+      | inr f1 =>
+        simp (config := { zetaDelta := true }) [f1, not0_eq1] at fb₁b₂
+        simp [f1, fb₁b₂]
+    let targetfinset: Finset ℕ := {5 * block₁.val, 5 * block₁.val + 1, 5 * block₁.val + 2}
+    have fin25 : Fintype.card (Fin 2) * 1 <  Fintype.card { x // x ∈ targetfinset } := by simp [targetfinset]
+    -- Define f': takes one of the elemnet in finset ∅, return its color
+    let f' : targetfinset → Fin 2 := λ k => f k
+    -- There exists more than 1 elements that have the same color
+    obtain ⟨c, chyp⟩ := Fintype.exists_lt_card_fiber_of_mul_lt_card f' fin25
+    -- pick a₁ a₂ from (Finset.filter (λ (x :({5 * block₁.val, 5 * block₁.val + 1, 5 * block₁.val + 2}:Finset ℕ )) => f' x = c) Finset.univ)
+    rw [Finset.one_lt_card_iff] at chyp
+    obtain ⟨a₁, a₂, a₁Ins, a₂Ins, a₁Nea₂⟩ := chyp
+    simp [f', targetfinset] at a₁Ins a₂Ins
+    clear f' -- Bug #21396
+    wlog a₁Lta₂ : a₁ < a₂
+    have a₂Lta₁ := lt_trichotomy a₁ a₂
+    simp [a₁Lta₂, a₁Nea₂] at a₂Lta₁
+    obtain ⟨s, c, sdiff, sc⟩ := this f fin533 y₅ block₁ block₂ block₁Neblock₂ block₁Ins block₂Ins block₁Ltblock₂ blockeq fin25 c a₂ a₁ a₁Nea₂.symm a₂Ins a₁Ins a₂Lta₁
+    use s, c
+    clear fin25
+    -- express a₂ as 5b₂+i and prove
+    have out₂ : ∃ i, (↑a₂ = 5 * block₁.val + i) ∧ (i < 3):= by
+      -- three cases for a2: i =0,1,2
+      rcases a₂Ins.left with rfl | rfl | rfl
+      · use 0
+        simp
+      · use 1
+        simp
+      · use 2
+        simp
+    obtain ⟨i₂, a₂eq, i₂ineq⟩ := out₂
+    -- express a1 as 5b1+i and prove
+    have out₁ : ∃ i, (↑a₁ = 5 * block₁.val + i) ∧ (i < i₂):= by
+      -- three cases for a1: i =0,1,2
+      rcases a₁Ins.left with rfl | rfl | rfl <;> rw [Subtype.mk_lt_mk] at a₁Lta₂ <;> simp [a₂eq] at a₁Lta₂
+      · use 0
+        simp [a₁Lta₂]
+      · use 1
+      · use 2
+    obtain ⟨i₁, a₁eq, i₁ineq⟩ := out₁
+    let I := i₂ - i₁
+    let B : ℕ := ↑block₂ - ↑block₁
+    have Ibound : i₁ + I < 3 := by
+      change i₁ + (i₂ - i₁) < 3
+      simp [← Nat.add_sub_assoc (le_of_lt i₁ineq) i₁, i₂ineq]
+    have Bbound : ↑block₁ + B < 33 := by simp [B, ←Nat.add_sub_assoc (le_of_lt block₁Ltblock₂) block₁]
+    let a₃ : ℕ := a₁.val + (I + I)
+    -- two cases: same color vs. different color
+    cases instDecidableEqFin 2 (f a₃) (f a₁) with
+    | isFalse fa₃a₁ =>
+      cases instDecidableEqFin 2 (f (↑a₁ + (I + 5 * B + (I + 5 * B)))) (f a₁) with
+      | isFalse fblock₂ =>
+        --Case III:  5block₁ + i₃, 5block₂ + i₃, 5block₃ + i₃
+        use {start := a₃, diff := 5 * B}, f a₃
+        simp (config := { zeta := false })
+        apply And.intro
+        · simp [B]
+          assumption
+        · intros e H
+          cases H with
+          | intro i ehyp =>
+            apply And.intro
+            · -- prove < 325
+              fin_cases i <;> simp (config := { zetaDelta := true }) [ehyp] <;> linarith
+            · --prove color ≠ c
+              fin_cases i
+              · simp at ehyp
+                tauto
+              · simp [ehyp]
+                have temp₁ : a₃ + 5 * B = 5 * block₂.val + (i₁ + (I + I)) := by
+                  change a₃ + 5 * (block₂.val - block₁.val)  = 5 * block₂.val + (i₁ + (I + I))
+                  rw [Nat.mul_sub_left_distrib 5 block₂.val block₁.val]
+                  rw [Fin.lt_def, ← Nat.mul_lt_mul_left (by trivial : 0 < 5)] at block₁Ltblock₂
+                  have h₂ : 5 * block₁.val ≤ a₃ := by  simp +arith [a₁eq, a₃]
+                  rw [← Nat.add_sub_assoc (Nat.le_of_lt block₁Ltblock₂), Nat.sub_add_comm h₂, Nat.add_comm (5 * block₂.val)]
+                  simp +arith (config := { zeta := false }) [a₁eq, a₃, Nat.add_assoc (5 * block₁.val) i₁]
+                have beqiII := blockeq ⟨i₁ + (I + I), by linarith⟩
+                simp at beqiII
+                rw [temp₁, ← beqiII, ← Nat.add_assoc]
+                simp [a₁eq, a₃]
+              · simp [ehyp]
+                have temp : a₃ + 5 * B + 5 * B = ↑a₁ + (I + 5 * B + (I + 5 * B)) := by simp +arith [a₃]
+                have temp₁: f a₃ = f (↑a₁ + (I + 5 * B + (I + 5 * B))) := notc fa₃a₁ fblock₂
+                rw [temp, temp₁]
+      | isTrue fblock₂ =>
+        use {start := a₁, diff := I + 5 * B}, f a₁
+        simp [i₁ineq, I, B]
+        intros e H
         cases H with
         | intro i ehyp =>
+          simp (config := { zeta := false }) at ehyp
           apply And.intro
-          · -- prove < 325
-            fin_cases i <;> simp (config := { zetaDelta := true }) [ehyp] <;> linarith
-          · --prove color ≠ c
-            fin_cases i
-            · simp at ehyp
-              tauto
+          · fin_cases i <;> simp (config := { zeta := false }) [ehyp, a₁eq] <;> linarith only [i₁ineq, i₂ineq, Bbound, Ibound]
+          · fin_cases i
             · simp [ehyp]
-              have temp₁ : a₃ + 5 * B = 5 * block₂.val + (i₁ + (I + I)) := by
-                change a₃ + 5 * (block₂.val - block₁.val)  = 5 * block₂.val + (i₁ + (I + I))
-                rw [Nat.mul_sub_left_distrib 5 block₂.val block₁.val]
-                rw [Fin.lt_def, ← Nat.mul_lt_mul_left (by trivial : 0 < 5)] at block₁Ltblock₂
-                have h₂ : 5 * block₁.val ≤ a₃ := by  simp +arith [a₁eq, a₃]
-                rw [← Nat.add_sub_assoc (Nat.le_of_lt block₁Ltblock₂), Nat.sub_add_comm h₂, Nat.add_comm (5 * block₂.val)]
-                simp +arith (config := { zeta := false }) [a₁eq, a₃, Nat.add_assoc (5 * block₁.val) i₁]
-              have beqiII := blockeq ⟨i₁ + (I + I), by linarith⟩
-              simp at beqiII
-              rw [temp₁, ← beqiII, ← Nat.add_assoc]
-              simp [a₁eq, a₃]
-            · simp [ehyp]
-              have temp : a₃ + 5 * B + 5 * B = ↑a₁ + (I + 5 * B + (I + 5 * B)) := by simp +arith [a₃]
-              have temp₁: f a₃ = f (↑a₁ + (I + 5 * B + (I + 5 * B))) := notc fa₃a₁ fblock₂
-              rw [temp, temp₁]
-    | isTrue fblock₂ =>
-      use {start := a₁, diff := I + 5 * B}, f a₁
-      simp [i₁ineq, I, B]
-      intros e H
-      cases H with
-      | intro i ehyp =>
-        simp (config := { zeta := false }) at ehyp
-        apply And.intro
-        · fin_cases i <;> simp (config := { zeta := false }) [ehyp, a₁eq] <;> linarith only [i₁ineq, i₂ineq, Bbound, Ibound]
-        · fin_cases i
+            · have a₁plusI: a₁.val + I = a₂.val := by simp [I, a₁eq, a₂eq, Nat.add_assoc (5 * block₁.val) i₁ (i₂ - i₁), Nat.add_sub_of_le (le_of_lt i₁ineq)]
+              -- NOTE: Should we rw block₁Ltblock₂ earlier?
+              rw [Fin.lt_def] at block₁Ltblock₂
+              have tmp₁ : 5 * block₁.val ≤ 5 * block₂.val := by linarith only [block₁Ltblock₂]
+              simp (config := { zeta := false }) [ehyp]
+              rw [← Nat.add_assoc, a₁plusI, a₂eq]
+              simp [Nat.mul_sub_left_distrib 5, ← Nat.add_sub_assoc tmp₁, Nat.add_assoc (5 * ↑block₁), Nat.add_comm i₂]
+              have i₂lt5 : i₂ < 5 := by trans 3 <;> simp +arith [i₂ineq]
+              have beqi₂ := blockeq (Fin.mk i₂ i₂lt5)
+              simp at beqi₂
+              aesop
+            · rw [← fblock₂]
+              simp [ehyp]
+              congr
+              simp +arith [I, B]
+    | isTrue fa₃a₁=>
+      use {start := a₁, diff := I}
+      simp (config := { zeta := false }) [-Fin.exists_fin_two]
+      apply And.intro
+      · simp [I]
+        assumption
+      · use f a₁
+        intros e H
+        cases H with
+        | intro i ehyp =>
+          simp at ehyp
+          apply And.intro
+          · fin_cases i <;> simp [ehyp, targetfinset] <;> linarith
           · simp [ehyp]
-          · have a₁plusI: a₁.val + I = a₂.val := by simp [I, a₁eq, a₂eq, Nat.add_assoc (5 * block₁.val) i₁ (i₂ - i₁), Nat.add_sub_of_le (le_of_lt i₁ineq)]
-            -- NOTE: Should we rw block₁Ltblock₂ earlier?
-            rw [Fin.lt_def] at block₁Ltblock₂
-            have tmp₁ : 5 * block₁.val ≤ 5 * block₂.val := by linarith only [block₁Ltblock₂]
-            simp (config := { zeta := false }) [ehyp]
-            rw [← Nat.add_assoc, a₁plusI, a₂eq]
-            simp [Nat.mul_sub_left_distrib 5, ← Nat.add_sub_assoc tmp₁, Nat.add_assoc (5 * ↑block₁), Nat.add_comm i₂]
-            have i₂lt5 : i₂ < 5 := by trans 3 <;> simp +arith [i₂ineq]
-            have beqi₂ := blockeq (Fin.mk i₂ i₂lt5)
-            simp at beqi₂
-            aesop
-          · rw [← fblock₂]
-            simp [ehyp]
-            congr
-            simp +arith [I, B]
-  | isTrue fa₃a₁=>
-    use {start := a₁, diff := I}
-    simp (config := { zeta := false })
-    apply And.intro
-    · simp [I]
-      assumption
-    · use c
-      intros e H
-      cases H with
-      | intro i ehyp =>
-        simp at ehyp
-        apply And.intro
-        · fin_cases i <;> simp [ehyp, targetfinset] <;> linarith
-        · simp [ehyp]
-          fin_cases i <;> aesop
+            fin_cases i <;> aesop
 
 noncomputable def vdW (k : ℕ) (r : ℕ) : ℕ := sInf { n : ℕ | vdWProp n k r.pred }
 
@@ -246,8 +249,8 @@ theorem vdW1 :∀ {k : ℕ}, vdW k.succ 1 = k.succ := by
       change 1 ≤ s.diff at sdiff
       have eend := eProp (s.start + k * s.diff) ⟨Fin.last k, by simp⟩
       have contra : k ≤ s.start + k * s.diff := by cases k with
-        |zero => simp
-        |succ k' => trans (k'.succ * s.diff); simp [Nat.mul_le_mul_left, sdiff]; simp
+      | zero => simp
+      | succ k' => trans (k'.succ * s.diff); simp [sdiff]; simp
       rw [lt_iff_not_ge] at eend
       simp [eend] at contra
   · monotone
@@ -270,7 +273,7 @@ theorem vdW2 : ∀ {r : ℕ}, vdW 2 r.succ = r.succ.succ := by
       simp [estart.right] at sdiff
   · monotone
 
-def isArithProg {N : ℕ} (l : List (Fin N)) (d : Fin N) := List.Chain' (λ m n => m < n ∧ m + d = n) l
+def isArithProg {N : ℕ} (l : List (Fin N)) (d : Fin N) := List.IsChain (λ m n ↦ m < n ∧ m + d = n) l
 
 lemma isArithProgIffGet {N : ℕ} {t : List (Fin N.succ)} {h h' d : Fin N.succ} : isArithProg (h :: h' :: t) d ↔ ((d > 0) ∧ ∀ (i : Fin t.length.succ.succ), ((h :: h' :: t).get i).val = h.val + i.val * d.val) := by
   induction t generalizing h h' with
@@ -289,30 +292,19 @@ lemma isArithProgIffGet {N : ℕ} {t : List (Fin N.succ)} {h h' d : Fin N.succ} 
           · rw [← hdh', Fin.lt_def, hd] at hLth'
             simp +arith at hLth'
             exact hLth'
-          · intro i
-            fin_cases i
-            · simp
-            · simp
-              have hd := h.val_add_eq_ite d
-              split at hd
-              · have ctr := add_tsub_le_assoc (a := ↑h) (b := ↑d) (c := N.succ)
-                simp [Nat.sub_eq_zero_iff_le.mpr (le_of_lt d.prop), ← hd, hdh'] at ctr
-                cases (not_le_of_gt hLth' ctr)
-              · simp [← hdh', hd]
+          · simp [← hd, hdh']
     · simp
       intros dpos iprop
-      have i1 := iprop (Fin.last 1)
-      simp at i1
       rw [Fin.lt_def] at dpos ⊢
       apply And.intro
-      · simpa [i1]
+      · simpa [iprop]
       · have hd := h.val_add_eq_ite d
         split at hd
         next ctr =>
-          rw [← i1] at ctr
+          rw [← iprop] at ctr
           cases (not_lt_of_ge ctr) h'.prop
         next =>
-          rw [← i1] at hd
+          rw [← iprop] at hd
           exact Fin.ext hd
   | cons h'' t ih =>
     simp [isArithProg]
@@ -384,7 +376,7 @@ instance existsIsArithProgDec {N : ℕ} : ∀ (l : List (Fin N.succ)), Decidable
         simp [isArithProg] at apProp
         cases hGth' apProp.left.left
       | isTrue hLth' =>
-        cases (@List.decidableChain' (Fin N.succ) (λ m n => m < n ∧ m + (h' - h) = n) _ (h' :: t)) with
+        cases (@List.instDecidableIsChain (Fin N.succ) (λ m n ↦ m < n ∧ m + (h' - h) = n) _ (h' :: t)) with
         | isFalse rest =>
           apply isFalse
           intro absurd
@@ -435,8 +427,6 @@ theorem vdWByList (N : ℕ) (k : ℕ) (r : ℕ) : vdWProp N.succ k r ↔ ∀ (f 
       use { toFun := idxMap, inj' := idxMapInj, map_rel_iff' := idxOrdered }
       simp [idxMap, f'']
     have lArithP : ∃ (d : Fin N.succ), isArithProg l d := by
-      -- 
-      -- use s.diff
       induction k with
       | zero => simp [isArithProg, l]
       | succ k' ih =>
@@ -455,7 +445,7 @@ theorem vdWByList (N : ℕ) (k : ℕ) (r : ℕ) : vdWProp N.succ k r ↔ ∀ (f 
           · apply Fin.cases
             · simp
             · rw [← Nat.mod_eq_iff_lt] at sdiffN
-              · apply Fin.cases <;> simp [f'', sdiffN]
+              · apply Fin.cases <;> simp [f'']
               · simp
     use c, l, lsublk, lArithP
     intros n nInl
@@ -555,25 +545,23 @@ theorem vdW32 : vdW 3 2 = 9 := by
     apply And.intro <;> rw [vdWByList]
     · intro f
       by_contra h
-      simp at h
+      simp [-List.mem_sublistsLen, -Fin.exists_fin_two, -Fin.forall_fin_two] at h
       have h' : ∀ (c : Fin (Nat.succ 1)) (l : List (Fin (Nat.succ 8))) (_ : l ∈ List.filter (fun l' => decide (∃ d, isArithProg l' d)) (List.sublistsLen 3 (List.finRange (Nat.succ 8)))), ∃ n, n ∈ l ∧ ¬f n = c := by
         intros c l H
         rw [List.mem_filter, List.mem_sublistsLen] at H
-        rcases H with ⟨⟨subl, length3⟩, isAP⟩
-        simp at isAP
-        rcases isAP with ⟨d, isAP⟩
-        exact h c l d isAP subl length3
-      have myReplace : (List.sublistsLen 3 (List.finRange (Nat.succ 8))).filter (λ l' => ∃ d, isArithProg l' d) = [[6, 7, 8], [5, 6, 7], [4, 6, 8], [4, 5, 6], [3, 5, 7], [3, 4, 5], [2, 5, 8], [2, 4, 6], [2, 3, 4], [1, 4, 7], [1, 3, 5], [1, 2, 3], [0, 4, 8], [0, 3, 6], [0, 2, 4], [0, 1, 2]] := by native_decide
+        obtain ⟨⟨subl, length3⟩, dAP⟩ := H
+        simp at dAP
+        obtain ⟨d, isAP⟩ := dAP; simp at length3
+        apply h c l d isAP
+        simp [length3, subl]
+      have myReplace : (List.sublistsLen 3 (List.finRange 9)).filter (λ l' => ∃ d, isArithProg l' d) = [[6, 7, 8], [5, 6, 7], [4, 6, 8], [4, 5, 6], [3, 5, 7], [3, 4, 5], [2, 5, 8], [2, 4, 6], [2, 3, 4], [1, 4, 7], [1, 3, 5], [1, 2, 3], [0, 4, 8], [0, 3, 6], [0, 2, 4], [0, 1, 2]] := by native_decide
       rw [myReplace] at h'
       have miniNotC : ∀ (x : Fin 2), ¬(x = 1) ↔ (x = 0) := by simp [← not0_eq1]
-      simp only [List.find?, List.mem_cons, List.not_mem_nil, forall_eq_or_imp, exists_eq_or_imp] at h'
-      simp at h'
-      have h1 := h' 1
-      simp [miniNotC] at h1
-      have h0 := h' 0
+      simp only [List.mem_cons, List.not_mem_nil, forall_eq_or_imp, exists_eq_or_imp] at h'
+      simp [miniNotC] at h'
       have v := vdW9 (f 0 = 0) (f 1 = 0) (f 2 = 0) (f 3 = 0) (f 4 = 0) (f 5 = 0) (f 6 = 0) (f 7 = 0) (f 8 = 0)
-      explode_assignments v <;> simp [ass] at h0 h1
-    · simp only [List.find?, Function.id_comp, Function.comp_apply, Fin.mk_one, Fin.mk_zero, exists_and_left, exists_prop, not_forall, not_exists, not_and, and_imp, forall_exists_index]
+      explode_assignments v <;> simp [ass] at h'
+    · simp only [exists_and_left, exists_prop, not_forall, not_exists, not_and, forall_exists_index]
       use ![0, 1, 1, 0, 0, 1, 1, 0]
       intros c l d isAP lsubl
       have lFiltered : l ∈ ((List.finRange (Nat.succ 7)).sublistsLen 3).filter (λ l' => (∃ (d : Fin (Nat.succ 7)), isArithProg l' d)) := by
