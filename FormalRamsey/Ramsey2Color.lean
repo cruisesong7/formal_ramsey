@@ -37,7 +37,7 @@ def Ramsey₂GraphProp (N s t : ℕ) : Ramsey₂Prop N s t ↔ RamseyGraphProp N
       simp [Symmetric, GAdj]
       intros _ _ xneqy fxyeq0
       simp [Ne.symm xneqy, Sym2.eq_swap, fxyeq0]
-    have GAdjLoopless : Irreflexive GAdj := by simp [GAdj, Irreflexive]
+    have GAdjLoopless : Std.Irrefl GAdj := by constructor; simp [GAdj]
     have graphClique := RamseyGraphN { Adj := GAdj, symm := GAdjSym, loopless := GAdjLoopless }
     rcases graphClique with ⟨S, Sclique⟩ | ⟨T, Tclique⟩
     · use S, 0

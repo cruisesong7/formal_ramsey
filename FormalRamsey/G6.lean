@@ -81,7 +81,8 @@ def readG6Internal (s : List Char) : SimpleGraph (Fin (readG6HeaderInternal s)) 
     rw [Sym2.eq_swap]
     exact xyIn,
   loopless := by
-    simp [Irreflexive, readG6Adj]
+    simp [readG6Adj]
+    constructor
     intros v loop
     cases s with
     | nil =>

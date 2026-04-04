@@ -15,7 +15,7 @@ def graphAtColor {N k : ℕ} (G : SimpleGraph (Fin N)) (f : Sym2 (Fin N) → Fin
     rw [Sym2.eq_swap]
     exact fxy,
   loopless :=  by
-    unfold Irreflexive
+    constructor
     intros _ h
     simp at h
  }

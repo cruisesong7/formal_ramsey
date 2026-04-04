@@ -400,7 +400,7 @@ lemma RamseyPropG6Partition : ∀ {N r : ℕ} {s : List.Vector ℕ r.succ}, (∃
 def castGraph {M N : ℕ} (MeqN : M = N) (G : SimpleGraph (Fin N)) : SimpleGraph (Fin M) := {
   Adj := λ u v ↦ G.Adj (Fin.cast MeqN u) (Fin.cast MeqN v)
   symm := λ _ _ uvAdj ↦  G.symm uvAdj
-  loopless := λ _ vvAdj ↦  G.loopless _ vvAdj
+  loopless := { irrefl := (λ _ vvAdj ↦  G.loopless.irrefl _ vvAdj) }
 }
 
 set_option maxHeartbeats 1000000

@@ -4,6 +4,8 @@ import Mathlib.Logic.Equiv.Fin.Basic
 import Mathlib.Algebra.BigOperators.Intervals
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
+import SimplerGraph
+
 import Trestle
 
 namespace Fin
@@ -103,33 +105,6 @@ end Sorted
 
 end List
 
--- TODO: Probably move to Utils.lean
-namespace SimpleGraph
-
-private lemma exists_isNClique_of_le_cliqueNum {α : Type} [Fintype α] {n : ℕ} {G : SimpleGraph α} (h : n ≤ G.cliqueNum) : ∃ S : Finset α, G.IsNClique n S := by
-  rcases G.exists_isNClique_cliqueNum with ⟨s, sclique⟩
-  have nlescard : n ≤ s.card := by simp [h, sclique.card_eq]
-  obtain ⟨t, tprop⟩ := s.exists_subset_card_eq nlescard
-  use t
-  simp [← tprop.right, isNClique_iff]
-  exact sclique.isClique.subset tprop.left
-
-private lemma cliqueNum_lt_iff_cliqueFree {α : Type} [Fintype α] {G : SimpleGraph α} {n : ℕ} : G.cliqueNum < n ↔ G.CliqueFree n := by
-  apply Iff.intro
-  · rintro Gcn S ⟨SIsClique, Scard⟩
-    have absurd := SIsClique.card_le_cliqueNum
-    rw [Scard] at absurd
-    cases (Nat.not_le_of_lt Gcn) absurd
-  · intro Gcf
-    cases Nat.decLt G.cliqueNum n with
-    | isTrue _ => assumption
-    | isFalse nleGcn =>
-      simp at nleGcn
-      obtain ⟨S, SIsNClique⟩ := exists_isNClique_of_le_cliqueNum nleGcn
-      cases Gcf S SIsNClique
-
-end SimpleGraph
-
 open Trestle Encode VEncCNF
 
 lemma triangular_monotone : Monotone (λ N : ℕ ↦ N * (N - 1) / 2) := by
@@ -227,7 +202,10 @@ instance : ∀ N, LawfulIndexType (EdgeVar N) := by
 
 open Model
 
-def assignment_to_graph {N : ℕ} (τ : PropAssignment (EdgeVar N)) (polarity : Bool) : SimpleGraph (Fin N) := { Adj := (λ i j ↦ match instDecidableEqFin N j i with | isTrue _ => False | isFalse ineqj => (τ (EdgeVar.mk (max i j) (min i j) (by simpa)) = polarity)), loopless := by simp [Irreflexive]; intros i imatch; split at imatch; simp_all; have := Eq.refl i; contradiction, symm := by simp [Symmetric, min_comm, max_comm]; aesop }
+def assignment_to_graph {N : ℕ} (τ : PropAssignment (EdgeVar N)) (polarity : Bool) : SimpleGraph (Fin N) := {
+  Adj := (λ i j ↦ match instDecidableEqFin N j i with | isTrue _ => False | isFalse ineqj => (τ (EdgeVar.mk (max i j) (min i j) (by simpa)) = polarity)),
+  loopless := by constructor; intros i imatch; split at imatch; simp_all; have := Eq.refl i; contradiction, symm := by simp [Symmetric, min_comm, max_comm]; aesop
+}
 
 lemma assignment_to_graph_compl : ∀ {N : ℕ} (τ : PropAssignment (EdgeVar N)) (p : Bool), assignment_to_graph τ p = (assignment_to_graph τ !p)ᶜ := by
   simp [-Bool.forall_bool, assignment_to_graph]

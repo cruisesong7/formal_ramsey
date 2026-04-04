@@ -16,8 +16,8 @@ lemma RamseyGraphMonotone : ∀ {N s t}, RamseyGraphProp N s t → ∀ {M}, N �
     unfold Symmetric
     intros _ _ xAdjy
     simp [subAdj, SimpleGraph.Adj.symm xAdjy]
-  have subAdjLoopless : Irreflexive subAdj := by
-    unfold Irreflexive
+  have subAdjLoopless : Std.Irrefl subAdj := by
+    constructor
     simp [subAdj]
   let G' : SimpleGraph (Fin N) := { Adj := subAdj, symm := subAdjSym, loopless := subAdjLoopless }
   rcases R G' with ⟨S, SProp⟩ | ⟨S, SProp⟩
@@ -170,71 +170,6 @@ theorem R44' : ¬(RamseyGraphProp 17 4 4) := by
     have cliqueFree : (readG6 "P}qTKukXaUja[IBjanPeMI\\K").indepSetFinset 4 = Finset.empty := by native_decide
     rw [cliqueFree]
     exact Finset.notMem_empty T
-
-namespace SimpleGraph
-
-private theorem IsIndepSet.subset {α : Type} {G : SimpleGraph α} {s t : Finset α} (h : t ⊆ s) : G.IsIndepSet s → G.IsIndepSet t := Set.Pairwise.mono h
-
-private lemma exists_isNClique_of_le_cliqueNum {α : Type} [Fintype α] {n : ℕ} {G : SimpleGraph α} (h : n ≤ G.cliqueNum) : ∃ S : Finset α, G.IsNClique n S := by
-  rcases G.exists_isNClique_cliqueNum with ⟨s, sclique⟩
-  have nlescard : n ≤ s.card := by simp [h, sclique.card_eq]
-  obtain ⟨t, tprop⟩ := s.exists_subset_card_eq nlescard
-  use t
-  simp [← tprop.right, isNClique_iff]
-  exact sclique.isClique.subset tprop.left
-
-namespace Iso
-
-private lemma IsClique {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, G.IsClique s ↔ G'.IsClique (iso.toEquiv '' s) := by
-  simp [SimpleGraph.IsClique, Set.Pairwise]
-  intros
-  apply Iff.intro <;> intros sprop u uins v vins uneqv
-  · simp [← iso.map_rel_iff'] at sprop
-    apply sprop <;> assumption
-  · rw [← iso.map_rel_iff']
-    simp
-    apply sprop <;> assumption
-
-private lemma IsIndepSet {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, G.IsIndepSet s ↔ G'.IsIndepSet (iso.toEquiv '' s) := by
-  simp [SimpleGraph.IsIndepSet, Set.Pairwise]
-  intros
-  apply Iff.intro <;> intros sprop u uins v vins uneqv
-  · simp [← iso.map_rel_iff'] at sprop
-    apply sprop <;> assumption
-  · rw [← iso.map_rel_iff']
-    simp
-    apply sprop <;> assumption
-
-private lemma IsNClique {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, G.IsNClique n s ↔ G'.IsNClique n (s.map iso.toEquiv) := by simp [isNClique_iff, iso.IsClique]
-
-private lemma IsNIndepSet {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : ∀ s, G.IsNIndepSet n s ↔ G'.IsNIndepSet n (s.map iso.toEquiv) := by simp [isNIndepSet_iff, iso.IsIndepSet]
-
-private lemma cliqueNum {α : Type} {G G' : SimpleGraph α} (iso : G ≃g G') : G.cliqueNum = G'.cliqueNum := by
-  unfold SimpleGraph.cliqueNum
-  congr
-  ext n
-  apply Iff.intro
-  · intro Gclique
-    obtain ⟨S, Sprop⟩ := Gclique
-    use (S.map iso.toEquiv)
-    rw [iso.IsNClique] at Sprop
-    assumption
-  · intro Gclique'
-    obtain ⟨S', Sprop'⟩ := Gclique'
-    use (S'.map iso.toEquiv.symm)
-    simpa [iso.IsNClique, Finset.map_map]
-
-end Iso
-
-private lemma exists_isNIndset_of_le_indepNum  {α : Type} [Fintype α] {G : SimpleGraph α} (h : n ≤ G.indepNum) : ∃ S : Finset α, G.IsNIndepSet n S := by
-  rcases G.exists_isNIndepSet_indepNum with ⟨s, sindset⟩
-  have nlescard : n ≤ s.card := by simp [h, sindset.card_eq]
-  obtain ⟨t, tprop⟩ := s.exists_subset_card_eq nlescard
-  use t
-  simp [← tprop.right, isNIndepSet_iff]
-  exact sindset.isIndepSet.subset tprop.left
-
-end SimpleGraph
 
 open Trestle Model PropFun
 
