@@ -376,8 +376,11 @@ instance existsIsArithProgDec {N : ℕ} : ∀ (l : List (Fin N.succ)), Decidable
         simp [isArithProg] at apProp
         cases hGth' apProp.left.left
       | isTrue hLth' =>
-        cases (@List.instDecidableIsChain (Fin N.succ) (λ m n ↦ m < n ∧ m + (h' - h) = n) _ (h' :: t)) with
-        | isFalse rest =>
+        if rest : (h' :: t).IsChain (λ m n ↦ m < n ∧ m + (h' - h) = n) then
+          apply isTrue
+          use h' - h
+          simp [isArithProg, hLth', rest]
+        else
           apply isFalse
           intro absurd
           rcases absurd with ⟨d, apProp⟩
@@ -386,10 +389,6 @@ instance existsIsArithProgDec {N : ℕ} : ∀ (l : List (Fin N.succ)), Decidable
           rcases headChain with ⟨_, ddiff⟩
           simp only [← ddiff, add_sub_cancel_left] at rest restChain
           contradiction
-        | isTrue rest =>
-          apply isTrue
-          use h' - h
-          simp [isArithProg, hLth', rest]
 
 lrat_proof vdW9
   "p cnf 9 32 7 8 9 0 6 7 8 0 5 7 9 0 5 6 7 0 4 6 8 0 4 5 6 0 3 6 9 0 3 5 7 0 3 4 5 0 2 5 8 0 2 4 6 0 2 3 4 0 1 5 9 0 1 4 7 0 1 3 5 0 1 2 3 0 -7 -8 -9 0 -6 -7 -8 0 -5 -7 -9 0 -5 -6 -7 0 -4 -6 -8 0 -4 -5 -6 0 -3 -6 -9 0 -3 -5 -7 0 -3 -4 -5 0 -2 -5 -8 0 -2 -4 -6 0 -2 -3 -4 0 -1 -5 -9 0 -1 -4 -7 0 -1 -3 -5 0 -1 -2 -3 0"
