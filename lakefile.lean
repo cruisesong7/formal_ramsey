@@ -5,11 +5,9 @@ package «formal_ramsey» {
   -- add any package configuration options here
 }
 
-require mathlib from git "https://github.com/leanprover-community/mathlib4"@"v4.21.0"
+require trestle from "../trestle"
 
-require proofwidgets from git "https://github.com/EdAyers/ProofWidgets4"@"v0.0.64"
-
-require trestle from git "https://github.com/dMaggot/trestle"@"21e589d76f411d9ee3a70926c860e5c67285db7c"
+require simpler_graph from git "https://gitlab.com/dmaggot/simpler_graph"@"235a1ab"
 
 @[default_target]
 lean_lib «FormalRamsey» {
