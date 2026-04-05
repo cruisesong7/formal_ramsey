@@ -5,7 +5,7 @@ package «formal_ramsey» {
   -- add any package configuration options here
 }
 
-require trestle from "../trestle"
+require trestle from git "https://github.com/FormalSAT/trestle"@"853ce034ff4a5081d19ccc250d5780d4b7e718ec"
 
 require simpler_graph from git "https://gitlab.com/dmaggot/simpler_graph"@"235a1ab"
 
